@@ -26,9 +26,56 @@ defaults write NSGlobalDomain KeyRepeat -int 0
 defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool true
 defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool true
 
-# Run the screensaver if we're in the bottom-left hot corner.
-#defaults write com.apple.dock wvous-bl-corner -int 5
-#defaults write com.apple.dock wvous-bl-modifier -int 0
+# Don’t automatically rearrange Spaces based on most recent use
+defaults write com.apple.dock mru-spaces -bool false
+
+# Automatically hide and show the Dock
+defaults write com.apple.dock autohide -bool true
+
+# Make Dock icons of hidden applications translucent
+defaults write com.apple.dock showhidden -bool true
+
+# ==============================================
+# Mouse
+# ==============================================
+echo "Setting Mouse preferences"
+
+# Set scrolling back to 'normal'
+defaults write NSGlobalDomain com.apple.swipescrolldirection -bool false
+
+# ==============================================
+# Desktop & Screen Saver
+# ==============================================
+echo "Setting Desktop & Screen Saver preferences"
+
+# Hot corners
+# Possible values:
+#  0: no-op
+#  2: Mission Control
+#  3: Show application windows
+#  4: Desktop
+#  5: Start screen saver
+#  6: Disable screen saver
+#  7: Dashboard
+# 10: Put display to sleep
+# 11: Launchpad
+# 12: Notification Center
+
+# Top-Left Hot Corner: Launchpad (Applications)
+defaults write com.apple.dock wvous-tl-corner -int 11
+defaults write com.apple.dock wvous-tl-modifier -int 0
+
+# Top-Right Hot Corner: Put Display to Sleep
+defaults write com.apple.dock wvous-tr-corner -int 10
+defaults write com.apple.dock wvous-tr-modifier -int 0
+
+# Bottom-Left Hot Corner: Dashboard
+defaults write com.apple.dock wvous-bl-corner -int 7
+defaults write com.apple.dock wvous-bl-modifier -int 0
+
+# Bottom-Right Hot Corner: Show Desktop
+defaults write com.apple.dock wvous-br-corner -int 4
+defaults write com.apple.dock wvous-br-modifier -int 0
 
 # Hide Safari's bookmark bar.
 #defaults write com.apple.Safari ShowFavoritesBar -bool false
