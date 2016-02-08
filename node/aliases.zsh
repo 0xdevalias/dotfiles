@@ -1,0 +1,1 @@
+alias npm-global="npm list -g --depth=0"
