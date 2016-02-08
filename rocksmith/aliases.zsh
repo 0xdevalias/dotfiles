@@ -1,0 +1,1 @@
+alias rs-sync="rsync -rtv /Users/devalias/Dropbox/Games/RocksmithCDLC /Users/devalias/Library/Application\ Support/Steam/steamapps/common/Rocksmith2014/dlc && echo && echo Rocksmith CDLC Synced from Dropbox"
