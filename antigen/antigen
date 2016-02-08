@@ -1,0 +1,61 @@
+# Enable antigen (http://antigen.sharats.me)
+
+antigen_path=(/usr/local/Cellar/antigen/1/share/antigen.zsh)
+
+if [[ -e $antigen_path ]]
+then
+  echo "Loading antigen.."
+  source $antigen_path
+else
+  echo "Antigen not found. Skipping. ($antigen_path)"
+  return
+fi
+
+# Load oh-my-zsh (http://ohmyz.sh/)
+antigen use oh-my-zsh
+
+# All of our (unique) antigen files
+typeset -U antigen_files
+antigen_files=($ZSH/**/*.anti)
+
+# Load antigen files
+for file in ${antigen_files}
+do
+  source $file
+done
+
+antigen bundle zsh-users/zsh-completions src
+
+# Bundles from the default repo
+#   Ref: https://github.com/robbyrussell/oh-my-zsh/tree/master/plugins
+#antigen bundle aws
+#antigen bundle common-aliases
+#antigen bundle docker
+#antigen bundle encode64
+#antigen bundle gem
+#antigen bundle git
+#antigen bundle gitfast
+#antigen bundle github
+#antigen bundle history
+#antigen bundle jsontools
+#antigen bundle osx
+#antigen bundle pip
+#antigen bundle python
+#antigen bundle rails
+#antigen bundle rake
+#antigen bundle sbt
+#antigen bundle scala
+#antigen bundle sublime
+#antigen bundle vagrant
+#antigen bundle web-search
+#antigen bundle wd
+
+# Load the theme
+#antigen theme robbyrussell
+#antigen theme amuse
+#antigen theme dallas
+antigen theme pygmalion
+#antigen theme sunrise
+
+# Tell antigen we're done
+antigen apply

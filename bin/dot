@@ -9,7 +9,10 @@ export ZSH=$HOME/.dotfiles
 # Set OS X defaults
 $ZSH/osx/set-defaults.sh
 
-# Upgrade homebrew
+# Update antigen
+antigen update
+
+# Update homebrew
 brew update
 
 # Install homebrew packages
