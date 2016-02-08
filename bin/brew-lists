@@ -1,3 +1,4 @@
+#!/bin/bash
 cd ~/.dotfiles/homebrew
 
 echo Updating homebrew list files..
