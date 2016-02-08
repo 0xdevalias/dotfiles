@@ -6,6 +6,9 @@ brew list > brew.list
 brew tap > brew-tap.list
 brew cask list > brew-cask.list
 
+brew bundle dump --force
+mv ./Brewfile Brewfile.list
+
 # echo Staging in git..
 # git add brew.list
 # git add brew-tap.list
@@ -15,4 +18,5 @@ echo Diffs..
 git diff brew.list
 git diff brew-tap.list
 git diff brew-cask.list
+git diff Brewfile.list
 git status
