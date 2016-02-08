@@ -35,6 +35,9 @@ defaults write com.apple.dock autohide -bool true
 # Make Dock icons of hidden applications translucent
 defaults write com.apple.dock showhidden -bool true
 
+# Set calendar 'days in week' to 14
+defaults write com.apple.iCal CalUIDebugDefaultDaysInWeekView 14
+
 # ==============================================
 # Mouse
 # ==============================================
