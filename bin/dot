@@ -4,16 +4,25 @@
 #
 # `dot` handles installation, updates, things like that. Run it periodically
 # to make sure you're on the latest and greatest.
+echo "[dot] Handling installation, updates and awesomeness to ensure the latest and greatest!"
+
 export ZSH=$HOME/.dotfiles
 
 # Set OS X defaults
+echo "[dot] Setting osx defaults.."
 $ZSH/osx/set-defaults.sh
 
 # Update antigen
 antigen update
 
 # Update homebrew
+echo "[dot] Updating homebrew.."
 brew update
 
 # Install homebrew packages
-$ZSH/homebrew/install.sh 2>&1
+# echo "[dot] Installing homebrew packages.."
+# $ZSH/homebrew/install.sh 2>&1
+
+# Run installers
+echo "[dot] Running installer scripts.."
+$ZSH/script/install 2>&1
