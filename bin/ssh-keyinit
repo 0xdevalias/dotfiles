@@ -1,0 +1,4 @@
+#!/bin/bash
+cd ~/.ssh
+pwd
+ssh-add $(cat ~/.dotfiles/ssh/keys.init)
