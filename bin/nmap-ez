@@ -1,0 +1,21 @@
+#!/bin/bash
+echo "-----------------------------------------------"
+echo "A very simple script to make nmap scanning a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.3"
+echo "-----------------------------------------------"
+_iphost=$1
+_now=$(date +"%Y%m%d-%H%M")
+_nmapopts="-A -vvv ${@:2}"
+_nmapoptshidden="--webxml"
+_nmapoptsfilename=$(echo $_nmapopts | tr -d ' ') 
+_file="nmap-$_now-$_iphost$_nmapoptsfilename"
+
+if [ -z "$1" ]; then
+  echo "Usage: nmap-ez ipOrHostnameToScan [any other arguments here]"
+  echo "Default Options: $_nmapoptshidden $_nmapopts"
+  echo "Will (-oA) output in all formats automatically."
+  exit
+fi
+
+nmap -oA $_file $_nmapoptshidden $_nmapopts $_iphost
