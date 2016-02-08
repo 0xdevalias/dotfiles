@@ -13,16 +13,17 @@ echo "[dot] Setting osx defaults.."
 $ZSH/osx/set-defaults.sh
 
 # Update antigen
+echo "› antigen update"
 antigen update
 
-# Update homebrew
-echo "[dot] Updating homebrew.."
+# Install homebrew
+echo "› $ZSH/homebrew/install.sh"
+$ZSH/homebrew/install.sh 2>&1
+
+# Upgrade homebrew
+echo "› brew update"
 brew update
 
-# Install homebrew packages
-# echo "[dot] Installing homebrew packages.."
-# $ZSH/homebrew/install.sh 2>&1
-
-# Run installers
-echo "[dot] Running installer scripts.."
-$ZSH/script/install 2>&1
+# Install software
+echo "› $ZSH/script/install"
+$ZSH/script/install
