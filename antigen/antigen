@@ -1,15 +1,28 @@
+#!/bin/zsh
 # Enable antigen (http://antigen.sharats.me)
+# By Glenn 'devalias' Grant (devalias.net)
 
-antigen_path=(/usr/local/Cellar/antigen/1/share/antigen.zsh)
+echo "Loading antigen.."
 
-if [[ -e $antigen_path ]]
-then
-  echo "Loading antigen.."
-  source $antigen_path
-else
-  echo "Antigen not found. Skipping. ($antigen_path)"
-  return
+if [[ ! -x $(which brew) ]]; then
+  echo "  ERROR: Antigen loader requires homebrew to be installed. Exiting."
+  return 1
 fi
+
+# Paths to check
+antigen_path1="$(brew list antigen | grep antigen.zsh)"
+antigen_path2="$(brew --prefix)/Cellar/antigen/1/share/antigen.zsh"
+
+if [[ -e $antigen_path1 ]]; then
+  antigen_path="$antigen_path1"
+elif [[ -e $antigen_path2 ]]; then
+  antigen_path="$antigen_path2"
+else
+  echo "  ERROR: Antigen not found. Was it installed with homebrew? Skipping. ($antigen_path1, $antigen_path2)"
+  return 1
+fi
+
+source $antigen_path
 
 # Load oh-my-zsh (http://ohmyz.sh/)
 antigen use oh-my-zsh
@@ -21,9 +34,11 @@ antigen_files=($ZSH/**/*.anti)
 # Load antigen files
 for file in ${antigen_files}
 do
+  echo "  $file"
   source $file
 done
 
+# Load completions
 antigen bundle zsh-users/zsh-completions src
 
 # Bundles from the default repo
