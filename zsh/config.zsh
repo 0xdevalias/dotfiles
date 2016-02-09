@@ -15,6 +15,10 @@ HISTFILE=~/.zsh_history
 HISTSIZE=10000
 SAVEHIST=10000
 
+# Avoid "zsh: do you wish to see all NNN possibilities (NNN lines)?"
+# (default is 100). Only ask before displaying completions if doing so would scroll.
+LISTMAX=0
+
 setopt NO_BG_NICE # don't nice background tasks
 setopt NO_HUP
 setopt NO_LIST_BEEP
