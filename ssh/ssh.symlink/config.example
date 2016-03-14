@@ -1,0 +1,10 @@
+# Note:
+# Create: ssh-keygen -t rsa -f servername_user_rsa
+# Store:  ssh-add servername_user_rsa
+# Remove: ssh-add -d servername_user_rsa
+
+Host example example.com
+Hostname example.com
+User myuser
+IdentityFile ~/.ssh/example_myuser_rsa
+ForwardAgent yes

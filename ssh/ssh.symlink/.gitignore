@@ -1,0 +1,11 @@
+# Don't check in our secretz!!
+*
+known_hosts
+config
+*_rsa*
+*.pub
+
+# But include the useful bits
+!.gitignore
+!README.md
+!config.example
