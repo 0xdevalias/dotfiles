@@ -1,10 +1,11 @@
 # Note:
-# Create: ssh-keygen -t rsa -f servername_user_rsa
-# Store:  ssh-add servername_user_rsa
-# Remove: ssh-add -d servername_user_rsa
+# Create: ssh-keygen -t rsa -b 4096 -f servername_username_rsa -C "your_email@example.com"
+# Store:  ssh-add servername_username_rsa
+# Remove: ssh-add -d servername_username_rsa
 
 Host example example.com
 Hostname example.com
 User myuser
 IdentityFile ~/.ssh/example_myuser_rsa
-ForwardAgent yes
+IdentitiesOnly yes
+ForwardAgent no
