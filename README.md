@@ -48,7 +48,11 @@ There's a few special files in the hierarchy.
   symlinked in when you run `script/bootstrap`.
 - **topic/\*.anti** files will be bundled during antigen startup
 
-## install
+## What about my environment vars?
+
+- Stash your environment variables in `~/.localrc`. This means they'll stay out of your main dotfiles repository (which may be public, like this one), but you'll have access to them in your scripts.
+
+## Install
 
 Run this:
 
