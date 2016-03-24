@@ -1,0 +1,31 @@
+#!/bin/bash
+SEC_DIR="$HOME/sec"
+
+BURP_PRO_FN="burpsuite_pro_v*.jar"
+BURP_FREE_FN="burpsuite_free_v*.jar"
+
+BURP_PRO_PATH=$(find $SEC_DIR -name "$BURP_PRO_FN")
+BURP_FREE_PATH=$(find $SEC_DIR -name "$BURP_FREE_FN")
+
+if [ -f "$BURP_PRO_PATH" ]
+then
+  java -jar $BURP_PRO_PATH -Xms2048M -Xmx4096M &
+elif [ -f "$BURP_FREE_PATH" ]
+then
+  java -jar $BURP_FREE_PATH -Xms2048M -Xmx4096M &
+elif [ -z "$BURP_PRO_PATH" ] && [ -z "$BURP_FREE_PATH" ]
+then
+  echo "  Error: Couldn't find BURP in $SEC_DIR. Is it installed?"
+  echo "    BURP_PRO_FN    = '$BURP_PRO_FN'"
+  echo "    BURP_FREE_FN   = '$BURP_FREE_FN'"
+  echo "    BURP_PRO_PATH  = '$BURP_PRO_PATH'"
+  echo "    BURP_FREE_PATH = '$BURP_FREE_PATH'"
+  echo "    SEC_DIR        = '$SEC_DIR'"
+else
+  echo "  Error: Something went wrong trying to find BURP."
+  echo "    BURP_PRO_FN    = '$BURP_PRO_FN'"
+  echo "    BURP_FREE_FN   = '$BURP_FREE_FN'"
+  echo "    BURP_PRO_PATH  = '$BURP_PRO_PATH'"
+  echo "    BURP_FREE_PATH = '$BURP_FREE_PATH'"
+  echo "    SEC_DIR        = '$SEC_DIR'"
+fi
