@@ -2,6 +2,7 @@ cask_args appdir: '/Applications'
 
 tap 'homebrew/bundle'
 tap 'homebrew/fuse'
+tap 'homebrew/binary'
 tap 'caskroom/cask'
 tap 'caskroom/versions'
 tap 'vitorgalvao/tiny-scripts'
@@ -21,13 +22,16 @@ brew 'ethereum/ethereum/ethereum'
 cask 'adobe-reader'
 cask 'evernote'
 cask 'rescuetime'
+cask 'java'
 
 # Internet/Download
 cask 'google-chrome'
 cask 'google-drive'
 cask 'dropbox'
+cask 'bittorrent-sync'
 brew 'wget'
 brew 'youtube-dl'
+brew 'aria2'
 
 # Chat/Social
 cask 'skype'
@@ -55,11 +59,13 @@ cask 'sublime-text3'
 cask 'sourcetree'
 cask 'intellij-idea'
 
-# Security/Etc
+# Security/Pentest/Etc
 brew 'exiftool'
 brew 'john-jumbo'
 brew 'keybase'
 brew 'nmap'
+brew 'jad'    # Java Decompiler (http://tools.kali.org/reverse-engineering/jad)
+cask 'jd-gui' # Java Decompiler (http://tools.kali.org/reverse-engineering/jd-gui)
 cask '0xed'
 cask 'wireshark'
 cask 'lastpass'
@@ -76,8 +82,9 @@ cask 'bartender'
 cask 'bettertouchtool'
 cask 'flux'
 cask 'hyperdock'
-cask 'totalfinder'
-cask 'totalterminal'
+cask 'iterm2'
+#cask 'totalfinder'
+#cask 'totalterminal'
 cask 'nosleep'
 
 cask 'qlstephen' # Preview textfiles without extensions
