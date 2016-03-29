@@ -48,7 +48,7 @@ cask 'lastfm'
 cask 'audacity'
 
 # Dev/Etc
-brew 'node'       # See node/install.sh
+#brew 'node'       # See node/install.sh
 brew 'rbenv'      # See ruby/install.sh
 brew 'ruby-build' # See ruby/install.sh
 brew 'jenv'       # See jenv/install.sh

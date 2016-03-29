@@ -12,10 +12,17 @@ npmGlobalCheckOrInstall() {
   fi
 }
 
+if [[ -z $NVM_DIR ]] || [[ ! -f "$HOME/.nvm" ]]
+then
+  echo "  Installing nvm for you.."
+  curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | PROFILE="$ZSH/node/nvm.zsh" bash
+fi
+
 if test ! $(which node)
 then
-  echo "  Installing node for you."
-  brew install node > /tmp/node-install.log
+  echo "  Installing node for you.."
+  nvm install node
+  nvm alias default node
 fi
 
 #npmGlobalCheckOrInstall "grunt-cli"
