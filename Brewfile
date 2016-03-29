@@ -58,12 +58,15 @@ brew 'typesafe-activator'
 cask 'sublime-text3'
 cask 'sourcetree'
 cask 'intellij-idea'
+brew 'nasm'
 
 # Security/Pentest/Etc
 brew 'exiftool'
 brew 'john-jumbo'
 brew 'keybase'
 brew 'nmap'
+brew 'exploitdb'
+brew 'afl-fuzz'
 brew 'jad'    # Java Decompiler (http://tools.kali.org/reverse-engineering/jad)
 cask 'jd-gui' # Java Decompiler (http://tools.kali.org/reverse-engineering/jd-gui)
 cask '0xed'
