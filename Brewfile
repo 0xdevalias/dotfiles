@@ -79,6 +79,7 @@ cask 'viscosity'
 # System/Etc
 brew 'homebrew/fuse/ntfs-3g'
 brew 'unrar'
+brew 'tmux'
 #cask 'razer-synapse'
 cask 'osxfuse'
 cask 'asepsis'
