@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+# Generate a secure random string of length X
+# By Glenn 'devalias' Grant (devalias.net)
+
+LENGTH=$1
+if [ -z "$LENGTH" ]; then
+  LENGTH=64
+fi
+
+if [ -x "$(command -v ruby)" ]; then
+  ruby -e "require 'securerandom'; puts SecureRandom.hex($LENGTH)[0..$LENGTH]"
+elif [ -x "$(command -v python)" ]; then
+  python -c "import os,binascii; print binascii.b2a_hex(os.urandom($LENGTH))[:$LENGTH]"
+elif [ -x "$(command -v openssl)" ]; then
+  openssl rand -hex $LENGTH | cut -c 1-$LENGTH
+else
+  echo "Error: You don't seem to have any supported random generation methods installed. :("
+  exit 1
+fi
