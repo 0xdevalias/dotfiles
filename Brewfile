@@ -37,6 +37,9 @@ brew 'aria2'
 cask 'skype'
 cask 'slack'
 
+# Productivity
+cask 'pomodone'
+
 # Gaming
 cask 'steam'
 cask 'league-of-legends'
