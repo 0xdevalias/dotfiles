@@ -4,6 +4,12 @@ echo "A very simple script to make nmap scanning a little quicker to kick off"
 echo "By Glenn 'devalias' Grant (devalias.net)"
 echo "v0.3"
 echo "-----------------------------------------------"
+
+if [[ $EUID -ne 0 ]]; then
+   echo "Error: This script must be run as root" 1>&2
+   exit 1
+fi
+
 _iphost=$1
 _now=$(date +"%Y%m%d-%H%M")
 _nmapopts="-A -vvv ${@:2}"
