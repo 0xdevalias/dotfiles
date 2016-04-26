@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+# Ref: https://www.calazan.com/docker-cleanup-commands/
+
+echo "Removing dangling/orphan images.."
+
+DANGLING=$(docker images -q -f dangling=true)
+
+if [ -z "$DANGLING" ]; then
+  echo "All good. No dangling images to remove."
+else
+  docker rmi "$DANGLING"
+  echo "Finished"
+fi

@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+# Ref: https://github.com/chadoe/docker-cleanup-volumes
+
+echo "Removing dangling/orphan volumes.."
+
+DANGLING=$(docker volume ls -qf dangling=true)
+
+if [ -z "$DANGLING" ]; then
+  echo "All good. No dangling volumes to remove."
+else
+  docker volume rm "$DANGLING"
+  echo "Finished"
+fi

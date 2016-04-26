@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  CONF=default
+else
+  CONF=$1
+fi
+
+echo "Note: you probably actually mean 'docker-machine env $CONF'"
+echo
+echo "$(docker-machine env $CONF)"
