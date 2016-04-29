@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export RUBY_VER="2.3.0"
+
 if test ! $(which rbenv)
 then
   echo "  Installing rbenv for you."
@@ -12,11 +14,20 @@ then
   brew install ruby-build > /tmp/ruby-build-install.log
 fi
 
-rbenv install 2.3.0
+if [[ ! -z "$RUBY_VER" ]]; then
+  if [ -z "$(rbenv versions | grep $RUBY_VER)" ]; then
+    echo "  Installing ruby $RUBY_VER for you.."
+    rbenv install $RUBY_VER
+    rbenv rehash
 
-rbenv rehash
-
-rbenv global 2.3.0
+    echo "  Setting ruby $RUBY_VER as global.."
+    rbenv global $RUBY_VER
+  else
+    echo "  Ruby $RUBY_VER already installed."
+  fi
+else
+  echo "  Warning: No RUBY_VER set, not installing."
+fi
 
 gem install bundler
 gem install jekyll
