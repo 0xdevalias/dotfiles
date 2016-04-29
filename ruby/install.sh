@@ -16,17 +16,17 @@ fi
 
 if [[ ! -z "$RUBY_VER" ]]; then
   if [ -z "$(rbenv versions | grep $RUBY_VER)" ]; then
-    echo "  Installing ruby $RUBY_VER for you.."
+    echo "  [rbenv] Installing ruby $RUBY_VER for you.."
     rbenv install $RUBY_VER
     rbenv rehash
 
-    echo "  Setting ruby $RUBY_VER as global.."
+    echo "  [rbenv] Setting ruby $RUBY_VER as global.."
     rbenv global $RUBY_VER
   else
-    echo "  Ruby $RUBY_VER already installed."
+    echo "  [rbenv] Ruby $RUBY_VER already installed."
   fi
 else
-  echo "  Warning: No RUBY_VER set, not installing."
+  echo "  [rbenv] Warning: No RUBY_VER set, not installing."
 fi
 
 gem install bundler

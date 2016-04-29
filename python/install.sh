@@ -18,37 +18,37 @@ fi
 # Install python 2x
 if [[ ! -z "$PYTHON_2X_VER" ]]; then
   if [ -z "$(pyenv versions | grep $PYTHON_2X_VER)" ]; then
-    echo "  Installing python $PYTHON_2X_VER for you.."
+    echo "  [pyenv] Installing python $PYTHON_2X_VER for you.."
     pyenv install $PYTHON_2X_VER
     pyenv rehash
   else
-    echo "  Python $PYTHON_2X_VER already installed."
+    echo "  [pyenv] Python $PYTHON_2X_VER already installed."
   fi
   
   if [[ "$PYTHON_GLOBAL_VER" = '2x' ]]; then
-    echo "  Setting python $PYTHON_2X_VER as global.."
+    echo "  [pyenv] Setting python $PYTHON_2X_VER as global.."
     pyenv global $PYTHON_2X_VER
   fi
 else
-  echo "  Warning: No PYTHON_2X_VER set, not installing."
+  echo "  [pyenv] Warning: No PYTHON_2X_VER set, not installing."
 fi
 
 # Install python 3x
 if [[ ! -z "$PYTHON_3X_VER" ]]; then
   if [ -z "$(pyenv versions | grep $PYTHON_3X_VER)" ]; then
-    echo "  Installing python $PYTHON_3X_VER for you.."
+    echo "  [pyenv] Installing python $PYTHON_3X_VER for you.."
     pyenv install $PYTHON_3X_VER
     pyenv rehash
   else
-    echo "  Python $PYTHON_3X_VER already installed."
+    echo "  [pyenv] Python $PYTHON_3X_VER already installed."
   fi
   
   if [[ "$PYTHON_GLOBAL_VER" = '3x' ]]; then
-    echo "  Setting python $PYTHON_3X_VER as global.."
+    echo "  [pyenv] Setting python $PYTHON_3X_VER as global.."
     pyenv global $PYTHON_3X_VER
   fi
 else
-  echo "  Warning: No PYTHON_3X_VER set, not installing."
+  echo "  [pyenv] Warning: No PYTHON_3X_VER set, not installing."
 fi
 
 #easy_install SpoofMAC
