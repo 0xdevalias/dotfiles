@@ -1,3 +1,8 @@
+#!/bin/sh
+
+export PYTHON_2X_VER="2.7.11"
+export PYTHON_3X_VER="3.5.1"
+export PYTHON_GLOBAL_VER="2x" # 2x or 3x
 
 if test ! $(which pyenv)
 then
@@ -10,11 +15,40 @@ if [ -z "$(brew list | grep pyenv-virtualenv)" ]; then
   brew install pyenv-virtualenv > /tmp/pyenv-install.log
 fi
 
-pyenv install 2.7.11
-pyenv install 3.5.1
+# Install python 2x
+if [[ ! -z "$PYTHON_2X_VER" ]]; then
+  if [ -z "$(pyenv versions | grep $PYTHON_2X_VER)" ]; then
+    echo "  Installing python $PYTHON_2X_VER for you.."
+    pyenv install $PYTHON_2X_VER
+    pyenv rehash
+  else
+    echo "  Python $PYTHON_2X_VER already installed."
+  fi
+  
+  if [[ "$PYTHON_GLOBAL_VER" = '2x' ]]; then
+    echo "  Setting python $PYTHON_2X_VER as global.."
+    pyenv global $PYTHON_2X_VER
+  fi
+else
+  echo "  Warning: No PYTHON_2X_VER set, not installing."
+fi
 
-pyenv rehash
-
-pyenv global 2.7.11
+# Install python 3x
+if [[ ! -z "$PYTHON_3X_VER" ]]; then
+  if [ -z "$(pyenv versions | grep $PYTHON_3X_VER)" ]; then
+    echo "  Installing python $PYTHON_3X_VER for you.."
+    pyenv install $PYTHON_3X_VER
+    pyenv rehash
+  else
+    echo "  Python $PYTHON_3X_VER already installed."
+  fi
+  
+  if [[ "$PYTHON_GLOBAL_VER" = '3x' ]]; then
+    echo "  Setting python $PYTHON_3X_VER as global.."
+    pyenv global $PYTHON_3X_VER
+  fi
+else
+  echo "  Warning: No PYTHON_3X_VER set, not installing."
+fi
 
 #easy_install SpoofMAC
