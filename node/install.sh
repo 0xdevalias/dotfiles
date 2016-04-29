@@ -1,4 +1,6 @@
-#!/bin/zsh
+#!/bin/sh
+
+export NODE_VER="6.0.0"
 
 npmGlobalCheckOrInstall() {
   local module="$1"
@@ -12,20 +14,34 @@ npmGlobalCheckOrInstall() {
   fi
 }
 
-if [[ -z $NVM_DIR ]] || [[ ! -f "$HOME/.nvm" ]]
+if test ! $(which nodenv)
 then
-  echo "  Installing nvm for you.."
-  curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | PROFILE="$ZSH/node/nvm.zsh" bash
+  echo "  Installing nodenv for you."
+  brew install nodenv > /tmp/nodenv-install.log
 fi
 
-if test ! $(which node)
+if test ! $(which node-build)
 then
-  echo "  Installing node for you.."
-  nvm install node
-  nvm alias default node
+  echo "  Installing node-build for you."
+  brew install node-build > /tmp/node-build-install.log
 fi
 
-#npmGlobalCheckOrInstall "grunt-cli"
-npmGlobalCheckOrInstall "gulp"
-npmGlobalCheckOrInstall "bower"
-npmGlobalCheckOrInstall "bower-check-updates"
+if [[ ! -z "$NODE_VER" ]]; then
+  if [ -z "$(nodenv versions | grep $NODE_VER)" ]; then
+    echo "  [nodenv] Installing node $NODE_VER for you.."
+    nodenv install $NODE_VER
+    nodenv rehash
+
+    echo "  [nodenv] Setting node $NODE_VER as global.."
+    nodenv global $NODE_VER
+  else
+    echo "  [nodenv] Node $NODE_VER already installed."
+  fi
+else
+  echo "  [nodenv] Warning: No NODE_VER set, not installing."
+fi
+
+# npmGlobalCheckOrInstall "grunt-cli"
+# npmGlobalCheckOrInstall "gulp"
+# npmGlobalCheckOrInstall "bower"
+# npmGlobalCheckOrInstall "bower-check-updates"

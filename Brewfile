@@ -51,7 +51,8 @@ cask 'lastfm'
 cask 'audacity'
 
 # Dev/Etc
-#brew 'node'            # See node/install.sh
+brew 'nodenv'           # See node/install.sh
+brew 'node-build'       # See node/install.sh
 brew 'rbenv'            # See ruby/install.sh
 brew 'ruby-build'       # See ruby/install.sh
 brew 'pyenv'            # See python/install.sh
