@@ -30,4 +30,4 @@ else
 fi
 
 gem install bundler
-gem install jekyll
+# gem install jekyll
