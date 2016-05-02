@@ -16,6 +16,7 @@ brew 'zsh'
 brew 'zsh-completions'
 brew 'antigen'
 brew 'vitorgalvao/tiny-scripts/cask-repair'
+brew 'mas'               # Install appstore programs from command line
 
 # Misc/Unsorted
 brew 'ethereum/ethereum/ethereum'
@@ -23,6 +24,10 @@ cask 'adobe-reader'
 cask 'evernote'
 cask 'rescuetime'
 cask 'java'
+mas 'Kindle', id: 405399194
+mas 'Reditr', id: 572716744
+mas 'Microsoft Remote Desktop', id: 715768417
+mas 'TNEFs Enough', id: 986621173
 
 # Internet/Download
 cask 'google-chrome'
@@ -36,9 +41,13 @@ brew 'aria2'
 # Chat/Social
 cask 'skype'
 cask 'slack'
+mas 'Textual', id: 896450579
 
 # Productivity
-cask 'pomodone'
+mas 'Sunrise Calendar', id: 886106985
+mas 'Wunderlist', id: 410628904
+mas 'Pomodone', id: 1096128050
+#cask 'pomodone'
 
 # Gaming
 cask 'steam'
@@ -50,7 +59,11 @@ cask 'vlc'
 cask 'lastfm'
 cask 'audacity'
 
+# Docs/Notes/Etc
+mas 'Outline', id: 604802021
+
 # Dev/Etc
+mas 'Xcode', id: 497799835
 brew 'nodenv'           # See node/install.sh
 brew 'node-build'       # See node/install.sh
 brew 'rbenv'            # See ruby/install.sh
@@ -82,6 +95,7 @@ cask 'viscosity'
 
 # System/Etc
 brew 'homebrew/fuse/ntfs-3g'
+mas 'The Unarchiver', id: 425424353
 brew 'unrar'
 brew 'tmux'
 #cask 'razer-synapse'
@@ -96,6 +110,7 @@ cask 'iterm2'
 #cask 'totalfinder'
 #cask 'totalterminal'
 cask 'nosleep'
+mas 'Caffeine', id: 411246225
 
 cask 'qlstephen' # Preview textfiles without extensions
 cask 'disk-inventory-x'

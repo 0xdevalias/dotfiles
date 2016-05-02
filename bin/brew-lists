@@ -5,6 +5,7 @@ echo Updating homebrew list files..
 brew list > brew.list
 brew tap > brew-tap.list
 brew cask list > brew-cask.list
+mas list > mas.list
 
 brew bundle dump --force
 mv ./Brewfile Brewfile.list
@@ -14,9 +15,10 @@ mv ./Brewfile Brewfile.list
 # git add brew-tap.list
 # git add brew-cask.list
 
-echo Diffs..
-git diff brew.list
-git diff brew-tap.list
-git diff brew-cask.list
-git diff Brewfile.list
+# echo Diffs..
+# git diff brew.list
+# git diff brew-tap.list
+# git diff brew-cask.list
+# git diff Brewfile.list
+# git diff mas.list
 git status
