@@ -1,0 +1,13 @@
+# From https://stackoverflow.com/questions/14805896/how-do-i-get-the-full-path-for-a-process-on-os-x/14805977#14805977
+
+if [[ -z "$1" ]]; then
+  echo "Usage: `basename $0` PID"
+  exit 1
+fi
+
+PID="$1"
+PATH1="`ps -o comm= -p $PID`"
+PATH2=`which "$PATH1"`
+
+echo "Path        : $PATH1"
+echo "Path (which): $PATH2"
