@@ -1,1 +1,10 @@
-{}
+dotfiles:
+  title: "Dotfiles"
+  paths: [
+    "/Users/devalias/.dotfiles"
+  ]
+atom:
+  title: "Atom"
+  paths: [
+    "/Users/devalias/.dotfiles/atom.symlink"
+  ]
