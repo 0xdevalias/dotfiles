@@ -1,0 +1,6 @@
+# Snippets: snip<tab>
+# Eg.
+# '.source.js':
+#   'Snippet Name':
+#     'prefix': 'Snippet Trigger'
+#     'body': 'Hello World!'

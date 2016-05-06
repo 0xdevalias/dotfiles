@@ -1,0 +1,4 @@
+# Keymap customisation: key<tab>
+# Eg.
+# 'body':
+#   'cmd-i': 'namespace:event'
