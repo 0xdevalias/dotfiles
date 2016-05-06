@@ -1,14 +1,18 @@
 #!/bin/bash
-cd ~/.dotfiles/homebrew
 
-echo Updating homebrew list files..
-brew list > brew.list
-brew tap > brew-tap.list
-brew cask list > brew-cask.list
-mas list > mas.list
+HOST="`hostname`"
+DIR="$HOME/.dotfiles/homebrew/lists/$HOST"
+mkdir -p "$DIR"
+cd "$DIR"
+
+echo "Updating homebrew list files for $HOST.."
+brew list > brew.$HOST.list
+brew tap > brew-tap.$HOST.list
+brew cask list > brew-cask.$HOST.list
+mas list > mas.$HOST.list
 
 brew bundle dump --force
-mv ./Brewfile Brewfile.list
+mv ./Brewfile Brewfile.$HOST.list
 
 # echo Staging in git..
 # git add brew.list
