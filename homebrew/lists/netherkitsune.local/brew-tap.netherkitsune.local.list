@@ -1,0 +1,6 @@
+caskroom/cask
+caskroom/versions
+homebrew/binary
+homebrew/bundle
+homebrew/core
+homebrew/services
