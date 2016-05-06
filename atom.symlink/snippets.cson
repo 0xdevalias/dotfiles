@@ -1,6 +1,13 @@
-# Snippets: snip<tab>
-# Eg.
-# '.source.js':
-#   'Snippet Name':
-#     'prefix': 'Snippet Trigger'
-#     'body': 'Hello World!'
+# Atom Snippets: snip<tab>
+
+'.source.coffee':
+  'Project Manager Snippet':
+    'prefix': 'project'
+    'description': "Project Manager: Create a new project"
+    'body': """
+    '${1:projectname}':
+      title: "${2:Project Name}"
+      paths: [
+        "/Users/devalias/dev/${3:projectname}"
+      ]
+    """
