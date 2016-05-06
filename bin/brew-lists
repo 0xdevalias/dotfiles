@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 
 HOST="`hostname`"
 DIR="$HOME/.dotfiles/homebrew/lists/$HOST"
 mkdir -p "$DIR"
 cd "$DIR"
 
-echo "Updating homebrew list files for $HOST.."
+echo "Updating list files for $HOST.."
 brew list > brew.$HOST.list
 brew tap > brew-tap.$HOST.list
 brew cask list > brew-cask.$HOST.list
@@ -13,6 +13,22 @@ mas list > mas.$HOST.list
 
 brew bundle dump --force
 mv ./Brewfile Brewfile.$HOST.list
+
+# Node
+npm list -g --depth=0 > npm.$HOST.list
+
+# Ruby
+ruby -e 'puts Gem::Specification.all_names' > gem.$HOST.list
+
+# Python
+eval "$(pyenv init -)"
+pyenv shell 2.7.11
+pip list > pip.$HOST.list
+
+pyenv shell 3.5.1
+pip3 list > pip3.$HOST.list
+
+pyenv shell --unset
 
 # echo Staging in git..
 # git add brew.list
