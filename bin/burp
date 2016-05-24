@@ -9,14 +9,11 @@ BURP_FREE_PATH=$(find $SEC_DIR -name "$BURP_FREE_FN")
 
 cd "$SEC_DIR"
 
-if [ -f "$BURP_PRO_PATH" ]
-then
-  java -jar $BURP_PRO_PATH -Xms2048M -Xmx4096M &
-elif [ -f "$BURP_FREE_PATH" ]
-then
-  java -jar $BURP_FREE_PATH -Xms2048M -Xmx4096M &
-elif [ -z "$BURP_PRO_PATH" ] && [ -z "$BURP_FREE_PATH" ]
-then
+if [[ -f "$BURP_PRO_PATH" ]]; then
+  java -jar "$BURP_PRO_PATH" -Xms2048M -Xmx4096M &
+elif [[ -f "$BURP_FREE_PATH" ]]; then
+  java -jar "$BURP_FREE_PATH" -Xms2048M -Xmx4096M &
+elif [[ -z "$BURP_PRO_PATH" ]] && [[ -z "$BURP_FREE_PATH" ]]; then
   echo "  Error: Couldn't find BURP in $SEC_DIR. Is it installed?"
   echo "    BURP_PRO_FN    = '$BURP_PRO_FN'"
   echo "    BURP_FREE_FN   = '$BURP_FREE_FN'"

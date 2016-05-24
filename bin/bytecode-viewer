@@ -1,0 +1,24 @@
+#!/bin/bash
+SEC_DIR="$HOME/sec/bytecodeviewer"
+
+BCV_FN="BytecodeViewer*.jar"
+
+BCV_PATH="$(find $SEC_DIR -name "$BCV_FN")"
+
+cd "$SEC_DIR"
+
+if [[ -f "$BCV_PATH" ]]; then
+  echo "Starting bytecode-viewer.."
+  java -jar "$BCV_PATH" &
+  # -Xms2048M -Xmx4096M &
+elif [[ -z "$BCV_PATH" ]]; then
+  echo "  Error: Couldn't find 'Bytecode Viewer' in $SEC_DIR. Is it installed?"
+  echo "    BCV_FN    = '$BCV_FN'"
+  echo "    BCV_PATH  = '$BCV_PATH'"
+  echo "    SEC_DIR   = '$SEC_DIR'"
+else
+  echo "  Error: Something went wrong trying to find 'Bytecode Viewer'."
+  echo "    BCV_FN    = '$BCV_FN'"
+  echo "    BCV_PATH  = '$BCV_PATH'"
+  echo "    SEC_DIR   = '$SEC_DIR'"
+fi

@@ -1,0 +1,24 @@
+#!/bin/bash
+SEC_DIR="$HOME/sec/helios"
+
+HELIOS_FN="helios-bootstrapper-*.jar"
+
+HELIOS_PATH="$(find $SEC_DIR -name "$HELIOS_FN")"
+
+cd "$SEC_DIR"
+
+if [[ -f "$HELIOS_PATH" ]]; then
+  echo "Starting helios.."
+  java -jar $HELIOS_PATH &
+  # -Xms2048M -Xmx4096M &
+elif [[ -z "$HELIOS_PATH" ]]; then
+  echo "  Error: Couldn't find Helios in $SEC_DIR. Is it installed?"
+  echo "    HELIOS_FN    = '$HELIOS_FN'"
+  echo "    HELIOS_PATH  = '$HELIOS_PATH'"
+  echo "    SEC_DIR      = '$SEC_DIR'"
+else
+  echo "  Error: Something went wrong trying to find Helios."
+  echo "    HELIOS_FN    = '$HELIOS_FN'"
+  echo "    HELIOS_PATH  = '$HELIOS_PATH'"
+  echo "    SEC_DIR      = '$SEC_DIR'"
+fi
