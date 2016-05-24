@@ -5,16 +5,11 @@ echo "By Glenn 'devalias' Grant (devalias.net)"
 echo "v0.3"
 echo "-----------------------------------------------"
 
-if [[ $EUID -ne 0 ]]; then
-   echo "Error: This script must be run as root" 1>&2
-   exit 1
-fi
-
 _iphost=$1
 _now=$(date +"%Y%m%d-%H%M")
-_nmapopts="-A -vvv ${@:2}"
+_nmapopts="-A -vvv -Pn ${@:2}"
 _nmapoptshidden="--webxml"
-_nmapoptsfilename=$(echo $_nmapopts | tr -d ' ') 
+_nmapoptsfilename=$(echo $_nmapopts | tr -d ' ')
 _file="nmap-$_now-$_iphost$_nmapoptsfilename"
 
 if [ -z "$1" ]; then
@@ -22,6 +17,11 @@ if [ -z "$1" ]; then
   echo "Default Options: $_nmapoptshidden $_nmapopts"
   echo "Will (-oA) output in all formats automatically."
   exit
+fi
+
+if [[ $EUID -ne 0 ]]; then
+   echo "Error: This script must be run as root" 1>&2
+   exit 1
 fi
 
 nmap -oA $_file $_nmapoptshidden $_nmapopts $_iphost
