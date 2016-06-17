@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+# coding=utf-8
+
+import sys
+
+if len(sys.argv) <= 1:
+  print 0
+    # print "Usage: {} string".format(sys.argv[0])
+    # exit(1)
+else:
+  print len(sys.argv[1])
