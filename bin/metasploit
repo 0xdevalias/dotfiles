@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+# Convenient little metasploit docker wrapper
+# By Glenn 'devalias' Grant (devalias.net)
+#
+# https://github.com/docker-linux/kali-metasploit
+# https://hub.docker.com/r/linuxkonsult/kali-metasploit/
+#
+# https://github.com/pandrew/dockerfiles
+# https://hub.docker.com/r/pandrew/metasploit/
+#
+# https://zeltser.com/metasploit-framework-docker-container/
+#   Update it to use this one?
+#
+NAME="metasploit"
+IMAGE="linuxkonsult/kali-metasploit"
+
+# TODO: move docker version check into it's own script?
+$(docker version > /dev/null 2>&1)
+RC=$?
+if [ "$RC" -eq 1 ]; then
+  echo "Error: Cannot connect to the Docker daemon. Do you need to run 'docker-machine env default'?"
+  exit 1
+fi
+
+COMMAND="$@"
+if [ -z "$COMMAND" ]; then
+  COMMAND="msfconsole -x db_status"
+elif [ "$COMMAND" = "status" ]; then
+  docker ps -af name=$NAME
+  exit 0
+elif [ "$COMMAND" = "stop" ]; then
+  echo "Stopping $NAME.."
+  docker stop $NAME
+  exit 0
+elif [ "$COMMAND" = "rm" ]; then
+  echo "Removing $NAME.."
+  docker stop $NAME
+  docker rm $NAME
+  exit 0
+fi
+
+INSTALLED=$(docker ps -af name=$NAME | grep -w $IMAGE)
+RUNNING=$(docker ps -f name=$NAME | grep -w $IMAGE)
+if [ -z "$INSTALLED" ]; then
+  echo "Installing $NAME.."
+  # TODO: This is a hack to keep it running.. surely a better way
+  docker create --name $NAME $IMAGE tail -F /var/log/kern.log
+  docker start $NAME
+
+  echo "Checking for updates.."
+  docker exec $NAME msfupdate
+
+  echo "Initialising database.."
+  docker exec $NAME msfdb init
+elif [ -z "$RUNNING" ]; then
+  echo "Starting $NAME.."
+  docker start $NAME
+
+  echo "Checking for updates.."
+  docker exec $NAME msfupdate
+
+  echo "Starting database.."
+  docker exec $NAME service postgresql start
+fi
+
+docker exec -it $NAME $COMMAND

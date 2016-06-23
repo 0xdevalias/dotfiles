@@ -1,0 +1,1 @@
+# export PATH="$PATH:$HOME/sec/bin:$HOME/sec/cvescan/bin"

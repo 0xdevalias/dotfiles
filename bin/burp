@@ -1,8 +1,19 @@
 #!/bin/bash
+
+# TODO:
+#   Handle multiple found versions better
+#     Eg. Display all found, allow choosing, set default, etc (think rbenv but for burp)
+
 SEC_DIR="$HOME/sec/burp"
 
-BURP_PRO_FN="burpsuite_pro_v*.jar"
-BURP_FREE_FN="burpsuite_free_v*.jar"
+if [[ -z "$1" ]]; then
+  BURP_VER_PREFIX="1.6"
+else
+  BURP_VER_PREFIX="$1"
+fi
+
+BURP_PRO_FN="burpsuite_pro_v${BURP_VER_PREFIX}*.jar"
+BURP_FREE_FN="burpsuite_free_v${BURP_VER_PREFIX}*.jar"
 
 BURP_PRO_PATH=$(find $SEC_DIR -name "$BURP_PRO_FN")
 BURP_FREE_PATH=$(find $SEC_DIR -name "$BURP_FREE_FN")

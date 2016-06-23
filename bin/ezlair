@@ -1,0 +1,23 @@
+#
+# Convenient little ezlair (https://github.com/alias1/ezlair) wrapper
+# By Glenn 'devalias' Grant (devalias.net)
+#
+
+# TODO: Ask before initial installl
+
+# if [[ ! -d "$HOME/sec/ezlair" ]]; then
+#   echo "ezLair not found.. Installing now.."
+
+#   echo "Cloning ezlair.."
+#   git clone git@github.com:alias1/ezlair.git "$HOME/sec/ezlair"
+  
+#   echo "Downloading lair.."
+#   RET=$(cd "$HOME/sec/ezlair/" && ./ezlair-download)
+#   echo $RET
+
+#   echo "Creating DB.."
+#   RET=$(cd "$HOME/sec/ezlair/" && ./ezlair-mongo-create)
+#   echo $RET
+# fi
+
+cd ~/sec/ezlair/ && ./ezlair
