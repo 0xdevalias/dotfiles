@@ -1,7 +1,11 @@
 "*":
+  "atom-beautify":
+    general:
+      _analyticsUserId: "74ff7094-fb28-421f-a114-e38de744bee9"
   core:
     disabledPackages: [
       "background-tips"
+      "notebook"
     ]
     followSymlinks: false
     hideGitIgnoredFiles: true
