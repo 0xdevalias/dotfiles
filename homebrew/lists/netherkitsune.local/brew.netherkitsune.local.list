@@ -37,10 +37,12 @@ ruby
 ruby-build
 spark
 sqlite
+srcclr
 tmux
 tree
 unrar
 wget
+x265
 xz
 zsh
 zsh-completions

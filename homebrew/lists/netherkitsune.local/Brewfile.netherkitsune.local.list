@@ -4,6 +4,7 @@ tap 'homebrew/binary'
 tap 'homebrew/bundle'
 tap 'homebrew/core'
 tap 'homebrew/services'
+tap 'srcclr/srcclr'
 brew 'afl-fuzz'
 brew 'antigen'
 brew 'xz'
@@ -47,9 +48,11 @@ brew 'tmux'
 brew 'tree'
 brew 'unrar'
 brew 'wget'
+brew 'x265'
 brew 'zsh'
 brew 'zsh-completions'
 brew 'homebrew/binary/jad'
+brew 'srcclr/srcclr/srcclr'
 cask '0xed'
 cask 'alfred'
 cask 'asepsis'
@@ -61,13 +64,17 @@ cask 'bittorrent-sync'
 cask 'brackets'
 cask 'disk-inventory-x'
 cask 'dockertoolbox'
+cask 'fantastical'
 cask 'flux'
 cask 'google-chrome'
+cask 'handbrake'
+cask 'hex-fiend'
 cask 'hyperdock'
 cask 'ifunbox'
 cask 'iterm2'
 cask 'java'
 cask 'jd-gui'
+cask 'lacona'
 cask 'lighttable'
 cask 'microsoft-lync'
 cask 'nosleep'
@@ -76,6 +83,7 @@ cask 'rescuetime'
 cask 'sourcetree'
 cask 'spotify'
 cask 'sublime-text3'
+cask 'synalyze-it-pro'
 cask 'tubbler'
 cask 'virtualbox'
 cask 'viscosity'
@@ -88,9 +96,10 @@ mas 'The Unarchiver', id: 425424353
 mas 'Microsoft Remote Desktop', id: 715768417
 mas 'Caffeine', id: 411246225
 mas 'Wunderlist', id: 410628904
+mas 'Slack', id: 803453959
 mas 'Reditr', id: 572716744
-mas 'Sunrise Calendar', id: 886106985
 mas 'Textual', id: 896450579
 mas 'Pomodone', id: 1096128050
 mas 'Outline', id: 604802021
 mas 'TNEF's Enough', id: 986621173
+mas 'FullContact', id: 1094748271
