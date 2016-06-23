@@ -7,6 +7,7 @@ tap 'caskroom/cask'
 tap 'caskroom/versions'
 tap 'vitorgalvao/tiny-scripts'
 tap 'ethereum/ethereum'
+tap 'srcclr/srcclr'
 
 # Install homebrew packages
 brew 'grc'
@@ -41,10 +42,12 @@ brew 'aria2'
 # Chat/Social
 cask 'skype'
 cask 'slack'
+#cask 'slack'
+mas 'Slack', id: 803453959
 mas 'Textual', id: 896450579
 
 # Productivity
-mas 'Sunrise Calendar', id: 886106985
+cask 'fantastical'
 mas 'Wunderlist', id: 410628904
 mas 'Pomodone', id: 1096128050
 #cask 'pomodone'
@@ -58,6 +61,8 @@ cask 'spotify'
 cask 'vlc'
 cask 'lastfm'
 cask 'audacity'
+brew 'x265'
+cask 'handbrake'
 
 # Docs/Notes/Etc
 mas 'Outline', id: 604802021
@@ -89,20 +94,25 @@ brew 'exploitdb'
 brew 'afl-fuzz'
 brew 'jad'    # Java Decompiler (http://tools.kali.org/reverse-engineering/jad)
 cask 'jd-gui' # Java Decompiler (http://tools.kali.org/reverse-engineering/jd-gui)
+cask 'synalyze-it-pro'
 cask '0xed'
+cask 'hex-fiend'
 cask 'wireshark'
-cask 'lastpass'
+#cask 'lastpass'
 cask 'viscosity'
+brew 'proxychains-ng'
+brew 'srcclr'
 
 # System/Etc
-brew 'homebrew/fuse/ntfs-3g'
+#brew 'homebrew/fuse/ntfs-3g'
 mas 'The Unarchiver', id: 425424353
 brew 'unrar'
 brew 'tmux'
 #cask 'razer-synapse'
-cask 'osxfuse'
+#cask 'osxfuse'
 cask 'asepsis'
 cask 'alfred'
+cask 'lacona'
 cask 'bartender'
 cask 'bettertouchtool'
 cask 'flux'
@@ -118,7 +128,7 @@ cask 'disk-inventory-x'
 
 # VM/Etc
 cask 'virtualbox'
-cask 'dockertoolbox'
-cask 'parallels-desktop'
-cask 'vagrant'
-cask 'vagrant-bar'
+#cask 'dockertoolbox'
+#cask 'parallels-desktop'
+#cask 'vagrant'
+#cask 'vagrant-bar'
