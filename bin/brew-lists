@@ -21,11 +21,13 @@ npm list -g --depth=0 > npm.$HOST.list
 ruby -e 'puts Gem::Specification.all_names' > gem.$HOST.list
 
 # Python
+source `dirname $0`/../python/python-versions.zsh
 eval "$(pyenv init -)"
-pyenv shell 2.7.11
+
+pyenv shell $PYTHON_2X_VER
 pip list > pip.$HOST.list
 
-pyenv shell 3.5.1
+pyenv shell $PYTHON_3X_VER
 pip3 list > pip3.$HOST.list
 
 pyenv shell --unset
