@@ -14,6 +14,9 @@ mas list > mas.$HOST.list
 brew bundle dump --force
 mv ./Brewfile Brewfile.$HOST.list
 
+# Atom
+apm list --installed --bare > apm.$HOST.list
+
 # Node
 npm list -g --depth=0 > npm.$HOST.list
 
