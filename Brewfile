@@ -25,7 +25,7 @@ brew 'ethereum/ethereum/ethereum'
 cask 'adobe-reader'
 cask 'evernote'
 cask 'rescuetime'
-cask 'java'
+#cask 'java'
 mas 'Kindle', id: 405399194
 mas 'Reditr', id: 572716744
 mas 'Microsoft Remote Desktop', id: 715768417
