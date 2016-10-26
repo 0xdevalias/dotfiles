@@ -1,9 +1,12 @@
 tap 'caskroom/cask'
 tap 'caskroom/versions'
 tap 'ethereum/ethereum'
+tap 'homebrew/binary'
 tap 'homebrew/bundle'
+tap 'homebrew/command-not-found'
 tap 'homebrew/core'
 tap 'homebrew/fuse'
+tap 'srcclr/srcclr'
 tap 'vitorgalvao/tiny-scripts'
 cask 'osxfuse'
 brew 'antigen'
@@ -25,6 +28,7 @@ brew 'jenv'
 brew 'openssl'
 brew 'john-jumbo'
 brew 'keybase'
+brew 'mas'
 brew 'mercurial'
 brew 'nmap'
 brew 'node'
@@ -33,6 +37,7 @@ brew 'pyenv'
 brew 'pyenv-virtualenv'
 brew 'ruby-build'
 brew 'rbenv'
+brew 'sbt'
 brew 'spark'
 brew 'typesafe-activator'
 brew 'unrar'
@@ -41,6 +46,7 @@ brew 'zsh'
 brew 'zsh-completions'
 brew 'ethereum/ethereum/ethereum'
 brew 'homebrew/fuse/ntfs-3g'
+brew 'srcclr/srcclr/srcclr'
 brew 'vitorgalvao/tiny-scripts/cask-repair'
 cask '0xed'
 cask 'adobe-reader'
@@ -49,26 +55,32 @@ cask 'atom'
 cask 'audacity'
 cask 'bartender'
 cask 'bettertouchtool'
+cask 'crossover'
 cask 'disk-inventory-x'
-cask 'dockertoolbox'
+cask 'docker'
 cask 'dropbox'
 cask 'evernote'
 cask 'fantastical'
 cask 'flux'
+cask 'gitter'
 cask 'google-chrome'
 cask 'google-drive'
 cask 'hyperdock'
 cask 'intellij-idea'
 cask 'iterm2'
+cask 'lacona'
 cask 'lastfm'
 cask 'lastpass'
 cask 'league-of-legends'
+cask 'mendeley-desktop'
 cask 'nosleep'
 cask 'parallels-desktop'
 cask 'pomodone'
+cask 'porting-kit'
 cask 'qlstephen'
 cask 'razer-synapse'
 cask 'rescuetime'
+cask 'resilio-sync'
 cask 'skype'
 cask 'sourcetree'
 cask 'spotify'
@@ -81,3 +93,23 @@ cask 'virtualbox'
 cask 'viscosity'
 cask 'vlc'
 cask 'wireshark'
+cask 'zoomus'
+mas 'FullContact', id: 1094748271
+mas 'Xcode', id: 497799835
+mas 'Duplicate Detective', id: 686428787
+mas 'Growl', id: 467939042
+mas 'The Unarchiver', id: 425424353
+mas 'Kindle', id: 405399194
+mas 'TweetDeck', id: 485812721
+mas 'CopyQueue', id: 711074010
+mas 'Caffeine', id: 411246225
+mas 'Textual 5', id: 896450579
+mas 'Wunderlist', id: 410628904
+mas 'Slack', id: 803453959
+mas 'Tweetbot', id: 557168941
+mas 'Duplicate Photos Fixer Pro', id: 963642514
+mas 'Scapple', id: 568020055
+mas 'BetterSnapTool', id: 417375580
+mas 'iHex', id: 909566003
+mas 'Install macOS Sierra', id: 1127487414
+mas 'Outline', id: 604802021

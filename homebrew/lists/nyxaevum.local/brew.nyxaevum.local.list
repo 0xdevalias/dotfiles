@@ -16,6 +16,7 @@ hub
 jenv
 john-jumbo
 keybase
+mas
 mercurial
 nmap
 node
@@ -28,7 +29,9 @@ pyenv-virtualenv
 rbenv
 readline
 ruby-build
+sbt
 spark
+srcclr
 typesafe-activator
 unrar
 wget
