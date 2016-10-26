@@ -1,6 +1,7 @@
 tap 'caskroom/cask'
 tap 'caskroom/versions'
 tap 'ethereum/ethereum'
+tap 'homebrew/aliases'
 tap 'homebrew/binary'
 tap 'homebrew/bundle'
 tap 'homebrew/command-not-found'

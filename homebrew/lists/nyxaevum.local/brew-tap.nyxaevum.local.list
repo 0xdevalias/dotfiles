@@ -1,6 +1,7 @@
 caskroom/cask
 caskroom/versions
 ethereum/ethereum
+homebrew/aliases
 homebrew/binary
 homebrew/bundle
 homebrew/command-not-found
