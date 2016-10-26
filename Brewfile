@@ -32,11 +32,11 @@ mas 'TNEFs Enough', id: 986621173
 
 # Internet/Download
 cask 'google-chrome'
-cask 'google-drive'
+#cask 'google-drive'
 cask 'dropbox'
-cask 'bittorrent-sync'
+cask 'resilio-sync'
 brew 'wget'
-brew 'youtube-dl'
+#brew 'youtube-dl'
 brew 'aria2'
 
 # Chat/Social
