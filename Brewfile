@@ -129,7 +129,7 @@ cask 'disk-inventory-x'
 
 # VM/Etc
 cask 'virtualbox'
-#cask 'dockertoolbox'
+cask 'docker'
 #cask 'parallels-desktop'
 #cask 'vagrant'
 #cask 'vagrant-bar'
