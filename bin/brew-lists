@@ -6,25 +6,34 @@ mkdir -p "$DIR"
 cd "$DIR"
 
 echo "Updating list files for $HOST.."
+echo "  Dumping Brew list.."
 brew list > brew.$HOST.list
+echo "  Dumping Brew taps.."
 brew tap > brew-tap.$HOST.list
+echo "  Dumping Brew cask list.."
 brew cask list > brew-cask.$HOST.list
+
+echo "  Dumping Mas list.."
 mas list > mas.$HOST.list
 
-brew bundle dump --force
-mv ./Brewfile Brewfile.$HOST.list
+echo "  Dumping Brew bundle.."
+brew bundle dump --force --file="Brewfile.$HOST.list"
 
 # Atom
+echo "  Dumping Atom.."
 apm list --installed --bare > apm.$HOST.list
 
 # Node
+echo "  Dumping NPM.."
 npm list -g --depth=0 > npm.$HOST.list
 
 # Ruby
+echo "  Dumping Ruby Gems.."
 ruby -e 'puts Gem::Specification.all_names' > gem.$HOST.list
 
 # Python
-source `dirname $0`/../python/python-versions.zsh
+echo "  Dumping Python.."
+source "$HOME/.dotfiles/python/python-versions.zsh"
 eval "$(pyenv init -)"
 
 pyenv shell $PYTHON_2X_VER
