@@ -94,6 +94,7 @@ brew 'exiftool'
 brew 'john-jumbo'
 brew 'keybase'
 brew 'nmap'
+brew 'sslyze'
 brew 'exploitdb'
 brew 'afl-fuzz'
 brew 'jad'    # Java Decompiler (http://tools.kali.org/reverse-engineering/jad)
@@ -106,6 +107,7 @@ cask 'wireshark'
 cask 'viscosity'
 brew 'proxychains-ng'
 brew 'srcclr'
+cask 'burp-suite'
 
 # System/Etc
 #brew 'homebrew/fuse/ntfs-3g'
