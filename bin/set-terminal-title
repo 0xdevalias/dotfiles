@@ -1,0 +1,10 @@
+#!/bin/zsh
+
+# http://superuser.com/questions/292652/change-iterm2-window-and-tab-titles-in-zsh
+
+# $1 = type; 0 - both, 1 - tab, 2 - title
+# rest = text
+
+# echo works in bash & zsh
+local mode=$1 ; shift
+echo -ne "\033]$mode;$@\007"
