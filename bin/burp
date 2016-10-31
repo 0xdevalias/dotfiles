@@ -7,7 +7,7 @@
 SEC_DIR="$HOME/sec/burp"
 
 if [[ -z "$1" ]]; then
-  BURP_VER_PREFIX="1.6"
+  BURP_VER_PREFIX="1.7"
 else
   BURP_VER_PREFIX="$1"
 fi
