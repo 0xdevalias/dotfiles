@@ -43,9 +43,11 @@ brew 'aria2'
 
 # Chat/Social
 cask 'skype'
-cask 'slack'
 #cask 'slack'
 mas 'Slack', id: 803453959
+cask 'sempahor'
+cask 'adium'
+cask 'franz'
 mas 'Textual', id: 896450579
 
 # Productivity
