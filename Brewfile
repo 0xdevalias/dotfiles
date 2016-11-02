@@ -92,7 +92,7 @@ brew 'nasm'
 # Security/Pentest/Etc
 brew 'exiftool'
 brew 'john-jumbo'
-brew 'keybase'
+cask 'keybase'
 brew 'nmap'
 brew 'sslyze'
 brew 'exploitdb'
