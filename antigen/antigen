@@ -10,8 +10,8 @@ if [[ ! -x $(which brew) ]]; then
 fi
 
 # Paths to check
-antigen_path1="$(brew list antigen | grep antigen.zsh)"
-antigen_path2="$(brew --prefix)/Cellar/antigen/1/share/antigen.zsh"
+antigen_path1="$(brew --prefix)/share/antigen/antigen.zsh"
+antigen_path2="$(brew list antigen | grep antigen.zsh)"
 
 if [[ -e $antigen_path1 ]]; then
   antigen_path="$antigen_path1"
