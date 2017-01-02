@@ -83,11 +83,13 @@ brew 'jenv'             # See jenv/install.sh
 brew 'git'
 brew 'hub'
 brew 'typesafe-activator'
+brew 'haskell-stack'
 cask 'sublime-text3'
 cask 'atom'
 cask 'sourcetree'
 cask 'intellij-idea'
 brew 'nasm'
+brew 'libsodium'
 
 # Security/Pentest/Etc
 brew 'exiftool'
@@ -108,6 +110,7 @@ cask 'viscosity'
 brew 'proxychains-ng'
 brew 'srcclr'
 cask 'burp-suite'
+cask 'owasp-zap'
 
 # System/Etc
 #brew 'homebrew/fuse/ntfs-3g'
