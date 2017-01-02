@@ -1,11 +1,19 @@
 "*":
+  Ensime:
+    sbtExec: "/usr/local/bin/sbt"
   "atom-beautify":
     general:
       _analyticsUserId: "74ff7094-fb28-421f-a114-e38de744bee9"
+  "autocomplete-python":
+    useKite: false
   core:
     disabledPackages: [
       "background-tips"
       "notebook"
+      "language-gfm"
+      "markdown-scroll-sync"
+      "markdown-preview"
+      "atom-autocomplete-php"
     ]
     followSymlinks: false
     hideGitIgnoredFiles: true
@@ -18,11 +26,13 @@
       "vendor"
     ]
     projectHome: "/Users/devalias/dev"
+    telemetryConsent: "limited"
     themes: [
       "atom-dark-ui"
       "one-dark-syntax"
     ]
   editor:
+    backUpBeforeSaving: true
     fontFamily: "Menlo"
     invisibles: {}
     scrollPastEnd: true
@@ -31,6 +41,8 @@
     softWrapAtPreferredLineLength: true
   "exception-reporting":
     userId: "b97cb892-6dc3-ae91-c680-7b06b730f878"
+  "linter-php":
+    executablePath: "/usr/bin/php"
   minimap:
     plugins:
       cursorline: true
