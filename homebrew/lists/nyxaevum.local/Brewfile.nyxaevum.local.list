@@ -7,39 +7,71 @@ tap 'homebrew/bundle'
 tap 'homebrew/command-not-found'
 tap 'homebrew/core'
 tap 'homebrew/fuse'
+tap 'homebrew/science'
 tap 'srcclr/srcclr'
 tap 'vitorgalvao/tiny-scripts'
 cask 'osxfuse'
 brew 'antigen'
-brew 'pkg-config'
 brew 'aria2'
+brew 'gettext'
+brew 'libffi'
+brew 'pcre'
+brew 'glib'
+brew 'libpng'
+brew 'freetype'
+brew 'fontconfig'
+brew 'pixman'
+brew 'cairo'
+brew 'git'
+brew 'pkg-config'
+brew 'gobject-introspection'
+brew 'atk'
 brew 'autoconf'
-brew 'gmp'
 brew 'coreutils'
 brew 'exiftool'
+brew 'exploitdb'
 brew 'gdbm'
-brew 'gettext'
-brew 'pcre'
-brew 'git'
+brew 'jpeg'
+brew 'libtiff'
+brew 'shared-mime-info'
+brew 'gdk-pixbuf'
+brew 'git-flow'
+brew 'gmp'
+brew 'libtasn1'
+brew 'nettle'
+brew 'gnutls'
 brew 'grc'
 brew 'gsl'
+brew 'hicolor-icon-theme'
+brew 'icu4c'
+brew 'harfbuzz'
+brew 'pango'
+brew 'gtk+'
+brew 'haskell-stack'
 brew 'hr'
 brew 'hub'
 brew 'jenv'
 brew 'openssl'
 brew 'john-jumbo'
-brew 'keybase'
+brew 'libgpg-error'
+brew 'libgcrypt'
+brew 'libidn'
+brew 'libotr'
+brew 'libsodium'
 brew 'mas'
 brew 'mercurial'
 brew 'nmap'
 brew 'node'
 brew 'readline'
+brew 'postgresql'
 brew 'pyenv'
 brew 'pyenv-virtualenv'
+brew 'qemu'
 brew 'ruby-build'
 brew 'rbenv'
 brew 'sbt'
 brew 'spark'
+brew 'sslyze'
 brew 'typesafe-activator'
 brew 'unrar'
 brew 'wget'
@@ -50,12 +82,14 @@ brew 'homebrew/fuse/ntfs-3g'
 brew 'srcclr/srcclr/srcclr'
 brew 'vitorgalvao/tiny-scripts/cask-repair'
 cask '0xed'
+cask 'adium'
 cask 'adobe-reader'
 cask 'alfred'
 cask 'atom'
 cask 'audacity'
 cask 'bartender'
 cask 'bettertouchtool'
+cask 'burp-suite'
 cask 'crossover'
 cask 'disk-inventory-x'
 cask 'docker'
@@ -63,31 +97,34 @@ cask 'dropbox'
 cask 'evernote'
 cask 'fantastical'
 cask 'flux'
+cask 'franz'
 cask 'gitter'
 cask 'google-chrome'
 cask 'google-drive'
 cask 'hyperdock'
 cask 'intellij-idea'
 cask 'iterm2'
+cask 'keybase'
+cask 'kitematic'
 cask 'lacona'
 cask 'lastfm'
 cask 'lastpass'
 cask 'league-of-legends'
 cask 'mendeley-desktop'
 cask 'nosleep'
+cask 'owasp-zap'
 cask 'parallels-desktop'
-cask 'pomodone'
 cask 'porting-kit'
 cask 'qlstephen'
 cask 'razer-synapse'
 cask 'rescuetime'
 cask 'resilio-sync'
+cask 'semaphor'
 cask 'skype'
 cask 'sourcetree'
 cask 'spotify'
 cask 'steam'
 cask 'sublime-text'
-cask 'sublime-text3'
 cask 'totalfinder'
 cask 'vagrant'
 cask 'virtualbox'
@@ -95,22 +132,23 @@ cask 'viscosity'
 cask 'vlc'
 cask 'wireshark'
 cask 'zoomus'
-mas 'FullContact', id: 1094748271
-mas 'Xcode', id: 497799835
+mas 'Outline', id: 604802021
+mas 'BetterSnapTool', id: 417375580
+mas 'ResolutionTab', id: 540141595
+mas 'Kindle', id: 405399194
+mas 'CopyQueue', id: 711074010
+mas 'TweetDeck', id: 485812721
+mas 'The Unarchiver', id: 425424353
+mas 'Caffeine', id: 411246225
 mas 'Duplicate Detective', id: 686428787
 mas 'Growl', id: 467939042
-mas 'The Unarchiver', id: 425424353
-mas 'Kindle', id: 405399194
-mas 'TweetDeck', id: 485812721
-mas 'CopyQueue', id: 711074010
-mas 'Caffeine', id: 411246225
-mas 'Textual 5', id: 896450579
-mas 'Wunderlist', id: 410628904
-mas 'Slack', id: 803453959
 mas 'Tweetbot', id: 557168941
+mas 'Xcode', id: 497799835
+mas 'Wunderlist', id: 410628904
+mas 'iHex', id: 909566003
+mas 'Textual 5', id: 896450579
+mas 'Slack', id: 803453959
 mas 'Duplicate Photos Fixer Pro', id: 963642514
 mas 'Scapple', id: 568020055
-mas 'BetterSnapTool', id: 417375580
-mas 'iHex', id: 909566003
-mas 'Install macOS Sierra', id: 1127487414
-mas 'Outline', id: 604802021
+mas 'PomoDone App', id: 1096128050
+mas 'FullContact', id: 1094748271

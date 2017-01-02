@@ -7,5 +7,6 @@ homebrew/bundle
 homebrew/command-not-found
 homebrew/core
 homebrew/fuse
+homebrew/science
 srcclr/srcclr
 vitorgalvao/tiny-scripts

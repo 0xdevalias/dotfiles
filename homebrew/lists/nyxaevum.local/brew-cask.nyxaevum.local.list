@@ -1,10 +1,12 @@
 0xed
+adium
 adobe-reader
 alfred
 atom
-audacity
+audacity (!)
 bartender
 bettertouchtool
+burp-suite
 crossover
 disk-inventory-x
 docker
@@ -12,12 +14,15 @@ dropbox
 evernote
 fantastical
 flux
+franz
 gitter
 google-chrome
 google-drive
 hyperdock
 intellij-idea
 iterm2
+keybase
+kitematic
 lacona
 lastfm
 lastpass
@@ -25,19 +30,19 @@ league-of-legends
 mendeley-desktop
 nosleep
 osxfuse
+owasp-zap
 parallels-desktop
-pomodone
 porting-kit
 qlstephen
 razer-synapse
 rescuetime
 resilio-sync
+semaphor
 skype
 sourcetree
 spotify
 steam
 sublime-text
-sublime-text3 (!)
 totalfinder
 vagrant
 virtualbox
