@@ -87,7 +87,7 @@ brew 'haskell-stack'
 cask 'sublime-text3'
 cask 'atom'
 cask 'sourcetree'
-cask 'intellij-idea'
+cask 'jetbrains-toolbox'
 brew 'nasm'
 brew 'libsodium'
 
