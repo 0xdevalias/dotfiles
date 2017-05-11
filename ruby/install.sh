@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export RUBY_VER="2.3.0"
+export RUBY_VER="2.3.3"
 
 if test ! $(which rbenv)
 then
@@ -28,6 +28,8 @@ if [[ ! -z "$RUBY_VER" ]]; then
 else
   echo "  [rbenv] Warning: No RUBY_VER set, not installing."
 fi
+
+eval "$(rbenv init -)"
 
 gem install bundler
 # gem install jekyll

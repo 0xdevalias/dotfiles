@@ -67,3 +67,5 @@ antigen theme pygmalion
 
 # Tell antigen we're done
 antigen apply
+
+echo "Antigen done!"
