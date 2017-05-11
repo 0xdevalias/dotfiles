@@ -109,6 +109,7 @@ cask 'wireshark'
 cask 'viscosity'
 brew 'proxychains-ng'
 brew 'srcclr'
+brew 'dependency-check'
 cask 'burp-suite'
 cask 'owasp-zap'
 
