@@ -1,0 +1,12 @@
+#!/bin/zsh
+
+if [ -z "$1" ]; then
+  echo "List which process is listening on the given port."
+  echo "Usage: $0 port"
+  exit 1
+fi
+
+# Source: https://stackoverflow.com/questions/4421633/who-is-listening-on-a-given-tcp-port-on-mac-os-x/4421674#4421674
+#lsof -n -i4TCP:$PORT | grep LISTEN
+#lsof -n -iTCP:$PORT | grep LISTEN
+lsof -n -i:$1 | grep LISTEN
