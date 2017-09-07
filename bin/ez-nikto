@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make nikto a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 domain"
+  exit
+fi
+
+nikto -update
+nikto -Format txt -output . -host $1 ${@:2}
