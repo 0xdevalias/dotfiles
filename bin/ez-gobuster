@@ -1,0 +1,14 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make gobusting a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 wordlist domain"
+  exit
+fi
+
+docker run --rm -v "$HOME/sec/seclists:/seclists" devalias/gobuster -w /seclists/Discovery/Web_Content/$1 -k -u $2 ${@:3}
