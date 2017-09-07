@@ -24,4 +24,5 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+echo "Command: nmap -oA $_file $_nmapoptshidden $_nmapopts $_iphost"
 nmap -oA $_file $_nmapoptshidden $_nmapopts $_iphost
