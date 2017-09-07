@@ -1,0 +1,14 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make iis-shortname scanning a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 ipOrHostnameToScan"
+  exit
+fi
+
+(cd "$HOME/sec/dirbusting/iis-shortname-scanner" && java -jar iis_shortname_scanner.jar 2 20 $1)
