@@ -1,0 +1,20 @@
+#!/bin/bash
+
+NONSYMPRE="$HOME/ResilioSync/dtss/dev/$(hostname)/"
+SYMPRE="$HOME/localdev/"
+
+PWD="$(pwd)"
+PWDPRE="${PWD:0:${#NONSYMPRE}}"
+PWDPOST="${PWD:${#NONSYMPRE}}"
+
+LOCALDEV="${SYMPRE}${PWDPOST}"
+
+if [[ "$PWDPRE" == "$NONSYMPRE" ]]; then
+  echo "Doesn't look like we're in the canonical 'localdev' path, changing directories.."
+  cd "$LOCALDEV"
+else
+  echo "Either you're already in localdev, or you're somewhere entirely different. Not changing paths.."
+fi
+
+echo "  Before   : $PWD"
+echo "  Localdev : $LOCALDEV"
