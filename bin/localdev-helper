@@ -1,13 +1,26 @@
 #!/bin/bash
 
-NONSYMPRE="$HOME/ResilioSync/dtss/dev/$(hostname)/"
-SYMPRE="$HOME/localdev/"
+NONSYMPRE="$HOME/ResilioSync/dtss/dev/$(hostname)"
+SYMPRE="$HOME/localdev"
 
 PWD="$(pwd)"
 PWDPRE="${PWD:0:${#NONSYMPRE}}"
 PWDPOST="${PWD:${#NONSYMPRE}}"
 
-LOCALDEV="${SYMPRE}${PWDPOST}"
+LOCALDEV="${SYMPRE}/${PWDPOST}"
+
+if [ ! -d "$NONSYMPRE" ]; then
+  echo "Couldn't find appropriate localdev path. Creating it for you.."
+  echo "  $NONSYMPRE"
+  mkdir -p "$NONSYMPRE"
+fi
+
+if [[ ! -L "$SYMPRE" ]]; then
+  echo "Couldn't find appropriate localdev symlink. Creating it for you.."
+  echo "  $SYMPRE"
+  ln -s "$NONSYMPRE" "$SYMPRE"
+  ls -la "$SYMPRE"
+fi
 
 if [[ "$PWDPRE" == "$NONSYMPRE" ]]; then
   echo "Doesn't look like we're in the canonical 'localdev' path, changing directories.."
