@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make JSParser a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+echo "Opening http://127.0.0.1:8008 .."
+open http://127.0.0.1:8008
+exec docker run --name jsparser --rm -p 8008:8008 andmyhacks/jsparser
