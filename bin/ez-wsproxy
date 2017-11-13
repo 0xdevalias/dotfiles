@@ -1,0 +1,22 @@
+#!/bin/bash
+echo "-----------------------------------------------"
+echo "A very simple script to make wsproxy a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+_now=$(date +"%Y%m%d-%H%M")
+_file="wsproxy-$_now.txt"
+
+OUTDIR=$PWD
+OUTFILE="$OUTDIR/$_file"
+echo "Starting wsproxy.."
+echo "  SSL Port   : 8000"
+echo "  HTTP Port  : 8001"
+echo "  Proxy Port : 8081"
+echo "  Web UI     : 8082"
+echo ""
+echo "Writing logs to $OUTFILE"
+
+#TODO: Dockerize this
+cd $HOME/sec/wsproxy && node wsproxy.js | tee "$OUTFILE"
