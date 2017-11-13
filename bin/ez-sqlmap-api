@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make the SQLMap API a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+exec docker run --rm -p 8775:8775 --entrypoint "" ilyaglow/sqlmap python sqlmapapi.py -s -H 0.0.0.0 -p 8775

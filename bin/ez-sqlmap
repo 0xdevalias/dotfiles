@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make SQLMap a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+exec docker run --rm -it -v $PWD/sqlmapdata:/home/sqlmap/.sqlmap:rw ilyaglow/sqlmap $@
