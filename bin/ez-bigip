@@ -1,0 +1,34 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make F5 BigIP decoding a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 BIGIPVALUE"
+  echo " eg."
+  echo "   $0 1677787402.36895.0000"
+  echo "   $0 rd2o00000000000000000000ffffbfe5d5efo443"
+  exit
+fi
+
+# docker run --rm -v "$HOME/sec/seclists:/seclists" devalias/gobuster -w /seclists/Discovery/Web_Content/$1 -k -u $2 ${@:3}
+# TODO: Dockerise these tools
+# TODO: Add some better matching to know which version we should be testing against (rather than current bruteforce)
+# TODO: Could rewrite both into a golang based tool for funsies + add some other version detection features?
+
+# https://github.com/DarkLighting/bigip-cookie-decoder
+echo "Attempting to decode old style cookie.."
+echo ""
+cd $HOME/sec/bigip-cookie-decoder
+python2 f5_cookie_address.py $1
+echo "---------------------------------------"
+
+# https://github.com/evict/BIG-IP-Cookie-decoding
+echo "Attempting to decode cookie from version >= 10.0.0 .."
+echo ""
+cd $HOME/sec/BIG-IP-Cookie-decoding
+python decode_cookie.py $1
+echo "---------------------------------------"
