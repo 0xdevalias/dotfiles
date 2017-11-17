@@ -5,11 +5,15 @@
   "translate_tabs_to_spaces": true,
   "scroll_past_end": true,
   "trim_trailing_white_space_on_save": true,
-  "ensure_newline_at_eof_on_save": false,
+  "ensure_newline_at_eof_on_save": true,
   "default_encoding": "UTF-8",
   "copy_with_empty_selection": false,
   "drag_text": false,
   "highlight_modified_tabs": true,
   "enable_tab_scrolling": true,
   "show_full_path": true,
+	"ignored_packages":
+	[
+		"Vintage"
+	]
 }
