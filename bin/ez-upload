@@ -1,0 +1,17 @@
+#!/bin/bash
+echo "-----------------------------------------------"
+echo "A very simple script to temporarily upload files"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+if [ -z "$2" ]; then
+  echo "Usage: $0 filename uploadedName"
+  exit
+fi
+
+# Potential services:
+#   https://transfer.sh/
+#   https://www.file.io/
+curl --upload-file "$1" "https://transfer.sh/$2"
+echo " "
