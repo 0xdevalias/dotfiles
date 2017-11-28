@@ -1,0 +1,34 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make assessing spring web apps a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 pathToCode"
+  exit
+fi
+
+# Main config
+echo -e "\nStarter configuration:"
+find $1 -name "web.xml"
+find $1 -name "pom.xml"
+
+# Configuration files/etc
+echo -e "\nRest of configuration, properties, etc:"
+find $1 -name "*.xml"
+find $1 -name "*.properties"
+
+# Templates/Decorators
+echo -e "\nTemplates and Decorators"
+find $1 -name "*.ftl"
+find $1 -name "*.dec"
+
+# Controllers/Endpoints
+echo -e "\nControllers:"
+grep -rE '@Controller' $1/*
+
+echo -e "\nControllers and RequestMappings:"
+grep -rE '(@(Controller|RequestMapping|RequestParam|ModelAttribute)|RequestMethod)' $1/* #| awk '{split($0,a,":"); print a[1] a[2]}'
