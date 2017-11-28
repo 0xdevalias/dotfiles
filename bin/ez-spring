@@ -32,3 +32,9 @@ grep -rE '@Controller' $1/*
 
 echo -e "\nControllers and RequestMappings:"
 grep -rE '(@(Controller|RequestMapping|RequestParam|ModelAttribute)|RequestMethod)' $1/* #| awk '{split($0,a,":"); print a[1] a[2]}'
+
+# HttpInvoker
+echo -e "\nChecking for HttpInvoker:"
+grep -rEi "HttpInvoker(In|Out)boundGateway" .
+
+# TODO: Include common issues/exploitable type checks here
