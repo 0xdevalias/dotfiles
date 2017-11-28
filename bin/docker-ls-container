@@ -1,0 +1,23 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "Easy way to ls the contents of a docker FROM scratch image"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 containerName"
+  echo " eg."
+  echo "   $0 devalias/gobuster"
+  exit
+fi
+
+# Create
+CID=`docker create "$1"`
+
+# List
+docker export "$CID" | tar -tv
+
+# Cleanup
+docker rm "$CID"
