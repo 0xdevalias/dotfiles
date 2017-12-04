@@ -26,12 +26,19 @@ echo -e "\nTemplates and Decorators"
 find $1 -name "*.ftl"
 find $1 -name "*.dec"
 
+# TODO: For each *.ftl found, search for it's name inside files (to see which controllers use it, etc)
+echo -e "\nYou can find which controllers use these templates with something like:"
+echo "grep -ri \"fooFtlFilenameWithoutExtension\" $1"
+
 # Controllers/Endpoints
 echo -e "\nControllers:"
 grep -rE '@Controller' $1/*
 
 echo -e "\nControllers and RequestMappings:"
-grep -rE '(@(Controller|RequestMapping|RequestParam|ModelAttribute)|RequestMethod)' $1/* #| awk '{split($0,a,":"); print a[1] a[2]}'
+grep -rE '(@(Controller|RequestMapping|RequestParam|ModelAttribute|CookieValue)|RequestMethod)' $1/* #| awk '{split($0,a,":"); print a[1] a[2]}'
+
+echo -e "\nJSON, Models, etc:"
+grep -rE '@(Json|JsonProperty)' $1/*
 
 # HttpInvoker
 echo -e "\nChecking for HttpInvoker:"
