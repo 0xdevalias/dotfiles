@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make jwt-tool a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 JWT-TOKEN [PATH-TO-DICT]"
+  exit
+fi
+
+# See: https://github.com/ticarpi/jwt_tool
+cd $HOME/sec/jwt-tool
+
+python2 ./jwt_tool.py $1 $2
