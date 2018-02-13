@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make assessing web apps a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 pathToCode"
+  exit
+fi
+
+# Readme, Changelog, etc
+# find $1 -iname "*README*"
+find -E $1 -iregex ".*\/.*(README|CHANGELOG|PATCHES)+.*" | tee ./ez-websource-readme-etc.txt
+
+# Dependencies, etc
+find -E $1 -iregex ".*\/.*(package\.json|bower\.json|composer\.json)+.*" | tee ./ez-websource-dependencies-etc.txt
