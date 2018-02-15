@@ -10,7 +10,9 @@ function showUsage() {
   echo "Usage:"
   echo "  $0 moduleload PATH MODULE : Search for module_load_include's in PATH for MODULE"
   echo "  $0 moduleloadname PATH NAME : Search for module_load_include's in PATH called NAME"
-    echo "  $0 moduleloadname PATH MODULE NAME : Search for module_load_include's in PATH in MODULE called NAME"
+  echo "  $0 moduleloadname PATH MODULE NAME : Search for module_load_include's in PATH in MODULE called NAME"
+  echo "  $0 droopescan update : Update droopescan"
+  echo "  $0 droopescan URL : Run droopescan against URL"
   echo ""
   echo "See also: ez-websource"
 }
@@ -35,6 +37,12 @@ elif [ "moduleloadname" == "$1" ] && [ ! -z "$2" ] && [ ! -z "$3" ]; then
     REGEX="module_load_include\(.*?,.*?($3)+.*?,.*?($4)+.*?\)"
     echo "Regex: $REGEX"
     grep -rEi "$REGEX" $2
+  fi
+elif [ "droopescan" == "$1" ]; then
+  if [ "update" == "$2" ]; then
+    pip install -U droopescan
+  else
+    droopescan scan -u "$2"
   fi
 else
   echo "Unknown params: $@"
