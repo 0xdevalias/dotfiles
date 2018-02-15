@@ -1,0 +1,32 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make assessing drupal web apps a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+function showUsage() {
+  echo "Usage:"
+  echo "  $0 moduleload PATH MODULE : Search for module_load_include's in PATH for MODULE"
+  echo "  $0 moduleloadname PATH NAME : Search for module_load_include's in PATH called NAME"
+  echo ""
+  echo "See also: ez-websource"
+}
+
+if [ -z "$1" ]; then
+  showUsage
+  exit
+fi
+
+if [ "moduleload" == "$1" ] && [ ! -z "$2" ] && [ ! -z "$3" ]; then
+  # Ref: https://api.drupal.org/api/drupal/includes%21module.inc/function/module_load_include/7.x
+  grep -rEi "module_load_include\(.*?,.*?($3)+.*?,.*?\)" $2
+elif [ "moduleloadname" == "$1" ] && [ ! -z "$2" ] && [ ! -z "$3" ]; then
+  # Ref: https://api.drupal.org/api/drupal/includes%21module.inc/function/module_load_include/7.x
+  grep -rEi "module_load_include\(.*?,.*?,.*?($3)+.*?\)" $2
+else
+  echo "Unknown params: $@"
+  showUsage
+  exit
+fi
