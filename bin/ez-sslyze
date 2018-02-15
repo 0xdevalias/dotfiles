@@ -11,6 +11,13 @@ if [ -z "$1" ]; then
   exit
 fi
 
-sslyze --regular --hide_rejected_ciphers --http_headers $@
+_now=$(date +"%Y%m%d-%H%M")
+_file="sslyze-$1-$_now.txt"
+
+echo "> sslyze --regular --hide_rejected_ciphers --http_headers $1"
+sslyze --regular --hide_rejected_ciphers --http_headers $1 | tee "./$_file"
 
 # TODO: Dockerize this
+# TODO: Do we get anything different/better with nmap?
+#   nmap -vv -P0 -p 443 example.com --script 'ssl*'
+# I think SSL labs has some command line stuff too..?
