@@ -10,6 +10,7 @@ function showUsage() {
   echo "Usage:"
   echo "  $0 moduleload PATH MODULE : Search for module_load_include's in PATH for MODULE"
   echo "  $0 moduleloadname PATH NAME : Search for module_load_include's in PATH called NAME"
+    echo "  $0 moduleloadname PATH MODULE NAME : Search for module_load_include's in PATH in MODULE called NAME"
   echo ""
   echo "See also: ez-websource"
 }
@@ -21,10 +22,20 @@ fi
 
 if [ "moduleload" == "$1" ] && [ ! -z "$2" ] && [ ! -z "$3" ]; then
   # Ref: https://api.drupal.org/api/drupal/includes%21module.inc/function/module_load_include/7.x
-  grep -rEi "module_load_include\(.*?,.*?($3)+.*?,.*?\)" $2
+  REGEX="module_load_include\(.*?,.*?($3)+.*?,.*?\)"
+  echo "Regex: $REGEX"
+  grep -rEi "$REGEX" $2
 elif [ "moduleloadname" == "$1" ] && [ ! -z "$2" ] && [ ! -z "$3" ]; then
-  # Ref: https://api.drupal.org/api/drupal/includes%21module.inc/function/module_load_include/7.x
-  grep -rEi "module_load_include\(.*?,.*?,.*?($3)+.*?\)" $2
+  if [ -z "$4" ]; then
+    # Ref: https://api.drupal.org/api/drupal/includes%21module.inc/function/module_load_include/7.x
+    REGEX="module_load_include\(.*?,.*?,.*?($3)+.*?\)"
+    echo "Regex: $REGEX"
+    grep -rEi "$REGEX" $2
+  else
+    REGEX="module_load_include\(.*?,.*?($3)+.*?,.*?($4)+.*?\)"
+    echo "Regex: $REGEX"
+    grep -rEi "$REGEX" $2
+  fi
 else
   echo "Unknown params: $@"
   showUsage
