@@ -8,12 +8,47 @@ echo "-----------------------------------------------"
 
 if [ -z "$1" ]; then
   echo "Usage: $0 pathToCode"
+  echo ""
+  echo "See also: ez-spring ez-drupal"
   exit
 fi
 
+# Special Files
+find -E $1 -iregex ".*\/.*(\.htaccess|\.htpasswd)+.*" | tee ./ez-websource-special.txt
+
+# Hidden Files
+find . -iname ".*" | tee ./ez-websource-hidden.txt
+
+# Source Code Management
+find -E $1 -iregex ".*\/.*(\.git)+.*" | tee ./ez-websource-scm.txt
+
+# Settings
+find . -name "*settings*.php" | tee ./ez-websource-settings.txt
+
 # Readme, Changelog, etc
-# find $1 -iname "*README*"
 find -E $1 -iregex ".*\/.*(README|CHANGELOG|PATCHES)+.*" | tee ./ez-websource-readme-etc.txt
 
 # Dependencies, etc
-find -E $1 -iregex ".*\/.*(package\.json|bower\.json|composer\.json)+.*" | tee ./ez-websource-dependencies-etc.txt
+find -E $1 -iregex ".*\/.*(package|bower|composer)\.(json|lock)+.*" | tee ./ez-websource-dependencies-etc.txt
+
+# HTML
+find -E $1 -iregex ".*\/.*(\.html)+.*" | tee ./ez-websource-html.txt
+
+# JS
+find -E $1 -iregex ".*\/.*(\.js)+.*" | tee ./ez-websource-js.txt
+
+# JSON
+find -E $1 -iregex ".*\/.*(\.json)+.*" | tee ./ez-websource-json.txt
+
+# PHP
+find -E $1 -iregex ".*\/.*(\.php|\.php3)+.*" | tee ./ez-websource-php.txt
+
+# Flash
+find -E $1 -iregex ".*\/.*(\.swf)+" | tee ./ez-websource-flash.txt
+
+# Text, etc
+find -E $1 -iregex ".*\/.*(\.txt|\.md)+" | tee ./ez-websource-txt.txt
+
+# TODO: Other interesting things?
+
+# TODO: Something to get all files, then extract all of the extensions, and provide a unique list of extensions
