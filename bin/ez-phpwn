@@ -1,0 +1,21 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make assessing php web apps a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 PATH"
+  echo "Usage: $0 single PATH"
+  python $HOME/localdev/tss/phpwn/phpwn.py
+  exit
+fi
+
+if [ "single" == "$1" ]; then
+  python $HOME/localdev/tss/phpwn/phpwn.py --path $2
+else
+  python $HOME/localdev/tss/phpwn/phpwn.py --path $1 | tee ./ez-phpwn.txt
+  cat ./ez-phpwn.txt | grep "#" | awk '{print $2}' | tee ./ez-phpwn-files.txt
+fi
