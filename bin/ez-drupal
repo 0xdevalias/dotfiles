@@ -12,6 +12,7 @@ function showUsage() {
   echo "  $0 findprofiles PATH               : Search for all profiles in PATH"
   echo "  $0 findprofiles PATH PROFILE       : Search for PROFILE in PATH"
   echo "  $0 extractitems PATH               : Extract $items (generally url paths) from PATH"
+  echo "  $0 extractfuncs PATH               : Extract functions from PATH"
   echo "  $0 moduleload PATH MODULE          : Search for module_load_include's in PATH for MODULE"
   echo "  $0 moduleloadname PATH NAME        : Search for module_load_include's in PATH called NAME"
   echo "  $0 moduleloadname PATH MODULE NAME : Search for module_load_include's in PATH for MODULE called NAME"
@@ -43,7 +44,11 @@ elif [ "findprofiles" == "$1" ] && [ ! -z "$2" ]; then
     find $2 -iname "*$3*.profile"
   fi
 elif [ "extractitems" == "$1" ] && [ ! -z "$2" ]; then
+  # Extract $items from PATH
   grep -rEi '\$items\[.*?\].*?' $2
+elif [ "extractfuncs" == "$1" ] && [ ! -z "$2" ]; then
+  # Extract functions from PATH
+  grep -rEio "function.*)" $2
 elif [ "moduleload" == "$1" ] && [ ! -z "$2" ] && [ ! -z "$3" ]; then
   # Ref: https://api.drupal.org/api/drupal/includes%21module.inc/function/module_load_include/7.x
   REGEX="module_load_include\(.*?,.*?($3)+.*?,.*?\)"
