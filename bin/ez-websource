@@ -6,48 +6,51 @@ echo "By Glenn 'devalias' Grant (devalias.net)"
 echo "v0.1"
 echo "-----------------------------------------------"
 
-if [ -z "$1" ]; then
-  echo "Usage: $0 pathToCode"
+if [ -z "$2" ]; then
+  echo "Usage: $0 OUTNAME PATHTOCODE"
   echo ""
   echo "See also: ez-spring ez-drupal"
   exit
 fi
 
+OUTNAME=$1
+PATHTOCODE=$2
+
 # Special Files
-find -E $1 -iregex ".*\/.*(\.htaccess|\.htpasswd)+.*" | tee ./ez-websource-special.txt
+find -E $PATHTOCODE -iregex '.*\/.*(\.htaccess|\.htpasswd|web\.config)+.*' | tee ./ez-websource-$OUTNAME-special.txt
 
 # Hidden Files
-find . -iname ".*" | tee ./ez-websource-hidden.txt
+find . -iname '.*' | tee ./ez-websource-$OUTNAME-hidden.txt
 
 # Source Code Management
-find -E $1 -iregex ".*\/.*(\.git)+.*" | tee ./ez-websource-scm.txt
+find -E $PATHTOCODE -iregex '.*\/.*(\.git)+.*' | tee ./ez-websource-$OUTNAME-scm.txt
 
 # Settings
-find . -name "*settings*.php" | tee ./ez-websource-settings.txt
+find . -name '*settings*.php' | tee ./ez-websource-$OUTNAME-settings.txt
 
 # Readme, Changelog, etc
-find -E $1 -iregex ".*\/.*(README|CHANGELOG|PATCHES)+.*" | tee ./ez-websource-readme-etc.txt
+find -E $PATHTOCODE -iregex '.*\/.*(README|CHANGELOG|PATCHES)+.*' | tee ./ez-websource-$OUTNAME-readme-etc.txt
 
 # Dependencies, etc
-find -E $1 -iregex ".*\/.*(package|bower|composer)\.(json|lock)+.*" | tee ./ez-websource-dependencies-etc.txt
+find -E $PATHTOCODE -iregex '.*\/.*(package|bower|composer)\.(json|lock)+.*' | tee ./ez-websource-$OUTNAME-dependencies-etc.txt
 
 # HTML
-find -E $1 -iregex ".*\/.*(\.html)+.*" | tee ./ez-websource-html.txt
+find -E $PATHTOCODE -iregex '.*\/.*(\.html)+.*' | tee ./ez-websource-$OUTNAME-html.txt
 
 # JS
-find -E $1 -iregex ".*\/.*(\.js)+.*" | tee ./ez-websource-js.txt
+find -E $PATHTOCODE -iregex '.*\/.*(\.js)+.*' | tee ./ez-websource-$OUTNAME-js.txt
 
 # JSON
-find -E $1 -iregex ".*\/.*(\.json)+.*" | tee ./ez-websource-json.txt
+find -E $PATHTOCODE -iregex '.*\/.*(\.json)+.*' | tee ./ez-websource-$OUTNAME-json.txt
 
 # PHP
-find -E $1 -iregex ".*\/.*(\.php|\.php3)+.*" | tee ./ez-websource-php.txt
+find -E $PATHTOCODE -iregex '.*\/.*(\.php|\.php3)+.*' | tee ./ez-websource-$OUTNAME-php.txt
 
 # Flash
-find -E $1 -iregex ".*\/.*(\.swf)+" | tee ./ez-websource-flash.txt
+find -E $PATHTOCODE -iregex '.*\/.*(\.swf)+' | tee ./ez-websource-$OUTNAME-flash.txt
 
 # Text, etc
-find -E $1 -iregex ".*\/.*(\.txt|\.md)+" | tee ./ez-websource-txt.txt
+find -E $PATHTOCODE -iregex '.*\/.*(\.txt|\.md)+' | tee ./ez-websource-$OUTNAME-txt.txt
 
 # TODO: Other interesting things?
 
