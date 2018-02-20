@@ -43,14 +43,29 @@ find -E $PATHTOCODE -iregex '.*\/.*(\.js)+.*' | tee ./ez-websource-$OUTNAME-js.t
 # JSON
 find -E $PATHTOCODE -iregex '.*\/.*(\.json)+.*' | tee ./ez-websource-$OUTNAME-json.txt
 
+# XML
+find -E $PATHTOCODE -iregex '.*\/.*(\.xml)+.*' | tee ./ez-websource-$OUTNAME-xml.txt
+
 # PHP
 find -E $PATHTOCODE -iregex '.*\/.*(\.php|\.php3)+.*' | tee ./ez-websource-$OUTNAME-php.txt
+
+# ASP
+find -E $PATHTOCODE -iregex '.*\/.*(\.asp)+.*' | tee ./ez-websource-$OUTNAME-php.txt
 
 # Flash
 find -E $PATHTOCODE -iregex '.*\/.*(\.swf)+' | tee ./ez-websource-$OUTNAME-flash.txt
 
 # Text, etc
 find -E $PATHTOCODE -iregex '.*\/.*(\.txt|\.md)+' | tee ./ez-websource-$OUTNAME-txt.txt
+
+# Server Side Includes (SSI)
+grep -rEi '<!--#.*?-->' . | tee ./ez-websource-$OUTNAME-ssi.txt
+
+# Dreamweaver
+# https://stackoverflow.com/questions/7815233/can-dreamweaver-notes-folders-and-dwsync-xml-files-be-safely-ignored-by-source
+find . -name '*dwsync.xml' | tee ./ez-websource-$OUTNAME-dreamweaver.txt
+
+# TODO: Look for dangerous sinks in JS files? Find HTML in a String?
 
 # TODO: Other interesting things?
 
