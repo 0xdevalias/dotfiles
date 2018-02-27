@@ -1,0 +1,59 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make identifying web frameworks a little quicker"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 PATHTOCODE"
+  echo ""
+  echo "See also: ez-websource ez-javaweb ez-spring ez-drupal"
+  exit
+fi
+
+PATHTOCODE=$1
+
+TRYJAVA="false"
+
+# Spring
+SPRINGCNT=`grep -rEi 'org\.springframework' $PATHTOCODE | wc -l | bc`
+if [ "$SPRINGCNT" -gt 0 ]; then
+  echo "Spring found (lines=$SPRINGCNT)"
+  TRYJAVA="true"
+else
+  echo "Spring not found"
+fi
+
+# JBOSS
+JBOSSCNT=`grep -rEi 'org\.jboss' $PATHTOCODE | wc -l | bc`
+if [ "$JBOSSCNT" -gt 0 ]; then
+  echo "JBoss found (lines=$JBOSSCNT)"
+  TRYJAVA="true"
+else
+  echo "JBoss not found"
+fi
+
+# JBOSS Seam
+JBOSSSEAMCNT=`grep -rEi 'org\.jboss\.seam' $PATHTOCODE | wc -l | bc`
+if [ "$JBOSSSEAMCNT" -gt 0 ]; then
+  echo "JBoss Seam found (lines=$JBOSSSEAMCNT)"
+  TRYJAVA="true"
+else
+  echo "JBoss Seam not found"
+fi
+
+# JSF
+JSFCNT=`grep -rEi 'javax\.faces|com\.sun\.face' $PATHTOCODE | wc -l | bc`
+if [ "$JSFCNT" -gt 0 ]; then
+  echo "JSF found (lines=$JSFCNT)"
+  TRYJAVA="true"
+else
+  echo "JSF not found"
+fi
+
+if [ "$TRYJAVA" == "true" ]; then
+  echo ""
+  echo "It looks like there are Java frameworks, you might like to try 'ez-javaweb'"
+fi
