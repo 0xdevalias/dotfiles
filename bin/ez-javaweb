@@ -1,0 +1,75 @@
+#!/bin/bash
+
+echo "-----------------------------------------------"
+echo "A very simple script to make assessing java web apps a little quicker to kick off"
+echo "By Glenn 'devalias' Grant (devalias.net)"
+echo "v0.1"
+echo "-----------------------------------------------"
+
+if [ -z "$2" ]; then
+  echo "Usage: $0 OUTNAME PATHTOCODE"
+  echo ""
+  echo "See also: ez-webframeworks ez-websource ez-spring ez-drupal"
+  exit
+fi
+
+OUTNAME=$1
+PATHTOCODE=$2
+
+# Hidden Files
+find $PATHTOCODE -iname '.*' | tee ./ez-javaweb-$OUTNAME-hidden.txt
+
+# Config
+find -E $PATHTOCODE -iregex '.*\/.*(\.conf|\.properties|web\.xml|pages\.xml)+.*' | tee ./ez-javaweb-$OUTNAME-config.txt
+
+# Servlets, Filters, Paths, etc
+grep -rEi 'filter-name|filter-class|servlet-name|servlet-class|web-resource-name|url-pattern' $PATHTOCODE | tee ./ez-javaweb-$OUTNAME-servlets-filters-etc.txt
+
+# Endpoints
+# grep -rEi '<(page view-id|param name)' $PATHTOCODE | tee ./ez-javaweb-$OUTNAME-pages-params.txt
+ggrep --color -roP '(<page\s.*?>)|(<param\s(?!.*?converterId)(.*?)\/>)' $PATHTOCODE | tee ./ez-javaweb-$OUTNAME-pages-params.txt
+
+# Yaml
+find $PATHTOCODE -iname '*.yml' | tee ./ez-javaweb-$OUTNAME-yml.txt
+
+# Certs, CSR, keys, etc
+find -E $PATHTOCODE -iregex '.*\/.*(\.crt|\.csr|\.key)+.*' | tee ./ez-javaweb-$OUTNAME-certsKeys.txt
+grep -rEi 'BEGIN .*? PRIVATE KEY' $PATHTOCODE | tee ./ez-javaweb-$OUTNAME-privkey.txt
+
+# Java
+find $PATHTOCODE -iname '*.java' | tee ./ez-javaweb-$OUTNAME-java.txt
+grep -rEi '^\s*?import.*?;' $PATHTOCODE | awk '{if($3 != "") {print $2" "$3} else { print $2}}' | sort | uniq | tee ./ez-javaweb-$OUTNAME-javaimports.txt
+grep -rEi 'java\.util\.Random|org\.apache\.commons\.lang\.RandomStringUtils' $PATHTOCODE | tee ./ez-javaweb-$OUTNAME-javarandom.txt
+find $PATHTOCODE -iname '*.java' | xargs grep -rEi $'["\']http[s]*?://' | tee ./ez-javaweb-$OUTNAME-javaurls.txt
+
+# Scala
+find $PATHTOCODE -iname '*.scala' | tee ./ez-javaweb-$OUTNAME-scala.txt
+
+# XML
+find $PATHTOCODE -iname '*.xml' | tee ./ez-javaweb-$OUTNAME-xml.txt
+
+# SH
+find $PATHTOCODE -iname '*.sh' | tee ./ez-javaweb-$OUTNAME-sh.txt
+
+# SQL
+find $PATHTOCODE -iname '*.sql' | tee ./ez-javaweb-$OUTNAME-sql.txt
+grep -rEi $'SELECT [^\'\"]*? FROM [^\'\"]*?' $PATHTOCODE | tee ./ez-javaweb-$OUTNAME-sqlselect.txt
+
+# Archives
+find -E $PATHTOCODE -iregex '.*\/.*(\.jar|\.war|\.zip)+.*' | tee ./ez-javaweb-$OUTNAME-archives.txt
+
+# Tests
+find -E $PATHTOCODE -iregex '.*\/.*(\.feature)+.*' | tee ./ez-javaweb-$OUTNAME-tests.txt
+
+# JBOSS
+# https://docs.jboss.org/drools/release/5.2.0.Final/drools-expert-docs/html/ch05.html#d0e2785
+echo "---- Rule Files ----" | tee ./ez-javaweb-$OUTNAME-jboss.txt
+find $PATHTOCODE -iname '*.drl' | tee -a ./ez-javaweb-$OUTNAME-jboss.txt
+echo "---- Observers ----" | tee -a ./ez-javaweb-$OUTNAME-jboss.txt
+grep -rEi '@Observer' $PATHTOCODE | tee -a ./ez-javaweb-$OUTNAME-jboss.txt
+echo "---- @Name ----" | tee -a ./ez-javaweb-$OUTNAME-jboss.txt
+grep -rEi '@Name' $PATHTOCODE | tee -a ./ez-javaweb-$OUTNAME-jboss.txt
+
+# JSF
+grep -rEi 'javax\.faces|com.sun.face' $PATHTOCODE | tee -a ./ez-javaweb-$OUTNAME-jsf.txt
+grep -rEi '<param-name>.*?(javax\.faces|com\.sun\.face)' $PATHTOCODE | tee -a ./ez-javaweb-$OUTNAME-jsf-config.txt
