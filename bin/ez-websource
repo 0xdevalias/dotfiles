@@ -9,7 +9,7 @@ echo "-----------------------------------------------"
 if [ -z "$2" ]; then
   echo "Usage: $0 OUTNAME PATHTOCODE"
   echo ""
-  echo "See also: ez-spring ez-drupal"
+  echo "See also: ez-webframeworks ez-websource ez-javaweb ez-spring ez-drupal"
   exit
 fi
 
@@ -59,7 +59,9 @@ find -E $PATHTOCODE -iregex '.*\/.*(\.swf)+' | tee ./ez-websource-$OUTNAME-flash
 find -E $PATHTOCODE -iregex '.*\/.*(\.txt|\.md)+' | tee ./ez-websource-$OUTNAME-txt.txt
 
 # Server Side Includes (SSI)
-grep -rEi '<!--#.*?-->' $PATHTOCODE | tee ./ez-websource-$OUTNAME-ssi.txt
+echo "---- SSI Config ----" | tee ./ez-websource-$OUTNAME-ssi.txt
+grep -rEi '(Options .*?(Includes|IncludesNOEXEC|ExecCGI)|XBitHack|mod_include|mod_cgi|mod_alias|ScriptAlias|ScriptAliasMatch)' $PATHTOCODE | tee -a ./ez-websource-$OUTNAME-ssi.txt
+grep -rEi '<!--#.*?-->' $PATHTOCODE | tee -a ./ez-websource-$OUTNAME-ssi.txt
 
 # Dreamweaver
 # https://stackoverflow.com/questions/7815233/can-dreamweaver-notes-folders-and-dwsync-xml-files-be-safely-ignored-by-source
