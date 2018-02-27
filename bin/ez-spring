@@ -42,6 +42,6 @@ grep -rE '@(Json|JsonProperty)' $1/*
 
 # HttpInvoker
 echo -e "\nChecking for HttpInvoker:"
-grep -rEi "HttpInvoker(In|Out)boundGateway" .
+grep -rEi 'HttpInvoker(In|Out)boundGateway' .
 
 # TODO: Include common issues/exploitable type checks here
