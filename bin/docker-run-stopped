@@ -1,0 +1,31 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+  echo "Commit the contents of a stopped container to a new image, then run that image. Cleans up after itself."
+  echo "If the container is still running you should just use 'docker exec' instead"
+  echo "Usage: $0 CONTAINER COMMAND"
+  exit
+fi
+
+# Ref: https://github.com/moby/moby/issues/18078#issuecomment-158525729
+# Ref: https://github.com/moby/moby/issues/30361
+
+STOPPED_CONTAINER=$1
+shift
+NEW_COMMANDS=$@
+
+# IMAGE_NAME=$USER/docker-run-stopped-hack
+
+echo "Comitting container as temporary image.."
+CONTAINER_HASH=`docker commit $STOPPED_CONTAINER $IMAGE_NAME`
+CONTAINER_HASH=`echo $CONTAINER_HASH | awk -F':' '{print $2}'`
+echo $CONTAINER_HASH
+
+echo "Running new temporary image.."
+# docker run --rm -it --entrypoint="" $IMAGE_NAME $NEW_COMMANDS
+docker run --rm -it --entrypoint="" $CONTAINER_HASH $NEW_COMMANDS
+
+echo "Cleaning up.."
+# docker image rm $IMAGE_NAME
+docker image rm $CONTAINER_HASH
+
