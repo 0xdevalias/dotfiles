@@ -1,4 +1,6 @@
+argoproj/tap
 caskroom/cask
+caskroom/drivers
 caskroom/versions
 ethereum/ethereum
 homebrew/aliases
@@ -8,5 +10,6 @@ homebrew/command-not-found
 homebrew/core
 homebrew/fuse
 homebrew/science
+homebrew/services
 srcclr/srcclr
 vitorgalvao/tiny-scripts
