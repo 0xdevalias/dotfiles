@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+
+NSE_PATH1="`brew --prefix`/share/nmap/scripts"
+NSE_PATH2="`which nmap`/../../share/nmap/scripts"
+
+if [[ -d "$NSE_PATH1" ]]; then
+  NSE_PATH="$NSE_PATH1"
+elif [[ -d "$NSE_PATH2" ]]; then
+  NSE_PATH="$NSE_PATH2"
+else
+  echo "Couldn't figure out NSE script path, quitting."
+  echo "Tried:"
+  echo "  $NSE_PATH1"
+  echo "  $NSE_PATH2"
+  exit
+fi
+
+cmd="ls -1 $NSE_PATH/*$1*"
+eval $cmd
