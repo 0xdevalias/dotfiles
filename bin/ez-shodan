@@ -1,0 +1,9 @@
+#!/usr/bin/env zsh
+
+if type "shodan" > /dev/null; then
+  shodan $@
+else
+  echo "WARNING: Shodan isn't installed. If you want to install it, see: https://cli.shodan.io/"
+  echo "  easy_install shodan"
+  echo "  shodan init YOUR_API_KEY"
+fi
