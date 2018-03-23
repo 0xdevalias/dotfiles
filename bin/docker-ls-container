@@ -14,7 +14,7 @@ if [ -z "$1" ]; then
 fi
 
 # Create
-CID=`docker create "$1"`
+CID=`docker create "$1" /bin/false`
 
 # List
 docker export "$CID" | tar -tv
