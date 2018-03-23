@@ -15,8 +15,8 @@ fi
 BURP_PRO_FN="burpsuite_pro_v${BURP_VER_PREFIX}*.jar"
 BURP_FREE_FN="burpsuite_free_v${BURP_VER_PREFIX}*.jar"
 
-BURP_PRO_PATH=$(find $SEC_DIR -name "$BURP_PRO_FN")
-BURP_FREE_PATH=$(find $SEC_DIR -name "$BURP_FREE_FN")
+BURP_PRO_PATH=$(find $SEC_DIR -name "$BURP_PRO_FN" | tail -n 1)
+BURP_FREE_PATH=$(find $SEC_DIR -name "$BURP_FREE_FN" | tail -n 1)
 
 cd "$SEC_DIR"
 
