@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# TODO: If greadlink doesn't exist: brew install coreutils
+# TODO: This doesn't seem to change the directory properly.. why not?
+# TODO: This may be a better replacement for `localdev`, check that out..
+
+if [[ -z "$1" ]]; then
+  CDLN=`greadlink -f .`
+else
+  CDLN=`greadlink -f "$1"`
+fi
+
+if [[ "$CDLN" == "$PWD" ]]; then
+  echo "Seems you're already there.. Hooray!"
+elif [[ -f "$CDLN" ]]; then
+  echo "That's a file.. can't change into that.."
+  echo "  $CDLN"
+elif [[ -d "$CDLN" ]]; then
+  echo "Ok, let's change to the canonical directory.."
+  echo "  $CDLN"
+  cd $CDLN
+else
+  echo "Not a file or a directory.. does that path even exist..?"
+  echo "  $CDLN"
+fi
