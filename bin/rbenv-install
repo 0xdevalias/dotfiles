@@ -1,0 +1,57 @@
+#!/bin/bash
+
+if test ! $(which ruby-install)
+then
+  echo "Couldn't find ruby-install. Try:"
+  echo "  brew install ruby-install"
+  echo
+  brew info ruby-install
+  exit
+fi
+
+if [ "$1" == "ruby" ] && [ ! -z "$2" ]; then
+  RUBY_VER="$2"
+
+  echo "Note: This is just a small wrapper around 'ruby-install' to prefill the 'install-dir' params for rbenv support"
+  echo
+  echo "It looks like you're trying to install version: $RUBY_VER"
+  echo
+  RBINSTDIR="$HOME/.rbenv/versions/$RUBY_VER"
+  RBINSTCMD="ruby-install --install-dir \"$RBINSTDIR\" ruby $RUBY_VER"
+
+  if [ -d "$RBINSTDIR" ]; then
+    echo "It appears that the install directory already exists:"
+    echo "  $RBINSTDIR"
+    echo
+    read -p "Are you sure you want to continue? [y/n]: " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      echo
+      echo "Wasn't ok, so we're quitting. Maybe try using 'ruby-install' directly?"
+      exit
+    fi
+  fi
+
+  echo
+  echo "We will install with the following command:"
+  echo "  $RBINSTCMD"
+  echo
+  read -p "Is that ok? [y/n]: " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    eval "$RBINSTCMD"
+  else
+    echo
+    echo "Wasn't ok, so we're quitting. Maybe try using 'ruby-install' directly?"
+    exit
+  fi
+elif [ "$1" == "versions" ] || [ "$1" == "list" ]; then
+  exec ruby-install
+else
+  echo "This wrapper only handles one small case.. which you didn't hit. Did you want to just use 'ruby-install' directly?"
+  echo
+  echo "Usage:"
+  echo "  $0 ruby VERSION : Install the given VERSION using 'ruby-install'"
+  echo "  $0 versions     : List available versions to install"
+  exit
+fi
