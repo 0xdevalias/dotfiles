@@ -6,5 +6,12 @@
 # rest = text
 
 # echo works in bash & zsh
-local mode=$1 ; shift
-echo -ne "\033]$mode;$@\007"
+
+if [ -z "$1" ] || [ -z "$2" ]; then
+  echo "Usage: $0 MODE TITLE"
+  echo "  MODE: 0 - both, 1 - tab, 2 - title"
+  exit
+fi
+
+local MODE=$1; shift
+echo -ne "\033]$MODE;$@\007"
