@@ -1,3 +1,10 @@
 #!/bin/bash
 
-exec /usr/local/bin/webstorm "$PWD/$@"&
+# Manual Steps: Webstorm -> Tools -> Create Command-line Launcher -> set the path
+WEBSTORMBIN="/usr/local/bin/webstorm"
+if [ ! -f "$WEBSTORMBIN" ]; then
+  echo "Error: Webstorm launcher not found at $WEBSTORMBIN"
+  echo "  Open Webstorm: Tools -> Create Command-line Launcher -> set the path as above -> Ok"
+else
+  exec "$WEBSTORMBIN" "$PWD/$@"&
+fi
