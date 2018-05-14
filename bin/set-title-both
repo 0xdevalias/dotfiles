@@ -2,4 +2,4 @@
 
 # http://superuser.com/questions/292652/change-iterm2-window-and-tab-titles-in-zsh
 
-set-terminal-title 2 $@;
+set-title 0 $@;
