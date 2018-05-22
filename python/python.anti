@@ -1,2 +1,3 @@
 antigen bundle pip
 antigen bundle python
+#antigen bundle pyenv # Note: This doesn't seem to play nice with PYENV_ROOT, might be load order based..?
