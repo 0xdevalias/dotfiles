@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Manual Steps: Intellij IDEA -> Tools -> Create Command-line Launcher -> set the path
+IDEABIN="/usr/local/bin/idea"
+if [ ! -f "$IDEABIN" ]; then
+  echo "Error: Intellij IDEA launcher not found at $IDEABIN"
+  echo "  Open Intellij IDEA: Tools -> Create Command-line Launcher -> set the path as above -> Ok"
+else
+  exec "$IDEABIN" "$PWD/$@"&
+fi
