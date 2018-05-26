@@ -34,6 +34,22 @@ else
   return
 fi
 
+# TODO: Fix this.. doesn't work properly when the starting path doesn't exist.. (even if we use a path traversal)
+if [[ ! -z "$2" ]]; then
+  OURNEWNEWPATH=`greadlink -e "$OURNEWPATH/$2"`
+
+  if [[ ! -z "$OURNEWNEWPATH" ]]; then
+    OURNEWPATH="$OURNEWNEWPATH"
+  else
+    OURNEWPATH="$OURNEWPATH/$2"
+  fi
+
+  unset OURNEWNEWPATH
+
+  echo "Note: Path traversals may not work properly at the moment if the new 'base' dir doesn't exist.."
+  echo "ExtraPath: $2"
+fi
+
 if [[ "$PWD" == "$OURNEWPATH" ]]; then
   echo "You're already there!"
 elif [[ ! -d "$OURNEWPATH" ]]; then
