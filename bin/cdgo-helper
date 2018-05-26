@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Toggle between the the 'GOPATH' and 'normal' equivalent of the current folder, if it exists
+
+GOPREFIX="$HOME/dev/go/src"
+NOGOPREFIX="$HOME/dev"
+
+if [[ "$1" == "GO" ]] && [[ "$PWD" == "$GOPREFIX"* ]]; then
+  echo "You already appear to be in the GO path.."
+  echo "  $GOPREFIX"
+  return
+elif [[ "$1" == "NOGO" ]] && [[ "$PWD" == "$NOGOPREFIX"* ]] && [[ "$PWD" != "$GOPREFIX"* ]]; then
+  echo "You already appear to be in the NOGO path.."
+  echo "  $NOGOPREFIX"
+  return
+elif [[ "$PWD" != "$GOPREFIX"* ]] && [[ "$PWD" != "$NOGOPREFIX"* ]]; then
+  echo "Are you even in the right path to be using this?"
+  echo "  PWD        : $PWD"
+  echo "  GOPREFIX   : $GOPREFIX"
+  echo "  NOGOPREFIX : $NOGOPREFIX"
+  return
+fi
+
+if [[ "$1" == "GO" ]]; then
+  # We're in NOGO, want to go to GO
+  NOPREFIX="${PWD#$NOGOPREFIX/}"
+  OURNEWPATH="$GOPREFIX/$NOPREFIX"
+elif [[ "$1" == "NOGO" ]]; then
+  # We're in GO, want to go to NOGO
+  NOPREFIX="${PWD#$GOPREFIX/}"
+  OURNEWPATH="$NOGOPREFIX/$NOPREFIX"
+else
+  echo "Usage: $0 [GO/NOGO]"
+  return
+fi
+
+if [[ "$PWD" == "$OURNEWPATH" ]]; then
+  echo "You're already there!"
+elif [[ ! -d "$OURNEWPATH" ]]; then
+  echo "Does that path even exist?"
+  echo "  $OURNEWPATH"
+else
+  echo "Leaving from : $PWD"
+  echo "Arriving at  : $OURNEWPATH"
+  cd "$OURNEWPATH"
+fi
+
+# Cleanup
+unset GOPREFIX NOGOPREFIX NOPREFIX OURNEWPATH
