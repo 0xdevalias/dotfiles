@@ -1,0 +1,3 @@
+#!/bin/bash
+# Simple JSON pretty print for contents on your cliboard
+pbpaste | json_pp | pbcopy
