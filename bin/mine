@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Manual Steps: RubyMine -> Tools -> Create Command-line Launcher -> set the path
+MINEBIN="/usr/local/bin/mine"
+if [ ! -f "$MINEBIN" ]; then
+  echo "Error: RubyMine launcher not found at $MINEBIN"
+  echo "  Open RubyMine: Tools -> Create Command-line Launcher -> set the path as above -> Ok"
+else
+  exec "$MINEBIN" "$PWD/$@"&
+fi
