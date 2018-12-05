@@ -4,6 +4,9 @@ then
   brew install mas > /tmp/mas-install.log
 fi
 
+# Headers required for dev things (eg. compiling python)
+sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
+
 # TODO:
 #  * Launchpad database stored at: ~/Library/Application Support/Dock/*.db
 #  * SQLite 3 format
