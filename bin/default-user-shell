@@ -1,0 +1,16 @@
+#!/bin/bash
+
+main() {
+  local chkuser
+  if [[ -z "$1" ]]; then
+    chkuser=$USER
+  else
+    chkuser=$1
+  fi
+
+  local usershell=`finger $chkuser | grep 'Shell:*' | cut -f3 -d ":"`
+
+  echo $usershell
+}
+
+main "$@"
