@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export NODE_VER="6.9.2"
+export NODE_VER="10.14.1"
 
 npmGlobalCheckOrInstall() {
   local module="$1"

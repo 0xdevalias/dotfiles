@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export RUBY_VER="2.3.7"
+export RUBY_VER="2.5.3"
 
 if test ! $(which rbenv)
 then
