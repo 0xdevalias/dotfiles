@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/zsh
 #
 # dot
 #
@@ -9,21 +9,44 @@ echo "[dot] Handling installation, updates and awesomeness to ensure the latest 
 export ZSH=$HOME/.dotfiles
 
 # Set OS X defaults
-echo "[dot] Setting osx defaults.."
+echo "› $ZSH/osx/set-defaults.sh"
 $ZSH/osx/set-defaults.sh
 
-# Update antigen
-echo "› antigen update"
-antigen update
-
-# Install homebrew
+# Install homebrew / mas
 echo "› $ZSH/homebrew/install.sh"
 $ZSH/homebrew/install.sh 2>&1
 
-# Upgrade homebrew
-echo "› brew update"
-brew update
+Install/update antigen
+echo "› $ZSH/antigen/install.sh"
+$ZSH/antigen/install.sh 2>&1
 
-# Install software
-echo "› $ZSH/script/install"
-$ZSH/script/install
+# Make sure we are using zsh
+echo "› $ZSH/zsh/install.sh"
+$ZSH/zsh/install.sh 2>&1
+
+# Run install scripts
+echo -n "› Do you want to run all of the install scripts? [N/y/interactive] "
+read YN
+case "$YN" in
+  y*|Y* )
+    # Install software
+    # TODO: Ensure this is idempotent.. potentially also want to figure installing on certain 'packs' of programs or similar?
+    echo "› $ZSH/script/install"
+    echo "TODO: Run $ZSH/script/install to install everything"
+    # $ZSH/script/install
+  ;;
+  i*|I* )
+    echo "TODO: Implement an interactive mode where we can choose Y/N for each install script.."
+  ;;
+  * )
+    echo "Ok.. You might want to go and run some things manually:"
+    echo "  $ZSH/osx/install.zsh"
+    echo "  $ZSH/xcode/install.zsh (includes things like CLI devtools, FileMerge, etc)"
+    echo "  $ZSH/ruby/install.zsh"
+    echo "  $ZSH/python/install.zsh"
+    echo "  $ZSH/node/install.zsh"
+
+    echo "› softwareupdate -l"
+    softwareupdate -l
+  ;;
+esac

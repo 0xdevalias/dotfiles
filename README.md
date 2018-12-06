@@ -73,6 +73,32 @@ defaults, and so on. Tweak this script, and occasionally run `dot` from
 time to time to keep your environment fresh and up-to-date. You can find
 this script in `bin/`.
 
+Then you may want to run `~/.dotfiles/script/install`, or manually run appropriate install scripts, I tend to like to start with:
+
+```
+# Check latest python/ruby/node versions + update appropriate vars, then run these
+~/.dotfiles/ruby/install.sh
+~/.dotfiles/python/install.sh
+~/.dotfiles/node/install.sh
+```
+
+You might want to setup GPG commit signing for git.. this isn't automated yet..
+
+* https://github.com/pstadler/keybase-gpg-github
+* https://confluence.atlassian.com/sourcetreekb/setup-gpg-to-sign-commits-within-sourcetree-765397791.html
+* https://community.atlassian.com/t5/Sourcetree-questions/Why-is-quot-Enable-GPG-key-signing-for-commit-quot-is-greyed-out/qaq-p/249852
+
+## Improvements
+
+* Could see what is done in https://github.com/thoughtbot/laptop
+* Ability to install 'feature sets' (eg. dev machine)
+* Checkout asdf instead of rbenv/etc?
+	* https://github.com/asdf-vm/asdf
+	* https://github.com/asdf-vm/asdf-ruby
+	* https://github.com/asdf-vm/asdf-nodejs
+	* https://github.com/danhper/asdf-python
+* https://github.com/tj/n ?
+
 ## Bugs
 
 I want this to work for everyone; that means when you clone it down it should

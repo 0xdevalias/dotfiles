@@ -24,6 +24,13 @@ fi
 
 source $antigen_path
 
+if [[ "$1" == "update" ]]; then
+  echo "Updating antigen.."
+  antigen update
+  echo "Antigen updated."
+  exit 0
+fi
+
 # Load oh-my-zsh (http://ohmyz.sh/)
 antigen use oh-my-zsh
 

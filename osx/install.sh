@@ -1,11 +1,9 @@
-if test ! $(which mas)
-then
-  echo "  Installing mas (Mac App Store command-line interface) for you."
-  brew install mas > /tmp/mas-install.log
-fi
+#!/bin/bash
 
-# Headers required for dev things (eg. compiling python)
-sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
+if [[ "$(uname)" != "Darwin" ]]; then
+  echo "Not on macOS, skipping: $0"
+  exit 0
+fi
 
 # TODO:
 #  * Launchpad database stored at: ~/Library/Application Support/Dock/*.db
@@ -35,8 +33,8 @@ sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_heade
 # command line interface to it that we can use to just install everything, so
 # yeah, let's do that. (note: doesn't install 3rd party, use mas for that)
 
-echo "› sudo softwareupdate -l"
-sudo softwareupdate -l
+# echo "› softwareupdate -l"
+# softwareupdate -l
 
 # echo "› sudo softwareupdate -i -a"
 # sudo softwareupdate -i -a
