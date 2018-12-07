@@ -1,2 +1,5 @@
-pip (9.0.1)
-setuptools (20.10.1)
+Package    Version
+---------- -------
+pip        18.0   
+setuptools 40.0.0 
+wheel      0.31.1 
