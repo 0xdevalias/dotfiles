@@ -36,6 +36,9 @@ echo "  Dumping Python.."
 source "$HOME/.dotfiles/python/python-versions.zsh"
 eval "$(pyenv init -)"
 
+pyenv shell system
+pip list > pip.$HOST.system.list
+
 pyenv shell $PYTHON_2X_VER
 pip list > pip.$HOST.list
 
