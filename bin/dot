@@ -16,7 +16,7 @@ $ZSH/osx/set-defaults.sh
 echo "› $ZSH/homebrew/install.sh"
 $ZSH/homebrew/install.sh 2>&1
 
-Install/update antigen
+# Install/update antigen
 echo "› $ZSH/antigen/install.sh"
 $ZSH/antigen/install.sh 2>&1
 
@@ -45,8 +45,18 @@ case "$YN" in
     echo "  $ZSH/ruby/install.zsh"
     echo "  $ZSH/python/install.zsh"
     echo "  $ZSH/node/install.zsh"
+  ;;
+esac
 
+# Check for macOS updates
+echo -n "› Do you want to check for macOS software updates? [N/y] "
+read YN
+case "$YN" in
+  y*|Y* )
     echo "› softwareupdate -l"
     softwareupdate -l
+  ;;
+  * )
+    echo "› [SKIPPING] softwareupdate"
   ;;
 esac
