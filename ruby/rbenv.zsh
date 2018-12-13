@@ -4,3 +4,6 @@ then
   echo "Loading rbenv.."
   eval "$(rbenv init -)"
 fi
+
+# RubyMine needs this env var explicitly set or it can't find things..
+export RBENV_ROOT=$(rbenv root)
