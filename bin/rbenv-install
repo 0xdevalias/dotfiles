@@ -1,30 +1,12 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
 
 # TODO: explore using getopts
 #   https://sookocheff.com/post/bash/parsing-bash-script-arguments-with-shopts/
 #   https://stackoverflow.com/questions/16483119/an-example-of-how-to-use-getopts-in-bash
 #   https://www.computerhope.com/unix/bash/getopts.htm
-
-# TODO: move this into a generic helper commands file and import here
-# Ref: https://stackoverflow.com/questions/1167746/how-to-assign-a-heredoc-value-to-a-variable-in-bash/8088167#8088167
-define(){ IFS='\n' read -r -d '' ${1} || true; }
-
-# TODO: move this into a generic helper commands file and import here
-check_installed() {
-  local command="$1"
-  local command_path=$(command -v "${command}")
-  local command_realpath=$(realpath "${command_path}" 2> /dev/null)
-
-  if [[ ! ( -f "${command_path}" && -x "${command_realpath}" ) ]]; then
-    echo "ERROR: Couldn't find ${command}. Try:"
-    echo "  brew install ${command}"
-    echo
-    exec brew info "${command}"
-    exit
-  fi
-}
 
 print_help() {
   define helptext <<HELPTEXT
