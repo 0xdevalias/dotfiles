@@ -1,63 +1,135 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-if test ! $(which ruby-install)
-then
-  echo "Couldn't find ruby-install. Try:"
-  echo "  brew install ruby-install"
-  echo
-  brew info ruby-install
-  exit
-fi
+set -eo pipefail
 
-if [[ "$1" == "ruby" ]] && [[ ! -z "$2" ]]; then
-  RUBY_VER="$2"
+# TODO: explore using getopts
+#   https://sookocheff.com/post/bash/parsing-bash-script-arguments-with-shopts/
+#   https://stackoverflow.com/questions/16483119/an-example-of-how-to-use-getopts-in-bash
+#   https://www.computerhope.com/unix/bash/getopts.htm
 
-  echo "Note: This is just a small wrapper around 'ruby-install' to prefill the 'install-dir' params for rbenv support"
-  echo
-  echo "It looks like you're trying to install version: $RUBY_VER"
-  echo
-  RBINSTDIR="$HOME/.rbenv/versions/$RUBY_VER"
-  RBINSTCMD="ruby-install --install-dir \"$RBINSTDIR\" ruby $RUBY_VER"
+# TODO: move this into a generic helper commands file and import here
+# Ref: https://stackoverflow.com/questions/1167746/how-to-assign-a-heredoc-value-to-a-variable-in-bash/8088167#8088167
+define(){ IFS='\n' read -r -d '' ${1} || true; }
 
-  if [[ -d "$RBINSTDIR" ]]; then
-    echo "It appears that the install directory already exists:"
-    echo "  $RBINSTDIR"
+# TODO: move this into a generic helper commands file and import here
+check_installed() {
+  local command="$1"
+  local command_path=$(command -v "${command}")
+  local command_realpath=$(realpath "${command_path}" 2> /dev/null)
+
+  if [[ ! ( -f "${command_path}" && -x "${command_realpath}" ) ]]; then
+    echo "ERROR: Couldn't find ${command}. Try:"
+    echo "  brew install ${command}"
     echo
-    read -p "Are you sure you want to continue? [y/n]: " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-      echo
-      echo "Wasn't ok, so we're quitting. Maybe try using 'ruby-install' directly?"
-      exit
-    fi
-  fi
-
-  echo
-  echo "We will install with the following command:"
-  echo "  $RBINSTCMD"
-  echo
-  read -p "Is that ok? [y/n]: " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    eval "$RBINSTCMD"
-  else
-    echo
-    echo "Wasn't ok, so we're quitting. Maybe try using 'ruby-install' directly?"
+    exec brew info "${command}"
     exit
   fi
-elif [[ "$1" == "versions" ]] || [[ "$1" == "list" ]]; then
-  # This will download the latest versions, then display them
-  exec ruby-install --latest
-elif [[ "$1" == "update" ]] || [[ "$1" == "--update" ]] || [[ "$1" == "--latest" ]] || [[ "$1" == "-L" ]]; then
-  exec ruby-install --latest
-else
-  echo "This wrapper only handles a couple of small cases.. which you didn't hit."
-  echo
-  echo "Did you want to just use 'ruby-install' directly?"
-  echo
-  echo "Usage:"
-  echo "  $0 ruby VERSION : Install the given VERSION using 'ruby-install'"
-  echo "  $0 versions     : List available versions to install"
-  echo "  $0 update       : Update list of ruby versions"
-  exit
-fi
+}
+
+print_help() {
+  define helptext <<HELPTEXT
+Helper script for installing ruby versions into rbenv.
+
+Usage:
+  $thisscript FLAVOR VERSION                Install the given VERSION of ruby FLAVOR using 'ruby-install'
+  $thisscript versions                      Update then list available versions to install
+    (Aliases: ${list_update_commands})
+
+  $thisscript -h                            This help
+
+Example:
+  $thisscript versions
+  $thisscript install ruby --no-reinstall
+HELPTEXT
+
+  echo "${helptext}"
+}
+
+unknown_command() {
+  define unknown_command_text <<UNKNOWNCOMMAND
+NOTE: This wrapper only handles a couple of small usecases.. which you didn't hit.
+
+Did you want to just use 'ruby-install' directly?
+  ruby-install --help
+
+See Also:
+  $thisscript -h
+UNKNOWNCOMMAND
+
+  echo "${unknown_command_text}"
+}
+
+main() {
+  local thisscript=$(basename "$0")
+
+  local help_commands="help:--help:-h"
+  local list_update_commands="versions:list:update:--update:--latest:-L"
+  local ruby_flavors="ruby:jruby:rbx:truffleruby:mruby"
+
+  check_installed 'ruby-install'
+
+  if [[ ":$help_commands:" = *:$1:* ]]; then
+    print_help
+    exit 0
+  elif [[ ":$list_update_commands:" = *:$1:* ]]; then
+    # This will download the latest versions, then display them
+    exec ruby-install --latest
+  elif [[ ":$ruby_flavors:" = *:$1:* ]] && [[ -n "$2" ]]; then
+    local ruby_flavor="$1"
+    local ruby_version="$2"
+    shift 2
+
+    echo "Note: This is just a small wrapper around 'ruby-install' to prefill the 'install-dir' params for rbenv support"
+    echo
+    echo "It looks like you're trying to install"
+    echo "  flavor  : ${ruby_flavor}"
+    echo "  version : ${ruby_version}"
+    echo
+
+    local rbenv_install_dir
+    if [[ "${ruby_flavor}" == "ruby" ]] ; then
+      rbenv_install_dir="$HOME/.rbenv/versions/${ruby_version}"
+    else
+      rbenv_install_dir="$HOME/.rbenv/versions/${ruby_flavor}-${ruby_version}"
+    fi
+
+    local rbenv_install_extraflags
+    if [[ "${ruby_flavor}" == "truffleruby" ]] ; then
+      # Workaround for https://github.com/postmodern/ruby-install/issues/360
+      rbenv_install_extraflags="--no-install-deps"
+    fi
+
+    # TODO: explore usage of '--no-reinstall' option
+    # TODO: explore usage of '--package-manager brew' option
+    local rbenv_install_cmd="ruby-install ${rbenv_install_extraflags} --install-dir '${rbenv_install_dir}' '${ruby_flavor}' '${ruby_version}'"
+
+    if [[ -d "${rbenv_install_dir}" ]]; then
+      echo "It appears that the install directory already exists:"
+      echo "  ${rbenv_install_dir}"
+      echo
+      read -p "Are you sure you want to continue? [y/n]: " -n 1 -r
+      echo
+      if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "  Wasn't ok, so we're quitting. Maybe try using 'ruby-install' directly?"
+        exit 1
+      fi
+    fi
+
+    echo "We will install with the following command:"
+    echo "  ${rbenv_install_cmd}"
+    echo
+
+    read -p "Is that ok? [y/n]: " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      eval "${rbenv_install_cmd}"
+    else
+      echo "  Wasn't ok, so we're quitting. Maybe try using 'ruby-install' directly?"
+      exit 1
+    fi
+  else
+    unknown_command
+  fi
+}
+
+main "$@"
