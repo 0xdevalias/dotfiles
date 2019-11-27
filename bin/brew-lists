@@ -18,11 +18,19 @@ brew tap > brew-tap.$HOST.list
 echo "  Dumping Brew cask list.."
 brew cask list > brew-cask.$HOST.list
 
+echo "  Dumping Brew bundle.."
+brew bundle dump --force --file="Brewfile.$HOST.list"
+
 echo "  Dumping Mas list.."
 mas list > mas.$HOST.list
 
-echo "  Dumping Brew bundle.."
-brew bundle dump --force --file="Brewfile.$HOST.list"
+echo "  Dumping Whalebrew list.."
+if is_installed "whalebrew" 1> /dev/null; then
+  whalebrew list > whalebrew.$HOST.list
+else
+  echo "    [WARNING] 'whalebrew' not found, assuming it isn't installed. Skipping."
+fi
+
 
 # Atom
 echo "  Dumping Atom.."
@@ -33,6 +41,7 @@ else
 fi
 
 # Node
+# TODO: do this for each installed version in nodenv, not just the default?
 echo "  Dumping NPM.."
 npm list -g --depth=0 > npm.$HOST.list
 
