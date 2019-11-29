@@ -53,9 +53,11 @@
   github = !hub
   co = checkout
   count = !git shortlog -sn
-  all = add -A                    # Stage all unstaged
-  amend = commit --amend -C HEAD  # Use the last commit message and amend your stuffs
-  undo = reset --soft HEAD^       # Undo your last commit, but don't throw away your changes
+  all = add -A                                  # Stage all unstaged
+  amend = commit --amend -C HEAD                # Use the last commit message and amend your stuffs
+  undo = reset --soft HEAD^                     # Undo your last commit, but don't throw away your changes
+  stash-files = stash push --include-untracked  # Stash the specified pathspec of files (can label with -m)
+  stash-patch = stash push --patch              # Stash parts of the specified pathspec of files (can label with -m)
 
 # Include our .gitconfig.local configuration as well
 # Ref: https://git-scm.com/docs/git-config#_includes (include since v1.7.10, includeIf since v2.13)
