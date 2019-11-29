@@ -1,0 +1,4 @@
+#!/bin/sh
+#
+# List your git config aliases
+git config --get-regexp ^alias\\. | awk '{split($1, alias, "."); $1=""; printf("%10-s %s %s\n", alias[2], "=", $0);}'
