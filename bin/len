@@ -1,11 +1,15 @@
-#!/usr/bin/env python
-# coding=utf-8
+#!/usr/bin/env zsh
 
-import sys
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
 
-if len(sys.argv) <= 1:
-  print(0)
-    # print "Usage: {} string".format(sys.argv[0])
-    # exit(1)
-else:
-  print(len(sys.argv[1]))
+if matches_arg_help "$*"; then
+  echo "Usage: `basename $0` string"
+  exit 0
+fi
+
+if [[ $# -gt 0 && "$1" != "-" ]]; then
+  awk -v "str=$*" 'BEGIN { print length(str); }'
+else
+  awk -v RS='^$' '{ print length() } END { if (NR == 0) { print 0 } }'
+fi
