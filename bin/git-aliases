@@ -1,4 +1,91 @@
-#!/bin/sh
+#!/usr/bin/env zsh
 #
-# List your git config aliases
-git config --get-regexp ^alias\\. | awk '{split($1, alias, "."); $1=""; printf("%10-s %s %s\n", alias[2], "=", $0);}'
+# @description List git aliases + git subcommands in $ZSH/bin
+
+source "${ZSH}/lib/_helpers"
+
+show_aliases() {
+  define awk_cmd <<"AWKCMD"
+    {
+      split($1, alias, ".");
+
+      $1="";
+
+      printf("  %25-s =%s\n", alias[2], $0);
+    }
+AWKCMD
+
+  git config --get-regexp ^alias\\. | awk ${awk_cmd}
+}
+
+# When you think it will be fun to do it in awk.. then
+# WAY TOO MANY hours later regret your life choices..
+show_bin_with_desc() {
+  define awk_cmd <<"AWKCMD"
+    function push(A,B) { A[length(A)+1] = B }
+
+    BEGIN {
+      # ensure variables are arrays
+      delete alias_arr
+      delete alias_descriptions
+    }
+
+    BEGINFILE {
+      desc_idx = 0
+      alias=gensub(/^[.\/]*git-/, "", 1, FILENAME)
+
+      push(alias_arr, alias)
+    }
+
+    # For line in the file that matches the regex
+    match($0, /\s*#\s*@description\s*(.*)$/, matched) {
+      if (1 in matched) {
+        desc_idx++
+        alias_descriptions[alias, "description", desc_idx] = matched[1]
+      }
+    }
+
+    ENDFILE {
+      if (desc_idx > 0) {
+        alias_descriptions[alias, "desc_count"] = desc_idx
+      }
+    }
+
+    END {
+      # Sort by alias name
+      n = asort(alias_arr, alias_arr_sorted)
+
+      # For each alias
+      for (idx in alias_arr_sorted) {
+        alias = alias_arr_sorted[idx]
+        desc_count = alias_descriptions[alias, "desc_count"]
+
+        desc = "?"
+        if (desc_count >= 1) {
+          desc = alias_descriptions[alias, "description", 1]
+        }
+
+        # Display the output
+        printf("  %25-s = %s\n", alias, desc)
+        for (i = 2; i <= desc_count; i++) {
+          desc = alias_descriptions[alias, "description", i]
+          printf("  %28s%s\n", "", desc)
+        }
+      }
+    }
+AWKCMD
+
+  echo "$(cd $ZSH/bin && awk ${awk_cmd} ./git-*)"
+}
+
+main() {
+  echo "Sub-commands defined in $ZSH/bin with descriptions:"
+  show_bin_with_desc
+  echo
+
+  echo "Aliases defined in gitconfig:"
+  show_aliases
+  echo
+}
+
+main "$@"
