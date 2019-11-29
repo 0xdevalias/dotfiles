@@ -58,6 +58,11 @@
   undo = reset --soft HEAD^                     # Undo your last commit, but don't throw away your changes
   stash-files = stash push --include-untracked  # Stash the specified pathspec of files (can label with -m)
   stash-patch = stash push --patch              # Stash parts of the specified pathspec of files (can label with -m)
+  # Fetch latest from origin/master, then rebase current branch onto it
+  rebase-master = !git fetch origin master && git rebase origin/master
+  checkout-as = checkout -b                    # Checkout the specified branch with a different name
+  checkout-last = checkout -                   # Checkout the last branch we were on
+  closest-tag = !$ZSH/bin/git-find-closest-tag
 
 # Include our .gitconfig.local configuration as well
 # Ref: https://git-scm.com/docs/git-config#_includes (include since v1.7.10, includeIf since v2.13)
