@@ -20,6 +20,31 @@
 #   https://unix.stackexchange.com/questions/76481/cant-indent-heredoc-to-match-nestings-indent
 define() { IFS='\n' read -r -d '' ${1} || true; }
 
+matches_regex() {
+  local regex=$1
+  shift
+  local to_check=$*
+  local awk_cmd='BEGIN { RC=1; if (to_check ~ regex) { RC=0 }; exit RC }'
+
+  awk -v "regex=$regex" -v "to_check=$*" ${awk_cmd}
+}
+
+matches_arg() {
+  local arg_regex=$1
+  shift
+  local before_regex='(^|[ ])'
+  local after_regex='([ ]|$)'
+
+  matches_regex "${before_regex}${arg_regex}${after_regex}" "$*"
+}
+
+# Example
+#   if matches_arg_help "$*"; then
+#     echo "Usage: `basename $0` string"
+#     exit 0
+#   fi
+matches_arg_help() { matches_arg '(-h|--help)' "$*" }
+
 # TODO: make this also able to handle arrays
 #  local -a suggested_fix=(a bc d)
 #  for line in "${suggested_fix[@]}"; do echo "${line}"; done
