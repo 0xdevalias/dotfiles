@@ -1,11 +1,14 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 # Enable antigen (http://antigen.sharats.me)
 # By Glenn 'devalias' Grant (devalias.net)
 
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
+
 echo "Loading antigen.."
 
-if [[ ! -x $(which brew) ]]; then
-  echo "  ERROR: Antigen loader requires homebrew to be installed. Exiting."
+if ! is_installed "brew" 1> /dev/null; then
+  echo "  [ERROR] Antigen loader requires homebrew to be installed. Exiting."
   return 1
 fi
 

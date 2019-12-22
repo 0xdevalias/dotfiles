@@ -1,10 +1,24 @@
 #!/bin/sh
 
-if test ! $(which jenv)
+# See available versions: asdf list-all java
+export JAVA_VER="openjdk-11.0.1"
+
+if test ! $(which asdf)
 then
-  echo "  Installing jenv for you."
-  brew install jenv > /tmp/jenv-install.log
+  echo "  asdf is required.."
+  $ZSH/asdf/install.sh
 fi
 
+# https://github.com/skotchpine/asdf-java
+asdf plugin-add java
+asdf plugin-update java
+
 echo "Installing java.."
-brew cask install java > /tmp/java-install.log
+asdf install java $JAVA_VER
+asdf global java $JAVA_VER
+
+echo "Java versions installed:"
+asdf list java
+
+echo "Current Java version in use:"
+asdf current java

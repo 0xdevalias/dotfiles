@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# Find the closest parent tag to specified commit hash/branch
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 gitCommitHashOrBranch"
+  exit
+fi
+
+git describe --tags $1

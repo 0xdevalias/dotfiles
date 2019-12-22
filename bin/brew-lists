@@ -1,5 +1,7 @@
 #!/usr/bin/env zsh
 
+source $ZSH/lib/_helpers
+
 HOST="`hostname`"
 DIR="$HOME/.dotfiles/homebrew/lists/$HOST"
 mkdir -p "$DIR"
@@ -16,17 +18,30 @@ brew tap > brew-tap.$HOST.list
 echo "  Dumping Brew cask list.."
 brew cask list > brew-cask.$HOST.list
 
-echo "  Dumping Mas list.."
-mas list > mas.$HOST.list
-
 echo "  Dumping Brew bundle.."
 brew bundle dump --force --file="Brewfile.$HOST.list"
 
+echo "  Dumping Mas list.."
+mas list > mas.$HOST.list
+
+echo "  Dumping Whalebrew list.."
+if is_installed "whalebrew" 1> /dev/null; then
+  whalebrew list > whalebrew.$HOST.list
+else
+  echo "    [WARNING] 'whalebrew' not found, assuming it isn't installed. Skipping."
+fi
+
+
 # Atom
 echo "  Dumping Atom.."
-apm list --installed --bare > apm.$HOST.list
+if is_installed "apm" 1> /dev/null; then
+  apm list --installed --bare > apm.$HOST.list
+else
+  echo "    [WARNING] 'apm' not found, assuming Atom isn't installed. Skipping."
+fi
 
 # Node
+# TODO: do this for each installed version in nodenv, not just the default?
 echo "  Dumping NPM.."
 npm list -g --depth=0 > npm.$HOST.list
 
@@ -39,16 +54,23 @@ echo "  Dumping Python.."
 source "$HOME/.dotfiles/python/python-versions.zsh"
 eval "$(pyenv init -)"
 
+echo "    Python (System version)"
 pyenv shell system
 pip list > pip.$HOST.system.list
 
+echo "    Python 2.x"
 pyenv shell $PYTHON_2X_VER
 pip list > pip.$HOST.list
 
+echo "    Python 3.x"
 pyenv shell $PYTHON_3X_VER
 pip3 list > pip3.$HOST.list
 
 pyenv shell --unset
+
+# Go
+echo "  Dumping Golang bin/ folder"
+echo "$(cd ${GOPATH%%:*}/bin && ls)" > go.$HOST.list
 
 # echo Staging in git..
 # git add brew.list

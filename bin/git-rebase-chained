@@ -1,0 +1,167 @@
+#!/usr/bin/env zsh
+#
+# @description WIP: Ref: http://voidcanvas.com/how-to-rebase-a-branch-when-the-parent-is-rebased-with-another/
+
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
+
+show_help() {
+  echo "Usage: git-rebase-chained [chained_from_branch] [common_commit_message]"
+  exit 1
+}
+
+git_local_branches() {
+  git branch --list --no-color
+}
+
+git_current_branch() {
+  git rev-parse --abbrev-ref HEAD
+}
+
+# Finds best common ancestor(s) between two commits/branches
+# https://git-scm.com/docs/git-merge-base
+git_merge_base() {
+  local branch1=$1
+  local branch2=$2
+
+  git merge-base $branch1 $branch2
+}
+
+git_fork_point() {
+  local branch1=$1
+  local branch2=$2
+
+  # https://git-scm.com/docs/git-merge-base#Documentation/git-merge-base.txt---fork-point
+  git merge-base --fork-point $branch1 $branch2
+}
+
+# https://git-scm.com/docs/git-show
+git_show() {
+  local ref=$1
+
+  git show --no-patch --pretty $ref
+}
+
+git_branch_hash() {
+  local branch=$1
+
+  git rev-parse $branch
+}
+
+# git_reflog() {
+#   local 1
+#   git reflog $chained_from_branch --grep $common_commit_message
+# }
+
+main() {
+  # Check arguments
+  if matches_arg_help "$*"; then
+    show_help
+  elif [[ $# -lt 1 ]]; then
+    show_help
+  fi
+
+  # Collect parameters
+  local chained_from_branch=$1
+
+  # Check if params conflict with each other
+  local current_branch=$(git_current_branch)
+  if [[ "${chained_from_branch}" == "${current_branch}" ]]; then
+    echo "ERROR: chained_from_branch must be different to current_branch: ${current_branch}"
+    echo
+    show_help
+  fi
+
+  # Check if chained_from_branch exists in local_branches
+  local local_branches=$(git_local_branches)
+  local chained_from_branch_regex="[ \n]+${chained_from_branch}[ \n]+"
+  if ! matches_regex "${chained_from_branch_regex}" "${local_branches}"; then
+    echo "ERROR: unknown chained_from_branch (not in local branches): ${chained_from_branch}"
+    echo
+    echo "show local branches:"
+    echo "  git branch --list"
+    echo
+    show_help
+  fi
+
+  echo "Looking for common ancestor between branches:"
+  echo "  chained_from_branch : ${chained_from_branch}"
+  echo "  current_branch      : ${current_branch}"
+  echo
+
+  local merge_base_hash=$(git_merge_base $chained_from_branch $current_branch)
+  local fork_point_hash=$(git_fork_point $chained_from_branch $current_branch)
+
+  # local fork_point_hash=$(git_fork_point $chained_from_branch $current_branch)
+  if [[ -z "${merge_base_hash}" && -z "${fork_point_hash}" ]]; then
+    echo "ERROR: unable to find common ancestor between branches"
+    echo "  chained_from_branch : ${chained_from_branch}"
+    echo "  current_branch      : ${current_branch}"
+    echo "  merge_base_hash     : ${merge_base_hash}"
+    echo "  fork_point_hash     : ${fork_point_hash}"
+    exit 1
+  fi
+
+  local master_branch_hash=$(git_branch_hash master)
+
+  if [[ "${merge_base_hash}" == "${master_branch_hash}" ]]; then
+    echo "NOTE: found merge_base_hash is the HEAD of master:"
+    echo "  merge_base_hash    : ${merge_base_hash}"
+    echo "  master_branch_hash : ${master_branch_hash}"
+    echo
+  fi
+
+  if [[ "${fork_point_hash}" == "${master_branch_hash}" ]]; then
+    echo "NOTE: found fork_point_hash is the HEAD of master:"
+    echo "  fork_point_hash    : ${fork_point_hash}"
+    echo "  master_branch_hash : ${master_branch_hash}"
+    echo
+  fi
+
+  echo "NOTE: common ancestor found:"
+  echo "  merge_base_hash    : ${merge_base_hash}"
+  echo "  fork_point_hash    : ${fork_point_hash}"
+  echo
+
+  echo "----------------------------------------"
+  echo "merge_base_hash:"
+  if [[ ! -z "${merge_base_hash}" ]]; then
+    echo "$(git_show ${merge_base_hash})"
+    echo
+    echo "This commit exists in these branches:"
+    echo "$(git branch -a --contains $merge_base_hash)"
+  else
+    echo "Not found"
+  fi
+  echo "----------------------------------------"
+  echo "fork_point_hash:"
+  if [[ ! -z "${fork_point_hash}" ]]; then
+    echo "$(git_show ${fork_point_hash})"
+    echo
+    echo "This commit exists in these branches:"
+    echo "$(git branch -a --contains $fork_point_hash)"
+  else
+    echo "Not found"
+  fi
+  echo "----------------------------------------"
+  echo
+
+  echo "TODO: if it only exists in our current branch, it probably doesn't count.."
+
+  # https://git-scm.com/docs/git-merge-base
+  # echo -e "merge_base_hash: ${merge_base_hash}\n\n $(git_show ${merge_base_hash})"
+  # echo -e "fork_point_hash: ${fork_point_hash}\n\n $(git_show ${fork_point_hash})"
+
+  # git show-branch --merge-base master $current_branch
+  # https://git-scm.com/docs/git-show-branch#Documentation/git-show-branch.txt---merge-base
+  # echo git show-branch --merge-base master $current_branch
+
+  echo "TODO: figure out how we tell which of merge_base_hash / fork_point_hash to use"
+  echo "TODO: figure out the correct way to use: git rebase --onto branch-1 <commit-hash-from-step-3> branch-2"
+  echo "  (will it be our common ancestor hash? or 1 commit earlier than it? etc)"
+  exit 1
+
+  # git reflog $chained_from_branch --grep $common_commit_message
+}
+
+main "$@"

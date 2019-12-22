@@ -1,0 +1,6 @@
+Pry.config.commands.command "pbcopy", "Copy the specified data to clipboard" do |arg|
+  # Ref: https://stackoverflow.com/questions/27261378/how-might-i-pass-text-data-from-the-ruby-console-into-my-clipboard-without-savin/46065116#46065116
+  IO.popen('pbcopy', 'w') { |io| io.print arg }
+  puts 'Copied to clipboard!'
+  true
+end

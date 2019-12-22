@@ -1,0 +1,106 @@
+#!/usr/bin/env echo These script helpers should be imported into scripts with: source
+
+# Refs:
+#   https://www.linuxjournal.com/content/return-values-bash-functions
+#   https://askubuntu.com/questions/926450/how-do-i-assign-a-variable-in-bash-whose-name-is-expanded-from-another-varia
+
+# Define a variable with the contents of a HEREDOC
+#
+# Example:
+#   define helptext <<HELPTEXT
+#     Helper script for installing ruby versions into rbenv.
+#
+#     Foo Bar Baz with some ${interpreted_foo}
+#   HELPTEXT
+#
+#   echo "${helptext}"
+#
+# Refs:
+#   https://stackoverflow.com/questions/1167746/how-to-assign-a-heredoc-value-to-a-variable-in-bash/8088167#8088167
+#   https://unix.stackexchange.com/questions/76481/cant-indent-heredoc-to-match-nestings-indent
+define() { IFS='\n' read -r -d '' ${1} || true; }
+
+matches_regex() {
+  local regex=$1
+  shift
+  local to_check=$*
+  local awk_cmd='BEGIN { RC=1; if (to_check ~ regex) { RC=0 }; exit RC }'
+
+  awk -v "regex=$regex" -v "to_check=$*" ${awk_cmd}
+}
+
+matches_arg() {
+  local arg_regex=$1
+  shift
+  local before_regex='(^|[ ])'
+  local after_regex='([ ]|$)'
+
+  matches_regex "${before_regex}${arg_regex}${after_regex}" "$*"
+}
+
+# Example
+#   if matches_arg_help "$*"; then
+#     echo "Usage: `basename $0` string"
+#     exit 0
+#   fi
+matches_arg_help() { matches_arg '(-h|--help)' "$*" }
+
+# TODO: make this also able to handle arrays
+#  local -a suggested_fix=(a bc d)
+#  for line in "${suggested_fix[@]}"; do echo "${line}"; done
+# Refs:
+#  https://linuxconfig.org/how-to-use-arrays-in-bash-script
+#  https://opensource.com/article/18/5/you-dont-know-bash-intro-bash-arrays
+prefix_lines() {
+  local IFS=$'\n'
+
+  local prefix
+  local lines
+
+  if [[ $# -gt 1 ]]; then
+    prefix="${1}"
+    shift
+    lines="${@}"
+  else
+    prefix=""
+    lines="${@}"
+  fi
+
+  while read -r line; do
+    echo "${prefix}${line}"
+  done < <(printf '%s\n' "${lines}")
+}
+
+# Check if program is installed
+check_installed() {
+  local command="$1"
+  local only_return="$2"
+
+  local command_path=$(command -v "${command}")
+  local command_realpath=$(realpath "${command_path}" 2> /dev/null)
+
+  if [[ ! ( -f "${command_path}" && -x "${command_realpath}" ) ]]; then
+    echo "[ERROR] Couldn't find '${command}'. Try:"
+
+    if [[ "${command}" == "brew" ]]; then
+      echo "  installing homebrew from https://brew.sh/"
+    else
+      local brew_info=$(brew info ${command} 2>&1 || true)
+
+      echo "  brew install ${command}"
+      echo ""
+      echo "[brew-info]"
+      prefix_lines "  " "${brew_info}"
+    fi
+
+    if [[ "${only_return}" == "return" ]]; then
+      return 1
+    else
+      exit 1
+    fi
+  fi
+}
+
+is_installed() {
+  check_installed "$1" "return"
+}

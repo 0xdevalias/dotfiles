@@ -1,0 +1,13 @@
+# Include local .gitconfig configuration that you don't want to be tracked in git here
+# Ref: https://git-scm.com/docs/git-config
+
+# See also: $ZSH/script/bootstrap
+
+# TODO: Setup commit signing automagically https://github.com/pstadler/keybase-gpg-github
+[user]
+  name = AUTHORNAME
+  email = AUTHOREMAIL
+  # signingkey =
+
+[credential]
+  helper = GIT_CREDENTIAL_HELPER

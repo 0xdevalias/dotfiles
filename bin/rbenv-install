@@ -1,57 +1,117 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-if test ! $(which ruby-install)
-then
-  echo "Couldn't find ruby-install. Try:"
-  echo "  brew install ruby-install"
-  echo
-  brew info ruby-install
-  exit
-fi
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
 
-if [ "$1" == "ruby" ] && [ ! -z "$2" ]; then
-  RUBY_VER="$2"
+# TODO: explore using getopts
+#   https://sookocheff.com/post/bash/parsing-bash-script-arguments-with-shopts/
+#   https://stackoverflow.com/questions/16483119/an-example-of-how-to-use-getopts-in-bash
+#   https://www.computerhope.com/unix/bash/getopts.htm
 
-  echo "Note: This is just a small wrapper around 'ruby-install' to prefill the 'install-dir' params for rbenv support"
-  echo
-  echo "It looks like you're trying to install version: $RUBY_VER"
-  echo
-  RBINSTDIR="$HOME/.rbenv/versions/$RUBY_VER"
-  RBINSTCMD="ruby-install --install-dir \"$RBINSTDIR\" ruby $RUBY_VER"
+print_help() {
+  define helptext <<HELPTEXT
+Helper script for installing ruby versions into rbenv.
 
-  if [ -d "$RBINSTDIR" ]; then
-    echo "It appears that the install directory already exists:"
-    echo "  $RBINSTDIR"
+Usage:
+  $thisscript FLAVOR VERSION                Install the given VERSION of ruby FLAVOR using 'ruby-install'
+  $thisscript versions                      Update then list available versions to install
+    (Aliases: ${list_update_commands})
+
+  $thisscript -h                            This help
+
+Example:
+  $thisscript versions
+  $thisscript install ruby --no-reinstall
+HELPTEXT
+
+  echo "${helptext}"
+}
+
+unknown_command() {
+  define unknown_command_text <<UNKNOWNCOMMAND
+NOTE: This wrapper only handles a couple of small usecases.. which you didn't hit.
+
+Did you want to just use 'ruby-install' directly?
+  ruby-install --help
+
+See Also:
+  $thisscript -h
+UNKNOWNCOMMAND
+
+  echo "${unknown_command_text}"
+}
+
+main() {
+  local thisscript=$(basename "$0")
+
+  local help_commands="help:--help:-h"
+  local list_update_commands="versions:list:update:--update:--latest:-L"
+  local ruby_flavors="ruby:jruby:rbx:truffleruby:mruby"
+
+  check_installed 'ruby-install'
+
+  if [[ ":$help_commands:" = *:$1:* ]]; then
+    print_help
+    exit 0
+  elif [[ ":$list_update_commands:" = *:$1:* ]]; then
+    # This will download the latest versions, then display them
+    exec ruby-install --latest
+  elif [[ ":$ruby_flavors:" = *:$1:* ]] && [[ -n "$2" ]]; then
+    local ruby_flavor="$1"
+    local ruby_version="$2"
+    shift 2
+
+    echo "Note: This is just a small wrapper around 'ruby-install' to prefill the 'install-dir' params for rbenv support"
     echo
-    read -p "Are you sure you want to continue? [y/n]: " -n 1 -r
+    echo "It looks like you're trying to install"
+    echo "  flavor  : ${ruby_flavor}"
+    echo "  version : ${ruby_version}"
     echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-      echo
-      echo "Wasn't ok, so we're quitting. Maybe try using 'ruby-install' directly?"
-      exit
+
+    local rbenv_install_dir
+    if [[ "${ruby_flavor}" == "ruby" ]] ; then
+      rbenv_install_dir="$HOME/.rbenv/versions/${ruby_version}"
+    else
+      rbenv_install_dir="$HOME/.rbenv/versions/${ruby_flavor}-${ruby_version}"
     fi
-  fi
 
-  echo
-  echo "We will install with the following command:"
-  echo "  $RBINSTCMD"
-  echo
-  read -p "Is that ok? [y/n]: " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    eval "$RBINSTCMD"
-  else
+    local rbenv_install_extraflags
+    if [[ "${ruby_flavor}" == "truffleruby" ]] ; then
+      # Workaround for https://github.com/postmodern/ruby-install/issues/360
+      rbenv_install_extraflags="--no-install-deps"
+    fi
+
+    # TODO: explore usage of '--no-reinstall' option
+    # TODO: explore usage of '--package-manager brew' option
+    local rbenv_install_cmd="ruby-install ${rbenv_install_extraflags} --install-dir '${rbenv_install_dir}' '${ruby_flavor}' '${ruby_version}'"
+
+    if [[ -d "${rbenv_install_dir}" ]]; then
+      echo "It appears that the install directory already exists:"
+      echo "  ${rbenv_install_dir}"
+      echo
+      read -p "Are you sure you want to continue? [y/n]: " -n 1 -r
+      echo
+      if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "  Wasn't ok, so we're quitting. Maybe try using 'ruby-install' directly?"
+        exit 1
+      fi
+    fi
+
+    echo "We will install with the following command:"
+    echo "  ${rbenv_install_cmd}"
     echo
-    echo "Wasn't ok, so we're quitting. Maybe try using 'ruby-install' directly?"
-    exit
+
+    read -p "Is that ok? [y/n]: " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      eval "${rbenv_install_cmd}"
+    else
+      echo "  Wasn't ok, so we're quitting. Maybe try using 'ruby-install' directly?"
+      exit 1
+    fi
+  else
+    unknown_command
   fi
-elif [ "$1" == "versions" ] || [ "$1" == "list" ]; then
-  exec ruby-install
-else
-  echo "This wrapper only handles one small case.. which you didn't hit. Did you want to just use 'ruby-install' directly?"
-  echo
-  echo "Usage:"
-  echo "  $0 ruby VERSION : Install the given VERSION using 'ruby-install'"
-  echo "  $0 versions     : List available versions to install"
-  exit
-fi
+}
+
+main "$@"

@@ -1,0 +1,78 @@
+# https://git-scm.com/docs/git-config
+[core]
+  excludesfile = ~/.gitignore
+  editor = subl -n -w
+
+[gpg]
+  # Note: install this with 'brew install gpg'
+  program = /usr/local/bin/gpg2
+
+[commit]
+  gpgsign = true
+
+# https://git-scm.com/docs/git-config#Documentation/git-config.txt-pushdefault
+[push]
+  default = simple
+
+# https://git-scm.com/docs/git-config#Documentation/git-config.txt-applywhitespace
+# https://git-scm.com/docs/git-apply#Documentation/git-apply.txt---whitespaceltactiongt
+[apply]
+  whitespace = warn
+
+[color]
+  status = auto
+  branch = auto
+  diff = auto
+  grep = auto
+  ui = true
+
+[difftool]
+  prompt = false
+
+[difftool "sourcetree"]
+  cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+  path =
+
+[mergetool]
+  keepBackup = false
+
+[mergetool "sourcetree"]
+  cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+  trustExitCode = true
+
+[filter "lfs"]
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
+
+# https://git-scm.com/docs/git-instaweb
+[instaweb]
+  local = true
+  httpd = python
+
+# https://hub.github.com/hub.1.html#configuration
+[hub]
+  protocol = ssh
+
+[alias]
+  alias = !echo Add with git config --global alias.FOO 'MY TOTALLY SWEET ALIAS'
+  hub = !hub
+  github = !hub
+  co = checkout
+  count = !git shortlog -sn
+  all = add -A                                  # Stage all unstaged
+  amend = commit --amend -C HEAD                # Use the last commit message and amend your stuffs
+  undo = reset --soft HEAD^                     # Undo your last commit, but don't throw away your changes
+  stash-files = stash push --include-untracked  # Stash the specified pathspec of files (can label with -m)
+  stash-patch = stash push --patch              # Stash parts of the specified pathspec of files (can label with -m)
+  # Fetch latest from origin/master, then rebase current branch onto it
+  rebase-master = !git fetch origin master && git rebase origin/master
+  checkout-as = checkout -b                    # Checkout the specified branch with a different name
+  checkout-last = checkout -                   # Checkout the last branch we were on
+  closest-tag = !$ZSH/bin/git-find-closest-tag
+
+# Include our .gitconfig.local configuration as well
+# Ref: https://git-scm.com/docs/git-config#_includes (include since v1.7.10, includeIf since v2.13)
+[include]
+  path = ~/.gitconfig.local
