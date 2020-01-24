@@ -11,6 +11,7 @@ echo "[node::install]"
 require_installed_brew "n"
 require_installed_brew "nodenv"
 require_installed_brew "node-build"
+require_installed_brew "yarn"
 
 # Ensure n and nodenv use the same install directory
 mkdir -p "$HOME/.n/n/versions"
