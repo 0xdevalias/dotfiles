@@ -40,11 +40,12 @@ case "$YN" in
   ;;
   * )
     echo "Ok.. You might want to go and run some things manually:"
-    echo "  $ZSH/osx/install.zsh"
-    echo "  $ZSH/xcode/install.zsh (includes things like CLI devtools, FileMerge, etc)"
-    echo "  $ZSH/ruby/install.zsh"
-    echo "  $ZSH/python/install.zsh"
-    echo "  $ZSH/node/install.zsh"
+    echo "  $ZSH/osx/install.sh"
+    echo "  $ZSH/xcode/install.sh (includes things like CLI devtools, FileMerge, etc)"
+    echo "  $ZSH/ruby/install.sh"
+    echo "  $ZSH/python/install.sh"
+    echo "  $ZSH/node/install.sh"
+    echo "  $ZSH/sublimetext/install.sh"
   ;;
 esac
 
