@@ -104,3 +104,15 @@ check_installed() {
 is_installed() {
   check_installed "$1" "return"
 }
+
+require_installed_brew() {
+  local command="$1"
+  local logfile="/tmp/brew-install-${command}.log"
+
+  if ! is_installed "${command}" 1> /dev/null; then
+    echo "[require_installed_brew::${command}]"
+    echo "  Required command '${command}' missing. Installing.."
+    brew install "${command}" | tee "${logfile}"
+    echo "  Install log: ${logfile}"
+  fi
+}
