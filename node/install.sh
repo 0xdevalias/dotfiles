@@ -43,5 +43,3 @@ fi
 
 # npmGlobalCheckOrInstall "grunt-cli"
 # npmGlobalCheckOrInstall "gulp"
-# npmGlobalCheckOrInstall "bower"
-# npmGlobalCheckOrInstall "bower-check-updates"
