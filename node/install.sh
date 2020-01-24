@@ -1,45 +1,71 @@
-#!/bin/sh
+#!/usr/bin/env zsh
 
-export NODE_VER="10.14.1"
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
 
-npmGlobalCheckOrInstall() {
-  local module="$1"
+# Import config for n
+source "${ZSH}/node/n.zsh"
 
-  if [ $(npm list -g --depth=0 | grep -c "$module") -eq 0 ]
-  then
-    echo "  [NPM] Installing $module for you."
-    npm install -g "$module"
-  else
-  	echo "  [NPM] $module already installed."
-  fi
-}
+echo "[node::install]"
 
-if test ! $(which nodenv)
-then
-  echo "  Installing nodenv for you."
-  brew install nodenv > /tmp/nodenv-install.log
+require_installed_brew "n"
+require_installed_brew "nodenv"
+require_installed_brew "node-build"
+
+# Ensure n and nodenv use the same install directory
+mkdir -p "$HOME/.n/n/versions"
+mkdir -p "$HOME/.nodenv/versions"
+
+if [[ ! -e "$HOME/.n/n/versions/node" ]]; then
+  echo "  Symlinking 'n' install directory to 'nodenv' install directory"
+  ln -s "$HOME/.nodenv/versions" "$HOME/.n/n/versions/node"
 fi
 
-if test ! $(which node-build)
-then
-  echo "  Installing node-build for you."
-  brew install node-build > /tmp/node-build-install.log
+NODE_VER=`n --lts`
+
+# Pre-install checks
+if [[ -z "$NODE_VER" ]]; then
+  echo "  Warning: No NODE_VER set, not installing."
+  exit 1
 fi
 
-if [[ ! -z "$NODE_VER" ]]; then
-  if [ -z "$(nodenv versions | grep $NODE_VER)" ]; then
-    echo "  [nodenv] Installing node $NODE_VER for you.."
-    nodenv install $NODE_VER
-    nodenv rehash
+if [[ ! -z "$(nodenv versions | grep $NODE_VER)" ]]; then
+  echo "  Node ${NODE_VER} already installed."
+  exit 0
+fi
 
-    echo "  [nodenv] Setting node $NODE_VER as global.."
-    nodenv global $NODE_VER
-  else
-    echo "  [nodenv] Node $NODE_VER already installed."
-  fi
+# Install node
+if [[ ! -z "$(node-build --definitions | grep $NODE_VER)" ]]; then
+  echo "  Installing node $NODE_VER for you via 'node-build'.."
+  nodenv install $NODE_VER
+elif [[ ! -z "$(n ls-remote --all | grep $NODE_VER)" ]]; then
+  echo "  Installing node $NODE_VER for you via 'n'.."
+  n $NODE_VER
 else
-  echo "  [nodenv] Warning: No NODE_VER set, not installing."
+  echo "  Error: Node ${NODE_VER} was unable to be installed via 'node-build' or 'n'"
+  exit 1
 fi
+
+echo "  [nodenv] Rehashing node versions.."
+nodenv rehash
+
+echo "  [nodenv] Setting node $NODE_VER as global.."
+nodenv global $NODE_VER
+
+echo "  [nodenv] Versions:"
+nodenv versions
+
+# npmGlobalCheckOrInstall() {
+#   local module="$1"
+#
+#   if [ $(npm list -g --depth=0 | grep -c "$module") -eq 0 ]
+#   then
+#     echo "  [NPM] Installing $module for you."
+#     npm install -g "$module"
+#   else
+#     echo "  [NPM] $module already installed."
+#   fi
+# }
 
 # npmGlobalCheckOrInstall "grunt-cli"
 # npmGlobalCheckOrInstall "gulp"
