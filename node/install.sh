@@ -54,18 +54,3 @@ nodenv global $NODE_VER
 
 echo "  [nodenv] Versions:"
 nodenv versions
-
-# npmGlobalCheckOrInstall() {
-#   local module="$1"
-#
-#   if [ $(npm list -g --depth=0 | grep -c "$module") -eq 0 ]
-#   then
-#     echo "  [NPM] Installing $module for you."
-#     npm install -g "$module"
-#   else
-#     echo "  [NPM] $module already installed."
-#   fi
-# }
-
-# npmGlobalCheckOrInstall "grunt-cli"
-# npmGlobalCheckOrInstall "gulp"
