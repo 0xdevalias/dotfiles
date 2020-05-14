@@ -1,3 +1,7 @@
+# Dotfiles/etc
+antigen/antigen.zwc
+cache/
 ssh/keys.init
 
+# System
 .DS_STORE
