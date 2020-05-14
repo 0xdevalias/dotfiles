@@ -39,8 +39,10 @@ autoload -U compinit
 compinit
 
 # load every completion after autocomplete loads
+echo Loading custom completions scripts..
 for file in ${(M)config_files:#*/completion.zsh}
 do
+  echo "  $file"
   source $file
 done
 
