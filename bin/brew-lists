@@ -31,7 +31,6 @@ else
   echo "    [WARNING] 'whalebrew' not found, assuming it isn't installed. Skipping."
 fi
 
-
 # Atom
 echo "  Dumping Atom.."
 if is_installed "apm" 1> /dev/null; then
@@ -50,22 +49,36 @@ echo "  Dumping Ruby Gems.."
 ruby -e 'puts Gem::Specification.all_names' > gem.$HOST.list
 
 # Python
+# TODO: do this for each installed version in pyenv, not just the default?
 echo "  Dumping Python.."
 source "$HOME/.dotfiles/python/python-versions.zsh"
 eval "$(pyenv init -)"
 
 echo "    Python (System version)"
 pyenv shell system
-pip list > pip.$HOST.system.list
+if is_installed "pip" 1> /dev/null; then
+  pip list > pip.$HOST.system.list
+else
+  echo "    [WARNING] 'pip' not found, assuming it isn't installed. Skipping."
+fi
+pyenv shell --unset
 
 echo "    Python 2.x"
 pyenv shell $PYTHON_2X_VER
-pip list > pip.$HOST.list
+if is_installed "pip" 1> /dev/null; then
+  pip list > pip.$HOST.list
+else
+  echo "    [WARNING] 'pip' not found, assuming it isn't installed. Skipping."
+fi
+pyenv shell --unset
 
 echo "    Python 3.x"
 pyenv shell $PYTHON_3X_VER
-pip3 list > pip3.$HOST.list
-
+if is_installed "pip3" 1> /dev/null; then
+  pip3 list > pip3.$HOST.list
+else
+  echo "    [WARNING] 'pip3' not found, assuming it isn't installed. Skipping."
+fi
 pyenv shell --unset
 
 # Go
