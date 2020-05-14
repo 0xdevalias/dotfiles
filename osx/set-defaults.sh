@@ -5,6 +5,11 @@
 # The original idea (and a couple settings) were grabbed from:
 #   https://github.com/mathiasbynens/dotfiles/blob/master/.osx
 #
+# Can also look at:
+#   https://github.com/kevinSuttle/macOS-Defaults/blob/master/.macos
+#   https://www.defaults-write.com/
+#   https://marcosantadev.com/manage-plist-files-plistbuddy/
+#
 # Run ./set-defaults.sh and you'll be good to go.
 
 echo "TODO: Can we diff some settings and ask if we want to change them (eg. running in dot later, seeing what we should add/update here"
@@ -19,25 +24,29 @@ defaults write -g ApplePressAndHoldEnabled -bool false
 defaults write -g NSUserKeyEquivalents -dict-add 'Emoji & Symbols' '\0'
 
 # Use AirDrop over every interface. srsly this should be a default.
-defaults write com.apple.NetworkBrowser BrowseAllInterfaces 1
+defaults write com.apple.NetworkBrowser BrowseAllInterfaces -bool true
 
-# Always open everything in Finder's list view. This is important.
-defaults write com.apple.Finder FXPreferredViewStyle Nlsv
-
-# Prevent .DS_Store file creation on network volumes
-# Ref: https://support.apple.com/en-us/HT208209
-defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+###############################################################################
+# Finder                                                                      #
+###############################################################################
 
 # Show the ~/Library folder.
 chflags nohidden ~/Library
+
+# Show the /Volumes folder
+sudo chflags nohidden /Volumes
 
 # Set a really fast key repeat.
 defaults write NSGlobalDomain KeyRepeat -int 2
 defaults write NSGlobalDomain InitialKeyRepeat -int 15
 
-# Set the Finder prefs for showing a few different volumes on the Desktop.
-defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool true
-defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool true
+# Finder: show all filename extensions
+defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+
+# Prevent .DS_Store file creation on network volumes / USB drives
+# Ref: https://support.apple.com/en-us/HT208209
+defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true
 
 # Don’t automatically rearrange Spaces based on most recent use
 defaults write com.apple.dock mru-spaces -bool false
@@ -48,11 +57,19 @@ defaults write com.apple.dock autohide -bool true
 # Make Dock icons of hidden applications translucent
 defaults write com.apple.dock showhidden -bool true
 
+# Use list view in all Finder windows by default
+# Four-letter codes for the other view modes: `icnv`, `clmv`, `glyv`
+defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
+
+# Set the Finder prefs for showing a few different volumes on the Desktop.
+defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool true
+defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool true
+
 # Set calendar 'days in week' to 14
 defaults write com.apple.iCal CalUIDebugDefaultDaysInWeekView 14
 
 # ==============================================
-# Mouse
+# Mouse & Trackpad
 # ==============================================
 echo "Setting Mouse preferences"
 
@@ -63,6 +80,10 @@ defaults write NSGlobalDomain com.apple.swipescrolldirection -bool false
 # Desktop & Screen Saver
 # ==============================================
 echo "Setting Desktop & Screen Saver preferences"
+
+# Require password immediately after sleep or screen saver begins
+defaults write com.apple.screensaver askForPassword -int 1
+defaults write com.apple.screensaver askForPasswordDelay -int 0
 
 # Hot corners
 # Possible values:
@@ -93,12 +114,28 @@ defaults write com.apple.dock wvous-bl-modifier -int 0
 defaults write com.apple.dock wvous-br-corner -int 4
 defaults write com.apple.dock wvous-br-modifier -int 0
 
+# ==============================================
+# Safari & WebKit
+# ==============================================
+
 # Hide Safari's bookmark bar.
 #defaults write com.apple.Safari ShowFavoritesBar -bool false
 
-# Set up Safari for development.
+# Enable the Develop menu and the Web Inspector in Safari
 defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
 defaults write com.apple.Safari IncludeDevelopMenu -bool true
 defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
-defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" -bool true
+defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled -bool true
+
+# Add a context menu item for showing the Web Inspector in web views
 defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
+
+###############################################################################
+# Mac App Store                                                               #
+###############################################################################
+
+# Enable the WebKit Developer Tools in the Mac App Store
+defaults write com.apple.appstore WebKitDeveloperExtras -bool true
+
+# Enable Debug Menu in the Mac App Store
+defaults write com.apple.appstore ShowDebugMenu -bool true
