@@ -22,15 +22,15 @@ brew 'vitorgalvao/tiny-scripts/cask-repair'
 brew 'mas'               # Install appstore programs from command line
 
 # Misc/Unsorted
-brew 'ethereum/ethereum/ethereum'
-cask 'adobe-reader'
-cask 'evernote'
+#brew 'ethereum/ethereum/ethereum'
+#cask 'adobe-reader'
+#cask 'evernote'
 cask 'rescuetime'
 #cask 'java'
 mas 'Kindle', id: 405399194
-mas 'Reditr', id: 572716744
-mas 'Microsoft Remote Desktop', id: 715768417
-mas 'TNEFs Enough', id: 986621173
+#mas 'Reditr', id: 572716744
+#mas 'Microsoft Remote Desktop', id: 715768417
+#mas 'TNEFs Enough', id: 986621173
 
 # Internet/Download
 cask 'google-chrome'
