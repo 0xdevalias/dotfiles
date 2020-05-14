@@ -21,6 +21,7 @@ disktype
 dive
 docker-machine
 docker-machine-driver-xhyve
+duti
 e2fsprogs
 esptool
 ethereum
