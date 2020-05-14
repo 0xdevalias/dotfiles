@@ -24,6 +24,10 @@ defaults write com.apple.NetworkBrowser BrowseAllInterfaces 1
 # Always open everything in Finder's list view. This is important.
 defaults write com.apple.Finder FXPreferredViewStyle Nlsv
 
+# Prevent .DS_Store file creation on network volumes
+# Ref: https://support.apple.com/en-us/HT208209
+defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+
 # Show the ~/Library folder.
 chflags nohidden ~/Library
 
