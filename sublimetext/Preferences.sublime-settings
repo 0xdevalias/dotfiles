@@ -4,7 +4,7 @@
 	"drag_text": false,
 	"enable_tab_scrolling": true,
 	"ensure_newline_at_eof_on_save": true,
-	"font_size": 13,
+	"font_size": 12,
 	"highlight_modified_tabs": true,
 	"ignored_packages":
 	[
