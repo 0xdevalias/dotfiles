@@ -96,7 +96,7 @@
 	<key>NSWindow Frame SUStatusFrame</key>
 	<string>714 1866 400 129 -806 900 3440 1417 </string>
 	<key>NSWindow Frame SUUpdateAlert</key>
-	<string>604 1668 620 392 -806 900 3440 1417 </string>
+	<string>410 363 620 392 0 0 1440 877 </string>
 	<key>NSWindow Frame SessionsPreferences</key>
 	<string>270 76 606 469 0 0 1440 877 </string>
 	<key>NSWindow Frame SharedPreferences</key>
@@ -104,7 +104,7 @@
 	<key>NSWindow Frame UKCrashReporter</key>
 	<string>99 293 592 584 0 0 1440 877 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>-806 1840 570 452 -806 900 3440 1417 </string>
+	<string>-806 2317 3440 474 -806 900 3440 1417 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
 	<string>411 173 570 452 0 0 1440 877 </string>
 	<key>New Bookmarks</key>
@@ -680,7 +680,7 @@
 			<key>Silence Bell</key>
 			<true/>
 			<key>Space</key>
-			<integer>0</integer>
+			<integer>-1</integer>
 			<key>Status Bar Layout</key>
 			<dict>
 				<key>advanced configuration</key>
@@ -1510,7 +1510,7 @@
 			<key>Silence Bell</key>
 			<true/>
 			<key>Space</key>
-			<integer>0</integer>
+			<integer>-1</integer>
 			<key>Status Bar Layout</key>
 			<dict>
 				<key>advanced configuration</key>
@@ -1771,7 +1771,7 @@
 	<key>NoSyncLastTipTime</key>
 	<real>599538171.37414205</real>
 	<key>NoSyncLaunchExperienceControllerRunCount</key>
-	<integer>4</integer>
+	<integer>5</integer>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile</key>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile_selection</key>
@@ -2637,7 +2637,7 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2020-01-24T02:16:10Z</date>
+	<date>2020-02-27T03:09:39Z</date>
 	<key>SUSendProfileInfo</key>
 	<false/>
 	<key>ShowFullScreenTabBar</key>
