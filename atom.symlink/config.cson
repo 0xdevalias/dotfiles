@@ -43,6 +43,8 @@
     userId: "b97cb892-6dc3-ae91-c680-7b06b730f878"
   "linter-php":
     executablePath: "/usr/bin/php"
+  "linter-ui-default":
+    panelHeight: 81
   minimap:
     plugins:
       cursorline: true

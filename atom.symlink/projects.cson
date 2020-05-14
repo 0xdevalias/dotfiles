@@ -8,14 +8,8 @@ atom:
   paths: [
     "/Users/devalias/.dotfiles/atom.symlink"
   ]
-rlaunchpad:
-  title: "rlaunchpad"
+'devalias.net':
+  title: "devalias.net"
   paths: [
-    "/Users/devalias/dev/rlaunchpad"
-    "/Users/devalias/.dotfiles/osx"
-  ]
-'CryptoPals':
-  title: "CryptoPals-Swift3"
-  paths: [
-    "/Users/devalias/dev/cryptopals-swift3/"
+    "/Users/devalias/dev/devalias.net/"
   ]
