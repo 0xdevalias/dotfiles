@@ -17,10 +17,10 @@ else
   check_installed pinentry-mac "return"
 
   # Check gpg config parses correctly (Ref: https://linux.die.net/man/1/gpg2)
-  if ! gpg2 --gpgconf-test; then
+  if ! gpg --gpgconf-test; then
     echo
     echo "  [ERROR] failed to parse gpg-config, not starting gpg-agent"
-    exit 1
+    return 1
   fi
 
   eval $(gpg-agent --daemon --enable-ssh-support)
