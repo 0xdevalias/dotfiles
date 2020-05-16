@@ -1,9 +1,16 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 #
 # Antigen
-#
 
-if test ! "$(which antigen)"; then
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
+
+if ! is_installed "brew" &> /dev/null; then
+  echo "  [ERROR] Antigen installer requires homebrew to be installed. Exiting."
+  exit 1
+fi
+
+if ! brew list antigen &> /dev/null; then
   echo "  Installing Antigen for you."
 
   brew install antigen
