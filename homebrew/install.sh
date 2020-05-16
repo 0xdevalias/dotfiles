@@ -21,6 +21,9 @@ install_macOS() {
   # else
   #   echo "Mas already installed, skipping..: $0"
   fi
+
+  # Install some common core dependencies
+  brew install coreutils
 }
 
 install_linux() {
@@ -35,7 +38,7 @@ install_linux() {
 main() {
   local system=$(uname -s)
 
-  case "${system:0:5}" in 
+  case "${system:0:5}" in
     "Darwi") install_macOS "$@" ;;
     "Linux") install_linux "$@" ;;
     *)
