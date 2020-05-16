@@ -9,13 +9,20 @@ source "${ZSH}/lib/_helpers"
 
 echo "Loading gpg-agent.."
 
+if ! is_installed "gpg" 1> /dev/null; then
+  echo "  gpg not found, skipping.."
+  return 1
+fi
+
+if ! is_installed "pinentry-mac" 1> /dev/null; then
+  echo "  pinentry-mac not found, skipping.."
+  return 1
+fi
+
 # Ref: https://gnupg.org/documentation/manuals/gnupg-2.0/Invoking-GPG_002dAGENT.html
 if [[ -S "${HOME}/.gnupg/S.gpg-agent" ]]; then
   echo "  gpg-agent already running, not starting another"
 else
-  check_installed gpg "return"
-  check_installed pinentry-mac "return"
-
   # Check gpg config parses correctly (Ref: https://linux.die.net/man/1/gpg2)
   if ! gpg --gpgconf-test; then
     echo
