@@ -6,6 +6,8 @@
 	<true/>
 	<key>AppleAntiAliasingThreshold</key>
 	<integer>1</integer>
+	<key>ApplePressAndHoldEnabled</key>
+	<false/>
 	<key>AppleScrollAnimationEnabled</key>
 	<integer>0</integer>
 	<key>AppleSmoothFixedFontsSizeThreshold</key>
@@ -94,9 +96,9 @@
 	<key>NSWindow Frame Preferences</key>
 	<string>269 168 606 456 0 0 1440 877 </string>
 	<key>NSWindow Frame SUStatusFrame</key>
-	<string>714 1866 400 129 -806 900 3440 1417 </string>
+	<string>520 561 400 129 0 0 1440 877 </string>
 	<key>NSWindow Frame SUUpdateAlert</key>
-	<string>410 363 620 392 0 0 1440 877 </string>
+	<string>604 1438 700 622 -806 900 3440 1417 </string>
 	<key>NSWindow Frame SessionsPreferences</key>
 	<string>270 76 606 469 0 0 1440 877 </string>
 	<key>NSWindow Frame SharedPreferences</key>
@@ -104,7 +106,7 @@
 	<key>NSWindow Frame UKCrashReporter</key>
 	<string>99 293 592 584 0 0 1440 877 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>-806 2317 3440 474 -806 900 3440 1417 </string>
+	<string>-806 1777 3440 540 -806 900 3440 1417 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
 	<string>411 173 570 452 0 0 1440 877 </string>
 	<key>New Bookmarks</key>
@@ -1482,7 +1484,7 @@
 			<key>Screen</key>
 			<integer>-2</integer>
 			<key>Scrollback Lines</key>
-			<integer>1000</integer>
+			<integer>0</integer>
 			<key>Selected Text Color</key>
 			<dict>
 				<key>Blue Component</key>
@@ -1748,11 +1750,19 @@
 	<array>
 		<string>3.2.7</string>
 		<string>3.3.7</string>
+		<string>3.3.9</string>
 	</array>
 	<key>NoSyncCommandHistoryHasEverBeenUsed</key>
 	<true/>
 	<key>NoSyncConfirmBeta</key>
 	<true/>
+	<key>NoSyncFrame_SessionsPreferences</key>
+	<dict>
+		<key>screenFrame</key>
+		<string>{{-806, 900}, {3440, 1440}}</string>
+		<key>topLeft</key>
+		<string>{611, 2092}</string>
+	</dict>
 	<key>NoSyncFrame_SharedPreferences</key>
 	<dict>
 		<key>screenFrame</key>
@@ -1771,7 +1781,7 @@
 	<key>NoSyncLastTipTime</key>
 	<real>599538171.37414205</real>
 	<key>NoSyncLaunchExperienceControllerRunCount</key>
-	<integer>5</integer>
+	<integer>9</integer>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile</key>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile_selection</key>
@@ -2637,8 +2647,10 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2020-02-27T03:09:39Z</date>
+	<date>2020-05-29T06:12:05Z</date>
 	<key>SUSendProfileInfo</key>
+	<false/>
+	<key>SUUpdateRelaunchingMarker</key>
 	<false/>
 	<key>ShowFullScreenTabBar</key>
 	<false/>
@@ -2657,6 +2669,6 @@
 	<key>findMode_iTerm</key>
 	<integer>0</integer>
 	<key>iTerm Version</key>
-	<string>3.3.7</string>
+	<string>3.3.9</string>
 </dict>
 </plist>
