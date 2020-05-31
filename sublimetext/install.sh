@@ -1,4 +1,11 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
+
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
+
+echo "[sublimetext::install]"
+
+require_installed_brew_cask "sublime-text"
 
 ST_USERPATH="$HOME/Library/Application Support/Sublime Text 3/Packages/User"
 ST_SETTINGSPATH="$ST_USERPATH/Preferences.sublime-settings"
