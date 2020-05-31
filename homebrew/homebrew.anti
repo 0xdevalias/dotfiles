@@ -1,3 +1,0 @@
-# https://github.com/Homebrew/homebrew/blob/master/Library/Contributions/brew_zsh_completion.zsh
-antigen bundle brew
-antigen bundle brew-cask
