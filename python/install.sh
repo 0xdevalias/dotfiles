@@ -1,17 +1,15 @@
-#!/bin/sh
+#!/usr/bin/env zsh
 
-source `dirname $0`/python-versions.zsh
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
 
-if test ! $(which pyenv)
-then
-  echo "  Installing pyenv for you."
-  brew install pyenv > /tmp/pyenv-install.log
-fi
+echo "[python::install]"
 
-if [ -z "$(brew list | grep pyenv-virtualenv)" ]; then
-  echo "  Installing pyenv-virtualenv for you."
-  brew install pyenv-virtualenv > /tmp/pyenv-install.log
-fi
+source "${ZSH}/python/python-versions.zsh"
+
+# Note: you can also install the latest head release with: brew unlink pyenv && brew install pyenv --head
+require_installed_brew "pyenv"
+require_installed_brew "pyenv-virtualenv"
 
 # Install python 2x
 if [[ ! -z "$PYTHON_2X_VER" ]]; then
@@ -22,7 +20,7 @@ if [[ ! -z "$PYTHON_2X_VER" ]]; then
   else
     echo "  [pyenv] Python $PYTHON_2X_VER already installed."
   fi
-  
+
   if [[ "$PYTHON_GLOBAL_VER" = '2x' ]]; then
     echo "  [pyenv] Setting python $PYTHON_2X_VER as global.."
     pyenv global $PYTHON_2X_VER
@@ -40,7 +38,7 @@ if [[ ! -z "$PYTHON_3X_VER" ]]; then
   else
     echo "  [pyenv] Python $PYTHON_3X_VER already installed."
   fi
-  
+
   if [[ "$PYTHON_GLOBAL_VER" = '3x' ]]; then
     echo "  [pyenv] Setting python $PYTHON_3X_VER as global.."
     pyenv global $PYTHON_3X_VER
@@ -48,5 +46,3 @@ if [[ ! -z "$PYTHON_3X_VER" ]]; then
 else
   echo "  [pyenv] Warning: No PYTHON_3X_VER set, not installing."
 fi
-
-#easy_install SpoofMAC
