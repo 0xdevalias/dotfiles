@@ -1,33 +1,27 @@
-#!/bin/sh
+#!/usr/bin/env zsh
 
-export RUBY_VER="2.5.3"
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
 
-if test ! $(which rbenv)
-then
-  echo "  Installing rbenv for you."
-  brew install rbenv > /tmp/rbenv-install.log
-fi
+echo "[ruby::install]"
 
-# if test ! $(which ruby-build)
-# then
-#   echo "  Installing ruby-build for you."
-#   brew install ruby-build > /tmp/ruby-build-install.log
-# fi
+# See https://www.ruby-lang.org/en/downloads/
+export RUBY_VER="2.7.1"
 
-if test ! $(which ruby-install)
-then
-  echo "  Installing ruby-install for you."
-  brew install ruby-install > /tmp/ruby-install-install.log
+require_installed_brew "rbenv"
+require_installed_brew "ruby-install"
+# require_installed_brew "ruby"
 
+if brew list "ruby-build" &> /dev/null; then
   echo "  Making sure ruby-build is uninstalled.. we have a ruby-install wrapper instead.."
-  brew uninstall --force --ignore-dependencies ruby-build
+  prefix_lines "  " "$(brew uninstall --force --ignore-dependencies ruby-build 2>&1)"
 fi
 
 if [[ ! -z "$RUBY_VER" ]]; then
   if [ -z "$(rbenv versions | grep $RUBY_VER)" ]; then
     echo "  [rbenv] Installing ruby $RUBY_VER for you.."
     # rbenv install $RUBY_VER
-    $HOME/.dotfiles/bin/rbenv-install ruby $RUBY_VER
+    $ZSH/bin/rbenv-install ruby $RUBY_VER
     # ruby-install --install-dir "$HOME/.rbenv/versions/$RUBY_VER" ruby $RUBY_VER
     rbenv rehash
 
