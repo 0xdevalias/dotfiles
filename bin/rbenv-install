@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 
 # Import our common helper scripts
 source "${ZSH}/lib/_helpers"
@@ -86,12 +86,14 @@ main() {
     local rbenv_install_cmd="ruby-install ${rbenv_install_extraflags} --install-dir '${rbenv_install_dir}' '${ruby_flavor}' '${ruby_version}'"
 
     if [[ -d "${rbenv_install_dir}" ]]; then
+      local should_continue="Y"
+
       echo "It appears that the install directory already exists:"
       echo "  ${rbenv_install_dir}"
       echo
-      read -p "Are you sure you want to continue? [y/n]: " -n 1 -r
+      vared -p "Are you sure you want to continue? [Y/n]: " should_continue
       echo
-      if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      if [[ ! $should_continue =~ ^[Yy]$ ]]; then
         echo "  Wasn't ok, so we're quitting. Maybe try using 'ruby-install' directly?"
         exit 1
       fi
@@ -101,9 +103,10 @@ main() {
     echo "  ${rbenv_install_cmd}"
     echo
 
-    read -p "Is that ok? [y/n]: " -n 1 -r
+    local should_continue_install="Y"
+    vared -p "Is that ok? [Y/n]: " should_continue_install
     echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
+    if [[ $should_continue_install =~ ^[Yy]$ ]]; then
       eval "${rbenv_install_cmd}"
     else
       echo "  Wasn't ok, so we're quitting. Maybe try using 'ruby-install' directly?"
