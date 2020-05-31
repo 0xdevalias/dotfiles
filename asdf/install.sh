@@ -2,6 +2,6 @@
 
 if test ! $(which asdf)
 then
-  echo "  Installing asdf for you."
-  brew install asdf > /tmp/asdf-install.log
+  echo "  Installing asdf for you.."
+  brew install asdf | tee /tmp/asdf-install.log
 fi
