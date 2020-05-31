@@ -5,7 +5,7 @@
 
 [gpg]
   # Note: install this with 'brew install gpg'
-  program = /usr/local/bin/gpg2
+  program = /usr/local/bin/gpg
 
 [commit]
   gpgsign = true
