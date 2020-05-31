@@ -1,24 +1,23 @@
-#!/bin/sh
+#!/usr/bin/env zsh
 
-# See available versions: asdf list-all java
-export JAVA_VER="openjdk-11.0.1"
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
 
-if test ! $(which asdf)
-then
-  echo "  asdf is required.."
-  $ZSH/asdf/install.sh
-fi
+# See also
+#   https://adoptopenjdk.net (find the latest release version from here)
+#     https://github.com/AdoptOpenJDK/homebrew-openjdk (contains additional versions)
+#       brew tap adoptopenjdk/openjdk
+#   https://dzone.com/articles/a-guide-to-java-versions-and-features
+#   brew search java
+#   brew search jdk
 
-# https://github.com/skotchpine/asdf-java
-asdf plugin-add java
-asdf plugin-update java
+require_installed_brew "jenv"
+require_installed_brew_cask "adoptopenjdk"
 
-echo "Installing java.."
-asdf install java $JAVA_VER
-asdf global java $JAVA_VER
+# Add java versions to jenv
+/usr/libexec/java_home | xargs jenv add
 
-echo "Java versions installed:"
-asdf list java
+# See also: ls -la /Library/Java/JavaVirtualMachines
+echo "\nInstalled Java versions:"
+prefix_lines "  " "$(/usr/libexec/java_home -V 2>&1)"
 
-echo "Current Java version in use:"
-asdf current java
