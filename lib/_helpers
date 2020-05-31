@@ -116,3 +116,15 @@ require_installed_brew() {
     echo "  Install log: ${logfile}"
   fi
 }
+
+require_installed_brew_cask() {
+  local command="$1"
+  local logfile="/tmp/brew-cask-install-${command}.log"
+
+  if ! brew cask list "${command}" &> /dev/null; then
+    echo "[require_installed_brew_cask::${command}]"
+    echo "  Required cask '${command}' missing. Installing.."
+    brew cask install "${command}" | tee "${logfile}"
+    echo "  Install log: ${logfile}"
+  fi
+}
