@@ -1,0 +1,166 @@
+tap "homebrew/bundle"
+tap "homebrew/cask"
+tap "homebrew/cask-versions"
+tap "homebrew/core"
+tap "twilio/brew"
+brew "antigen"
+brew "aria2"
+brew "automake"
+brew "bison"
+brew "gdbm"
+brew "readline"
+brew "glib"
+brew "cairo"
+brew "circleci"
+brew "coreutils"
+brew "curl"
+brew "dive"
+brew "duti"
+brew "eg-examples"
+brew "gobject-introspection"
+brew "harfbuzz"
+brew "libass"
+brew "ffmpeg"
+brew "fzf"
+brew "gh"
+brew "git"
+brew "gnupg"
+brew "grep"
+brew "shared-mime-info"
+brew "libheif"
+brew "imagemagick"
+brew "imageoptim-cli"
+brew "jenv"
+brew "jq"
+brew "libslirp"
+brew "libssh"
+brew "libyaml"
+brew "mas"
+brew "mosh"
+brew "n"
+brew "node"
+brew "node-build"
+brew "nodenv"
+brew "p7zip"
+brew "pinentry-mac"
+brew "pyenv"
+brew "pyenv-virtualenv"
+brew "python@3.8"
+brew "qemu"
+brew "rbenv"
+brew "ruby-install"
+brew "tldr"
+brew "unixodbc"
+brew "watchman"
+brew "wget"
+brew "whalebrew"
+brew "yarn"
+brew "youtube-dl"
+brew "youtube-dlc"
+brew "zsh"
+brew "twilio/brew/twilio"
+cask "4k-video-downloader"
+cask "adoptopenjdk"
+cask "alfred"
+cask "appcleaner"
+cask "atom"
+cask "bartender"
+cask "bettertouchtool"
+cask "blackhole"
+cask "boost-note"
+cask "boostnote"
+cask "brave-browser"
+cask "browserstacklocal"
+cask "calibre"
+cask "chrome-remote-desktop-host"
+cask "clockify"
+cask "cloudflare-warp"
+cask "dash"
+cask "db-browser-for-sqlite"
+cask "discord"
+cask "docker"
+cask "dropbox"
+cask "fl-studio"
+cask "gitkraken"
+cask "google-chrome"
+cask "grammarly"
+cask "handbrake"
+cask "hyperdock"
+cask "iexplorer"
+cask "imageoptim"
+cask "iterm2"
+cask "jetbrains-toolbox"
+cask "keybase"
+cask "ledger-live"
+cask "loom"
+cask "manictime"
+cask "melodics"
+cask "midi-monitor"
+cask "monitorcontrol"
+cask "native-access"
+cask "notion"
+cask "obsidian"
+cask "openemu"
+cask "plex"
+cask "plexamp"
+cask "postman"
+cask "private-internet-access"
+cask "resilio-sync"
+cask "retroarch"
+cask "send-to-kindle"
+cask "sidequest"
+cask "skype"
+cask "soundflower"
+cask "sourcetree"
+cask "spotify"
+cask "spotify-now-playing"
+cask "steam"
+cask "sublime-merge"
+cask "sublime-text"
+cask "svgcleaner"
+cask "virtualbox"
+cask "visual-studio-code"
+cask "vlc"
+cask "zoomus"
+mas "1Password 7", id: 1333542190
+mas "Amphetamine", id: 937984704
+mas "Bitwarden", id: 1352778147
+mas "Cardhop", id: 1290358394
+mas "Clocker", id: 1056643111
+mas "Color Widgets", id: 1541988646
+mas "Cryptowatch Desktop", id: 1527457231
+mas "Developer", id: 640199958
+mas "Drafts", id: 1435957248
+mas "Fantastical", id: 975937182
+mas "GarageBand", id: 682658836
+mas "Gifski", id: 1351639930
+mas "HazeOver", id: 430798174
+mas "iMovie", id: 408981434
+mas "Instapaper", id: 288545208
+mas "Keynote", id: 409183694
+mas "Kindle", id: 405399194
+mas "Magnet", id: 441258766
+mas "Messenger", id: 1480068668
+mas "Neural Mix Pro", id: 1527105121
+mas "Numbers", id: 409203825
+mas "Outline", id: 604802021
+mas "Pages", id: 409201541
+mas "Playgrounds", id: 1496833156
+mas "PrismPathfinder", id: 1534913975
+mas "QuickShade", id: 931571202
+mas "Reeder", id: 1449412482
+mas "Rosetta Stone", id: 1476088902
+mas "Shazam", id: 897118787
+mas "Slack", id: 803453959
+mas "Telegram", id: 747648890
+mas "The Unarchiver", id: 425424353
+mas "Time Out", id: 402592703
+mas "Time Sink", id: 404363161
+mas "Todoist", id: 585829637
+mas "Toggl Track", id: 957734279
+mas "Trello", id: 1278508951
+mas "Twitter", id: 1482454543
+mas "Ultimate Guitar - Chords & Tabs", id: 1479045460
+mas "WaterMinder", id: 1415257369
+mas "WhatsApp", id: 1147396723
+mas "Xcode", id: 497799835
