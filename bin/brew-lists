@@ -12,11 +12,11 @@ brew update
 
 echo "Updating list files for $HOST.."
 echo "  Dumping Brew list.."
-brew list > brew.$HOST.list
+brew list --formula > brew.$HOST.list
+echo "  Dumping Brew cask list.."
+brew list --cask > brew-cask.$HOST.list
 echo "  Dumping Brew taps.."
 brew tap > brew-tap.$HOST.list
-echo "  Dumping Brew cask list.."
-brew cask list > brew-cask.$HOST.list
 
 echo "  Dumping Brew bundle.."
 brew bundle dump --force --file="Brewfile.$HOST.list"
