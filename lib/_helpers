@@ -79,7 +79,7 @@ check_installed() {
   local command_path=$(command -v "${command}")
   local command_realpath=$(realpath "${command_path}" 2> /dev/null)
 
-  if [[ ! ( -f "${command_path}" && -x "${command_realpath}" ) ]]; then
+  if [[ ! ( -a "${command_path}" && -x "${command_realpath}" ) ]]; then
     echo "[ERROR] Couldn't find '${command}'. Try:"
 
     if [[ "${command}" == "brew" ]]; then
@@ -109,7 +109,7 @@ require_installed_brew() {
   local command="$1"
   local logfile="/tmp/brew-install-${command}.log"
 
-  if ! is_installed "${command}" 1> /dev/null; then
+  if ! is_installed "${command}" &> /dev/null; then
     echo "[require_installed_brew::${command}]"
     echo "  Required command '${command}' missing. Installing.."
     brew install "${command}" | tee "${logfile}"
