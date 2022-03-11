@@ -85,6 +85,14 @@ pyenv shell --unset
 echo "  Dumping Golang bin/ folder"
 echo "$(cd ${GOPATH%%:*}/bin && ls)" > go.$HOST.list
 
+# GitHub CLI
+echo "  Dumping GitHub CLI extensions list.."
+if is_installed "gh" 1> /dev/null; then
+  gh extension list > gh.$HOST.list
+else
+  echo "    [WARNING] 'gh' not found, assuming it isn't installed. Skipping."
+fi
+
 # echo Staging in git..
 # git add brew.list
 # git add brew-tap.list
