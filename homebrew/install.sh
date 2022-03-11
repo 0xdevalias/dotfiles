@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Homebrew
 #
@@ -8,7 +8,7 @@
 install_macOS() {
   if [[ ! $(which brew) ]]; then
     echo "  Installing Homebrew for you.."
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   # else
   #   echo "Homebrew already installed, skipping..: $0"
   else
@@ -23,13 +23,14 @@ install_macOS() {
   fi
 
   # Install some common core dependencies
+  echo "  Installing coreutils for you."
   brew install coreutils
 }
 
 install_linux() {
   if [[ ! $(which brew) ]]; then
     echo "  Installing Homebrew (linux) for you.."
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/linuxbrew/go/install)"
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   else
     brew update
   fi
