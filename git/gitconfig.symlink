@@ -1,6 +1,6 @@
 # https://git-scm.com/docs/git-config
 [core]
-  excludesfile = ~/.gitignore
+  excludesfile = ~/.gitignore_global
   editor = subl -n -w
 
 [gpg]
