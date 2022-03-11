@@ -1,4 +1,5 @@
 {
+	"color_scheme": "Mariana.sublime-color-scheme",
 	"copy_with_empty_selection": false,
 	"default_encoding": "UTF-8",
 	"drag_text": false,
@@ -13,6 +14,7 @@
 	"scroll_past_end": true,
 	"show_full_path": true,
 	"tab_size": 2,
+	"theme": "Adaptive.sublime-theme",
 	"translate_tabs_to_spaces": true,
 	"trim_trailing_white_space_on_save": true,
 }
