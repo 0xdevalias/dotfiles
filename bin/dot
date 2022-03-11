@@ -22,6 +22,7 @@ $ZSH/homebrew/install.sh 2>&1
 #   https://github.com/mattmc3/antidote
 # echo "› $ZSH/antigen/install.sh"
 # $ZSH/antigen/install.sh 2>&1
+echo "TODO: Install a modern replacement for antigen such as https://github.com/mattmc3/antidote"
 
 # Make sure we are using zsh
 echo "› $ZSH/zsh/install.sh"
