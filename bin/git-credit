@@ -10,4 +10,11 @@
 #   git credit "Zach Holman" zach@example.com
 #
 
+if [ "$#" -ne 2 ]; then
+    echo "usage: $0 'FULL NAME' EMAIL"
+    echo " FULL NAME: The full name of the author. Wrap with quotes if it contains spaces. (eg. 'devalias example' )"
+    echo " EMAIL: The email address of the author. (eg. devalias@example.com)"
+    exit 1
+fi
+
 git commit --amend --author "$1 <$2>" -C HEAD
