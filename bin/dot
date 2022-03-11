@@ -1,16 +1,13 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 #
 # dot
 #
 # `dot` handles installation, updates, things like that. Run it periodically
 # to make sure you're on the latest and greatest.
-echo "[dot] Handling installation, updates and awesomeness to ensure the latest and greatest!"
 
 export ZSH=$HOME/.dotfiles
 
-# Set OS X defaults
-echo "› $ZSH/osx/set-defaults.sh"
-$ZSH/osx/set-defaults.sh
+echo "[dot] Handling installation, updates and awesomeness to ensure the latest and greatest!"
 
 # Install homebrew / mas
 echo "› $ZSH/homebrew/install.sh"
@@ -23,6 +20,19 @@ $ZSH/antigen/install.sh 2>&1
 # Make sure we are using zsh
 echo "› $ZSH/zsh/install.sh"
 $ZSH/zsh/install.sh 2>&1
+
+# Set OS X defaults
+echo -n "› Do you want to set macOS defaults? [Y/n] "
+read YN
+case "$YN" in
+  n*|N* )
+    echo "›   [SKIPPING] $ZSH/osx/set-defaults.sh"
+  ;;
+  * )
+    echo "›   $ZSH/osx/set-defaults.sh"
+    $ZSH/osx/set-defaults.sh
+  ;;
+esac
 
 # Run install scripts
 echo -n "› Do you want to run all of the install scripts? [N/y/interactive] "
