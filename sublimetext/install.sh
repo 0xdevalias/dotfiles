@@ -7,7 +7,7 @@ echo "[sublimetext::install]"
 
 require_installed_brew_cask "sublime-text"
 
-ST_USERPATH="$HOME/Library/Application Support/Sublime Text 3/Packages/User"
+ST_USERPATH="$HOME/Library/Application Support/Sublime Text/Packages/User"
 ST_SETTINGSPATH="$ST_USERPATH/Preferences.sublime-settings"
 ST_DOTFILEPATH="$ZSH/sublimetext/Preferences.sublime-settings"
 
