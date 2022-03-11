@@ -6,7 +6,7 @@ source "${ZSH}/lib/_helpers"
 echo "[ruby::install]"
 
 # See https://www.ruby-lang.org/en/downloads/
-export RUBY_VER="2.7.1"
+export RUBY_VER="3.1.1"
 
 require_installed_brew "rbenv"
 require_installed_brew "ruby-install"
