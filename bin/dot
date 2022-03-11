@@ -14,8 +14,14 @@ echo "› $ZSH/homebrew/install.sh"
 $ZSH/homebrew/install.sh 2>&1
 
 # Install/update antigen
-echo "› $ZSH/antigen/install.sh"
-$ZSH/antigen/install.sh 2>&1
+# TODO: Should we remove antigen / oh-my-zsh in favour of zi or similar?
+#   https://github.com/zsh-users/antigen/issues/673#issuecomment-1064667661
+#   https://github.com/z-shell/zi
+#   https://github.com/z-shell/zi-console
+# TODO: Or just use a modern version of antigen such as antidote
+#   https://github.com/mattmc3/antidote
+# echo "› $ZSH/antigen/install.sh"
+# $ZSH/antigen/install.sh 2>&1
 
 # Make sure we are using zsh
 echo "› $ZSH/zsh/install.sh"
