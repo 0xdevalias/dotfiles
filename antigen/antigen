@@ -63,7 +63,6 @@ antigen bundle github
 antigen bundle osx
 #antigen bundle sbt
 #antigen bundle scala
-antigen bundle sublime
 #antigen bundle vagrant
 #antigen bundle web-search
 #antigen bundle wd
