@@ -60,7 +60,6 @@ antigen bundle common-aliases
 antigen bundle github
 #antigen bundle history
 #antigen bundle jsontools
-antigen bundle osx
 #antigen bundle sbt
 #antigen bundle scala
 #antigen bundle vagrant
