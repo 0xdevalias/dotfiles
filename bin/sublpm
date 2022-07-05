@@ -1,0 +1,99 @@
+#!/usr/bin/env zsh
+
+# Sublime Text package manager helper script
+#
+# Loosely modelled after the Atom Package Manager (apm):
+#   https://github.com/atom/apm/blob/master/src/apm-cli.coffee#L30-L57
+
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
+
+# TODO: can we get these paths automagically by reading from macOS settings?
+ST_SETTINGS_PATH="$HOME/Library/Application Support/Sublime Text/Packages/User"
+ST_PACKAGECONTROL_FILE="Package Control.sublime-settings"
+
+displayHelp() {
+  echo "Helper script for managing Sublime Text packages from your shell"
+  echo ""
+  echo "Commands:"
+  echo "  list                  : List all the installed packages"
+  echo "  search                : Open web browser to search for a package by name"
+  echo "  view                  : Open web browser to view a package by name"
+  echo "  install               : Install packages by name (comma delimited)"
+  echo "  init                  : Install Package Control in Sublime Text"
+  echo ""
+  echo "  --settingsPath        : Show the Sublime Text settings path"
+  echo "  -h, --help            : Show this help/usage"
+}
+
+handleCommands() {
+  local command="$1"
+  shift
+
+  case "$command" in
+  list)
+    listInstalledPackages
+    ;;
+  search)
+    searchPackageWeb "$@"
+    ;;
+  view)
+    viewPackageWeb "$@"
+    ;;
+  install)
+    installPackages "$@"
+    ;;
+  init)
+    initPackageControl
+    ;;
+  --settings*)
+    displaySettingsPath
+    ;;
+  -h | --h*)
+    displayHelp
+    ;;
+  *)
+    unknownCommand "$@"
+    ;;
+  esac
+}
+
+listInstalledPackages() {
+  # We use json5 to strip comments/trailing commas/etc from the settings json so that jq can parse it
+  require_installed_brew "json5"
+  require_installed_brew "jq"
+
+  json5 "${ST_SETTINGS_PATH}/${ST_PACKAGECONTROL_FILE}" | jq --raw-output '.installed_packages[]' | sort
+}
+
+searchPackageWeb() {
+  local termWithEncodedSpaces=$(echo "$@" | sed -e 's/ /%20/g')
+
+  open "https://packagecontrol.io/search/$termWithEncodedSpaces"
+}
+
+viewPackageWeb() {
+  local termWithEncodedSpaces=$(echo "$@" | sed -e 's/ /%20/g')
+
+  open "https://packagecontrol.io/packages/$termWithEncodedSpaces"
+}
+
+installPackages() {
+  # https://forum.sublimetext.com/t/installing-packages-from-the-command-line/64029/4
+  subl --command "advanced_install_package {\"packages\": \"$1\"}"
+}
+
+initPackageControl() {
+  # https://forum.sublimetext.com/t/installing-packages-from-the-command-line/64029/4
+  subl --command "install_package_control"
+}
+
+displaySettingsPath() {
+  echo "${ST_SETTINGS_PATH}"
+}
+
+unknownCommand() {
+  echo "sublpm: '$1' is not a sublpm command. See 'sublpm --help'"
+}
+
+handleCommands "$@"
