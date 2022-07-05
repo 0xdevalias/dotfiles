@@ -28,7 +28,11 @@ displayHelp() {
 
 handleCommands() {
   local command="$1"
-  shift
+
+  # Only shift if there is actually a command entered
+  if [[ -n "$1" ]]; then
+    shift
+  fi
 
   case "$command" in
   list)
