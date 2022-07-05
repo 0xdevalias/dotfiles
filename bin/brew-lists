@@ -31,6 +31,14 @@ else
   echo "    [WARNING] 'whalebrew' not found, assuming it isn't installed. Skipping."
 fi
 
+# Sublime
+echo "  Dumping Sublime Text.."
+if is_installed "subl" 1>/dev/null; then
+  sublpm list >sublimetext.$HOST.list
+else
+  echo "    [WARNING] 'subl' not found, assuming Sublime Text isn't installed. Skipping."
+fi
+
 # Atom
 echo "  Dumping Atom.."
 if is_installed "apm" 1>/dev/null; then
