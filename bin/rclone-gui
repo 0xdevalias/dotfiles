@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Ref:
+#   https://rclone.org/gui/
+
+# if [ -z "$1" ]; then
+#   echo "Usage: $0"
+#   exit
+# fi
+
+rclone rcd --rc-web-gui
