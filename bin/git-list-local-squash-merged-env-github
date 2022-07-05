@@ -1,0 +1,8 @@
+#!/bin/sh
+#
+# List all local branches that have been merged into staging.
+#
+# Ref: https://stackoverflow.com/questions/43489303/how-can-i-delete-all-git-branches-which-have-been-squash-and-merge-via-github/56026209#56026209
+
+# TODO: refactor this to be able to pass in the branch name via props and have it 'just work'
+git checkout -q "env/github" && git for-each-ref refs/heads/ "--format=%(refname:short)" | while read branch; do mergeBase=$(git merge-base "env/github" $branch) && [[ $(git cherry "env/github" $(git commit-tree $(git rev-parse $branch^{tree}) -p $mergeBase -m _)) == "-"* ]] && echo "$branch"; done

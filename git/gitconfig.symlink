@@ -55,22 +55,209 @@
 [hub]
   protocol = ssh
 
+# Refs:
+#  The Ultimate Git Alias Setup: https://gist.github.com/mwhite/6887990
+#  https://blog.theodo.com/2017/06/git-game-advanced-git-aliases/
 [alias]
-  alias = !echo Add with git config --global alias.FOO 'MY TOTALLY SWEET ALIAS'
   hub = !hub
   github = !hub
   co = checkout
-  count = !git shortlog -sn
+  count-contributions = shortlog -sn
   all = add -A                                  # Stage all unstaged
   amend = commit --amend -C HEAD                # Use the last commit message and amend your stuffs
   undo = reset --soft HEAD^                     # Undo your last commit, but don't throw away your changes
-  stash-files = stash push --include-untracked  # Stash the specified pathspec of files (can label with -m)
-  stash-patch = stash push --patch              # Stash parts of the specified pathspec of files (can label with -m)
-  # Fetch latest from origin/master, then rebase current branch onto it
-  rebase-master = !git fetch origin master && git rebase origin/master
-  checkout-as = checkout -b                    # Checkout the specified branch with a different name
-  checkout-last = checkout -                   # Checkout the last branch we were on
+  credit = !$ZSH/bin/git-credit
   closest-tag = !$ZSH/bin/git-find-closest-tag
+  push-fork-to-upstream-branch-origin = !$ZSH/bin/git-push-fork-to-upstream-branch
+
+  # Checkout / Branches
+  checkout-as = checkout -b                     # Checkout the specified branch with a different name
+
+  checkout-last-branch = checkout -             # Checkout the last branch we were on
+  checkout-prev-branch = checkout-last
+
+  # http://ses4j.github.io/2020/04/01/git-alias-recent-branches/
+  # TODO: this still lists branches that have been deleted already.. would be good to fix that or show them differently..
+  branch-history = !git reflog show --pretty=format:'%gs ~ %gd' --date=relative | grep 'checkout:' | grep -oE '[^ ]+ ~ .*' | awk -F~ '!seen[$1]++' | head -n 10 | awk -F' ~ HEAD@{' '{printf(\"  \\033[33m%s: \\033[37m %s\\033[0m\\n\", substr($2, 1, length($2)-1), $1)}'
+  last-branches = branch-history
+
+  switch-last-branch = switch -
+  switch-prev-branch = switch-last-branch
+
+  switch-new-branch-from = !"f() { git switch -c ${2} ${1}; }; f"
+  switch-new-branch-from-staging = !"f() { git switch -c ${1} staging; }; f"
+  switch-new-branch-from-master = !"f() { git switch -c ${1} master; }; f"
+
+  new-branch = checkout -b
+  new-branch-from = !"f() { git checkout -b ${2} ${1}; }; f"
+  new-branch-from-staging = !"f() { git checkout -b ${1} staging; }; f"
+  new-branch-from-master = !"f() { git checkout -b ${1} master; }; f"
+  new-branch-from-stash = stash branch
+  #  Note: this doesn't work if you're already in staging.. we could make it better.
+  # new-branch-from-staging = !"f() { git sync-staging && git checkout -b ${1} staging; }; f"
+  branch-rename = !echo "See grename zsh alias"
+  rename-branch = branch-rename
+
+  # Aliases
+  alias = !echo Add with git config --global alias.FOO 'MY TOTALLY SWEET ALIAS'
+  aliases = !$ZSH/bin/git-aliases
+  list-aliases = !git config --get-regexp '^alias\\.' | cut -c 7-
+  list-aliases2 = --list-cmds=alias
+  aliases-list = list-aliases
+  edit-aliases = !subl $ZSH/git/gitconfig.symlink
+  aliases-edit = edit-aliases
+
+  # Searching
+  #
+  # Refs:
+  #   https://gist.github.com/lyoshenka/8251914
+  #   https://stackoverflow.com/questions/2928584/how-to-grep-search-committed-code-in-the-git-history/2929502#2929502
+  #
+  # Examples:
+  #   git log -SFoo -- path_containing_change
+  #   git log -SFoo --since=2009.1.1 --until=2010.1.1 -- path_containing_change
+  #   git log -S foobarcaseinsensitive -i --oneline
+  #
+  # There is a subtle difference between the way the -G and -S options determine if a commit matches:
+  #   The -S option essentially counts the number of times your search matches in a file before and after a commit. The commit is shown in the log if the before and after counts are different. This will not, for example, show commits where a line matching your search was moved.
+  #   With the -G option, the commit is shown in the log if your search matches any line that was added, removed, or changed.
+  #
+  # You can combine -p / --patch with any of these methods to get a diff patch of the found commits.
+  find = !echo "Invalid alias. Did you mean: search-history, search-history-string, search-history-regex ?"
+  search-history = !"f() { git search-history-regex \"${1}\" --oneline --patch ${@:2}; }; f"
+  search-history-string = log -i -S
+  search-history-regex = log -i -G
+
+  # Diffing
+  # https://stackoverflow.com/questions/7759193/git-diff-renamed-file
+  # https://stackoverflow.com/questions/1955985/what-does-the-caret-character-mean
+  # https://stackoverflow.com/questions/29810331/is-there-a-quick-way-to-git-diff-from-the-point-or-branch-origin
+  diff-renamed = !echo "git diff SOURCEBRANCH:src/foo/bar.ts HEAD:src/foo/baz.ts"
+  # diff-renamed = !echo "git diff @{upstream}:src/foo/bar.ts HEAD:src/foo/baz.ts" TODO: Not sure if this is correct?
+  diff-aliases = !echo "TODO: Add aliases for different forms of git diff that are useful in different circumstances. Particularly look at: git diff --color-moved=<mode>, where mode is zebra/dimmed-zebra, etc"
+  diff-unstaged = diff
+  diff-unstaged-list-files = diff --name-only
+  diff-staged = diff --staged
+  diff-staged-list-files = diff --staged --name-only
+
+  #  Ref: https://stackoverflow.com/questions/3801321/git-list-only-untracked-files-also-custom-commands/3801554#3801554
+  list-unstaged-and-untracked-files = ls-files --modified --others --exclude-standard
+  list-untracked-files = ls-files --others --exclude-standard
+  list-unstaged-files-without-untracked = diff-unstaged-list-files
+  list-staged-files = diff-staged-list-files
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---name-only
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---colorltwhengt
+  #   Moved lines of code are colored differently. It can be changed by the diff.colorMoved configuration setting. The <mode> defaults to no if the option is not given and to zebra if the option with no mode is given.
+  #     https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-zebra
+  #     https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-dimmed-zebra
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---color-moved-wsltmodesgt
+  #   This configures how whitespace is ignored when performing the move detection for --color-moved. It can be set by the diff.colorMovedWS configuration setting.
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---word-diffltmodegt
+  #   Show a word diff, using the <mode> to delimit changed words. By default, words are delimited by whitespace; see --word-diff-regex below.
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---word-diff-regexltregexgt
+  #   Use <regex> to decide what a word is, instead of considering runs of non-whitespace to be a word. Also implies --word-diff unless it was already enabled.
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---find-renamesltngt
+  #   Detect renames. If n is specified, it is a threshold on the similarity index (i.e. amount of addition/deletions compared to the file’s size). For example, -M90% means Git should consider a delete/add pair to be a rename if more than 90% of the file hasn’t changed. The default similarity index is 50%.
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---find-copiesltngt
+  #   Detect copies as well as renames. See also --find-copies-harder
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---find-copies-harder
+  #  For performance reasons, by default, -C option finds copies only if the original file of the copy was modified in the same changeset. This flag makes the command inspect unmodified files as candidates for the source of copy. This is a very expensive operation for large projects, so use it with caution.
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt--Sltstringgt
+  #   Look for differences that change the number of occurrences of the specified string (i.e. addition/deletion) in a file. Intended for the scripter’s use.
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt--Gltregexgt
+  #   Look for differences whose patch text contains added/removed lines that match <regex>.
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---pickaxe-all
+  #   When -S or -G finds a change, show all the changes in that changeset, not just the files that contain the change in <string>.
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---pickaxe-regex
+  #   Treat the <string> given to -S as an extended POSIX regular expression to match.
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---function-context
+  #   Show whole function as context lines for each change. The function names are determined in the same way as git diff works out patch hunk headers
+
+  # Stashing
+  stash-list = stash list
+  stash-peek = stash show -p
+  stash-peek-files = stash show
+  peek-stash = stash-peek
+
+  stash-patch = stash push --patch              # Stash parts of the specified pathspec of files (can label with -m)
+  stash-files = stash push --include-untracked  # Stash the specified pathspec of files (can label with -m)
+
+  # Ref: https://stackoverflow.com/questions/14759748/stashing-only-staged-changes-in-git-is-it-possible/59874960#59874960
+  # TODO: stash-staged / etc don't currently allow additional args (such as -m) to be passed to them
+  stash-staged = !git stash push --include-untracked -- $(git diff --staged --diff-filter=d --name-only)
+  # stash-staged = !"f() { git stash push -- $(git diff --staged --name-only); }; f"
+  # Ref: https://stackoverflow.com/questions/20028507/git-stash-uncached-how-to-put-away-all-unstaged-changes/68241237#68241237
+  stash-unstaged = !git stash push --keep-index -- $(git diff --diff-filter=d --name-only)
+  stash-unstaged-untracked = !git stash push --keep-index --include-untracked -- $(git ls-files --modified --others --exclude-standard)
+  stash-staged-unstaged-keep-staged = stash push --keep-index
+  stash-staged-unstaged-untracked-keep-staged = stash push --include-untracked --keep-index
+  # See also: new-branch-from-stash
+
+  # Patches
+  patch = !echo "See git-format-patch (https://git-scm.com/docs/git-format-patch), git diff --patch (https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---patch), etc",
+
+  # Fetch latest from origin/{master,staging} + fast-forward update branch (without needing to switch to the branch to do so)
+  # sync = !echo "Usage: git sync-master OR git sync-staging"
+  sync = !"f() { git fetch origin ${1}:${1}; }; f"
+  sync-master = fetch origin master:master
+  sync-staging = fetch origin staging:staging
+
+  # Fetch latest from origin/{master,staging}, then merged that branch into current branch
+  merge-master = !git fetch origin master && git merge --autostash origin/master
+  merge-staging = !git fetch origin staging && git merge --autostash origin/staging
+
+  # Fetch latest from origin/{master,staging}, then rebase current branch onto it
+  rebase-master = !git fetch origin master && git rebase --autostash origin/master
+  rebase-staging = !git fetch origin staging && git rebase --autostash origin/staging
+
+  # Delete {local,remote} branch
+  delete-local-branch               = branch -d
+  delete-remote-origin-branch       = push origin --delete
+
+  # Force delete {local,remote} branch
+  force-delete-local-branch         = branch -D
+
+  # Ref: https://stackoverflow.com/questions/39220870/in-git-list-names-of-branches-with-unpushed-commits/48180899#48180899
+  list-unpushed                     = list-unpushed-to-origin
+  list-unpushed-to-origin           = log --branches --not --remotes=origin --no-walk --decorate --oneline
+
+  # List {local,remote} branches that have been merged into BRANCH
+  list-local-merged                 = branch --merged
+  list-remote-merged                = branch --remote --merged
+
+  # (Ref: https://stackoverflow.com/questions/43489303/how-can-i-delete-all-git-branches-which-have-been-squash-and-merge-via-github/56026209#56026209)
+
+  # List {local,remote} branches that have been merged into {master,staging}
+  list-local-merged-master          = !git list-local-merged master   | grep -v master | grep -v staging
+  list-local-merged-staging         = !git list-local-merged staging  | grep -v master | grep -v staging
+  list-remote-merged-master         = !git list-remote-merged master  | grep -v master | grep -v staging
+  list-remote-merged-staging        = !git list-remote-merged staging | grep -v master | grep -v staging
+
+  # List local branches that have been squash merged into {master,staging}
+  list-local-squash-merged-master   = !$ZSH/bin/git-list-local-squash-merged-master
+  list-local-squash-merged-staging  = !$ZSH/bin/git-list-local-squash-merged-staging
+  list-local-squash-merged-github   = !$ZSH/bin/git-list-local-squash-merged-env-github
+  list-local-squash-merged-ohbm     = !$ZSH/bin/git-list-local-squash-merged-env-ohbm
+
+  # Count {local,remote} branches that have been merged into {master,staging}
+  count-local-merged-master         = !git list-local-merged-master   | wc -l
+  count-local-merged-staging        = !git list-local-merged-staging  | wc -l
+  count-remote-merged-master        = !git list-remote-merged-master  | wc -l
+  count-remote-merged-staging       = !git list-remote-merged-staging | wc -l
+
+  # Count local branches that have been squash merged into {master,staging}
+  count-local-squash-merged-master   = !$ZSH/bin/git-list-local-squash-merged-master  | wc -l
+  count-local-squash-merged-staging  = !$ZSH/bin/git-list-local-squash-merged-staging | wc -l
+
+  # Cleanup {local,remote} merged branches
+  cleanup-local-merged-master       = !git list-local-merged-master   | xargs echo RUN THE FOLLOWING IF YOU ARE CERTAIN: git delete-local-branch ;:
+  cleanup-local-merged-staging      = !git list-local-merged-staging  | xargs echo RUN THE FOLLOWING IF YOU ARE CERTAIN: git delete-local-branch ;:
+  cleanup-remote-merged-master      = !git list-remote-merged-master  | xargs echo RUN THE FOLLOWING IF YOU ARE CERTAIN: git delete-remote-origin-branch ;:
+  cleanup-remote-merged-staging     = !git list-remote-merged-staging | xargs echo RUN THE FOLLOWING IF YOU ARE CERTAIN: git delete-remote-origin-branch ;:
+
+  # Cleanup local branches that have been squash merged into {master,staging}
+  cleanup-local-squash-merged-master   = !git list-local-squash-merged-master  | xargs echo RUN THE FOLLOWING IF YOU ARE CERTAIN: git force-delete-local-branch ;:
+  cleanup-local-squash-merged-staging  = !git list-local-squash-merged-staging | xargs echo RUN THE FOLLOWING IF YOU ARE CERTAIN: git force-delete-local-branch ;:
 
 # Include our .gitconfig.local configuration as well
 # Ref: https://git-scm.com/docs/git-config#_includes (include since v1.7.10, includeIf since v2.13)
