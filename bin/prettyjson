@@ -1,3 +1,52 @@
-#!/bin/bash
-# Simple JSON pretty print for contents on your cliboard
-pbpaste | json_pp | pbcopy
+#!/usr/bin/env zsh
+
+# Simple JSON pretty print helper script
+
+# Import our common helper scripts
+source "${ZSH}/lib/_helpers"
+
+getInput() {
+  if [ -t 0 ]; then
+    echo >&2 "Formatting JSON in clipboard..."
+    INPUT=$(pbpaste)
+  else
+    echo >&2 "Formatting JSON from STDIN..."
+    INPUT=$(cat -)
+  fi
+}
+
+formatJson() {
+  # https://stackoverflow.com/questions/20265439/how-can-i-pretty-print-a-json-file-from-the-command-line/24951417
+  if is_installed "json_pp" &>/dev/null; then
+    echo >&2 "Using 'json_pp'..."
+
+    FORMATTED=$(echo "$INPUT" | json_pp)
+  elif is_installed "jq" &>/dev/null; then
+    echo >&2 "Using 'jq'..."
+
+    FORMATTED=$(echo "$INPUT" | jq)
+  elif is_installed "python" &>/dev/null; then
+    echo >&2 "Using 'python -m json.tool'..."
+
+    FORMATTED=$(echo "$INPUT" | python -m json.tool)
+  else
+    echo >&2 "ERROR: no supported JSON pretty print tools installed (supported: json_pp, jq, python -m json.tool)"
+    exit 1
+  fi
+}
+
+handleOutput() {
+  if [ -t 1 ]; then
+    echo >&2 "Writing formatted JSON back into the clipboard..."
+    echo "$FORMATTED" | pbcopy
+  else
+    echo >&2 "Writing formatted JSON to STDOUT..."
+    echo "$FORMATTED"
+  fi
+}
+
+getInput
+
+formatJson
+
+handleOutput
