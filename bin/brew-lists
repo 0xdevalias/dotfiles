@@ -2,7 +2,7 @@
 
 source $ZSH/lib/_helpers
 
-HOST="`hostname`"
+HOST="$(hostname)"
 DIR="$HOME/.dotfiles/homebrew/lists/$HOST"
 mkdir -p "$DIR"
 cd "$DIR"
@@ -12,29 +12,29 @@ brew update
 
 echo "Updating list files for $HOST.."
 echo "  Dumping Brew list.."
-brew list --formula > brew.$HOST.list
+brew list --formula >brew.$HOST.list
 echo "  Dumping Brew cask list.."
-brew list --cask > brew-cask.$HOST.list
+brew list --cask >brew-cask.$HOST.list
 echo "  Dumping Brew taps.."
-brew tap > brew-tap.$HOST.list
+brew tap >brew-tap.$HOST.list
 
 echo "  Dumping Brew bundle.."
 brew bundle dump --force --file="Brewfile.$HOST.list"
 
 echo "  Dumping Mas list.."
-mas list > mas.$HOST.list
+mas list >mas.$HOST.list
 
 echo "  Dumping Whalebrew list.."
-if is_installed "whalebrew" 1> /dev/null; then
-  whalebrew list > whalebrew.$HOST.list
+if is_installed "whalebrew" 1>/dev/null; then
+  whalebrew list >whalebrew.$HOST.list
 else
   echo "    [WARNING] 'whalebrew' not found, assuming it isn't installed. Skipping."
 fi
 
 # Atom
 echo "  Dumping Atom.."
-if is_installed "apm" 1> /dev/null; then
-  apm list --installed --bare > apm.$HOST.list
+if is_installed "apm" 1>/dev/null; then
+  apm list --installed --bare >apm.$HOST.list
 else
   echo "    [WARNING] 'apm' not found, assuming Atom isn't installed. Skipping."
 fi
@@ -42,11 +42,11 @@ fi
 # Node
 # TODO: do this for each installed version in nodenv, not just the default?
 echo "  Dumping NPM.."
-npm list -g --depth=0 > npm.$HOST.list
+npm list -g --depth=0 >npm.$HOST.list
 
 # Ruby
 echo "  Dumping Ruby Gems.."
-ruby -e 'puts Gem::Specification.all_names' > gem.$HOST.list
+ruby -e 'puts Gem::Specification.all_names' >gem.$HOST.list
 
 # Python
 # TODO: do this for each installed version in pyenv, not just the default?
@@ -56,8 +56,8 @@ eval "$(pyenv init -)"
 
 echo "    Python (System version)"
 pyenv shell system
-if is_installed "pip" 1> /dev/null; then
-  pip list > pip.$HOST.system.list
+if is_installed "pip" 1>/dev/null; then
+  pip list >pip.$HOST.system.list
 else
   echo "    [WARNING] 'pip' not found, assuming it isn't installed. Skipping."
 fi
@@ -65,8 +65,8 @@ pyenv shell --unset
 
 echo "    Python 2.x"
 pyenv shell $PYTHON_2X_VER
-if is_installed "pip" 1> /dev/null; then
-  pip list > pip.$HOST.list
+if is_installed "pip" 1>/dev/null; then
+  pip list >pip.$HOST.list
 else
   echo "    [WARNING] 'pip' not found, assuming it isn't installed. Skipping."
 fi
@@ -74,8 +74,8 @@ pyenv shell --unset
 
 echo "    Python 3.x"
 pyenv shell $PYTHON_3X_VER
-if is_installed "pip3" 1> /dev/null; then
-  pip3 list > pip3.$HOST.list
+if is_installed "pip3" 1>/dev/null; then
+  pip3 list >pip3.$HOST.list
 else
   echo "    [WARNING] 'pip3' not found, assuming it isn't installed. Skipping."
 fi
@@ -83,12 +83,12 @@ pyenv shell --unset
 
 # Go
 echo "  Dumping Golang bin/ folder"
-echo "$(cd ${GOPATH%%:*}/bin && ls)" > go.$HOST.list
+echo "$(cd ${GOPATH%%:*}/bin && ls)" >go.$HOST.list
 
 # GitHub CLI
 echo "  Dumping GitHub CLI extensions list.."
-if is_installed "gh" 1> /dev/null; then
-  gh extension list > gh.$HOST.list
+if is_installed "gh" 1>/dev/null; then
+  gh extension list >gh.$HOST.list
 else
   echo "    [WARNING] 'gh' not found, assuming it isn't installed. Skipping."
 fi
