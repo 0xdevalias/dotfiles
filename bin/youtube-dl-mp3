@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Ref:
+#   https://itsfoss.com/youtube-dl-audio-only/
+#     -x --audio-format mp3
+#     --extract-audio --audio-format mp3 -o "%(title)s.%(ext)s"
+#   https://www.reddit.com/r/DataHoarder/comments/aoemi7/can_you_resume_youtubedl_channelplaylist_download/
+#     --download-archive done.txt
+#   https://stackoverflow.com/questions/35982269/youtube-dl-how-do-i-resume-a-download-after-error
+#      --continue --ignore-errors --no-overwrites
+#      -ciw
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 YOUTUBE_URL"
+  exit
+fi
+
+youtube-dl -x --audio-format mp3 --ignore-errors --no-overwrites --download-archive youtube-download-mp3.txt $@
