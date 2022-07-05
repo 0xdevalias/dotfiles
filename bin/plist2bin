@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+if [[ -z "$1" ]]; then
+  echo "Usage: $0 PLISTFILE"
+  echo " eg."
+  echo "   $0 foo.plist.xml"
+  echo "   $0 foo.plist.json"
+  exit
+fi
+
+plutil -convert binary1 -e plist -- "$1"

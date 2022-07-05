@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+if [[ -z "$1" ]]; then
+  echo "Usage: $0 PLISTFILE"
+  echo " eg."
+  echo "   $0 foo.plist"
+  echo "   $0 foo.plist.json"
+  exit
+fi
+
+plutil -convert xml1 -e xml -- "$1"
