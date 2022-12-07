@@ -96,7 +96,9 @@
   #  Note: this doesn't work if you're already in staging.. we could make it better.
   # new-branch-from-staging = !"f() { git sync-staging && git checkout -b ${1} staging; }; f"
   branch-rename = !echo "See grename zsh alias"
+  branch-rename-local = branch -m
   rename-branch = branch-rename
+  rename-branch-local = branch-rename-local
 
   # Aliases
   alias = !echo Add with git config --global alias.FOO 'MY TOTALLY SWEET ALIAS'
@@ -132,6 +134,7 @@
   # https://stackoverflow.com/questions/7759193/git-diff-renamed-file
   # https://stackoverflow.com/questions/1955985/what-does-the-caret-character-mean
   # https://stackoverflow.com/questions/29810331/is-there-a-quick-way-to-git-diff-from-the-point-or-branch-origin
+  diff-untracked-files = diff --no-index
   diff-renamed = !echo "git diff SOURCEBRANCH:src/foo/bar.ts HEAD:src/foo/baz.ts"
   # diff-renamed = !echo "git diff @{upstream}:src/foo/bar.ts HEAD:src/foo/baz.ts" TODO: Not sure if this is correct?
   diff-aliases = !echo "TODO: Add aliases for different forms of git diff that are useful in different circumstances. Particularly look at: git diff --color-moved=<mode>, where mode is zebra/dimmed-zebra, etc"
