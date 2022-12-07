@@ -130,6 +130,16 @@ defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebK
 # Add a context menu item for showing the Web Inspector in web views
 defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
 
+# ==============================================
+# Chrome
+# ==============================================
+
+# Tell Chrome to always restore windows to their original spaces
+#   Ref: https://superuser.com/questions/1111535/how-can-i-make-osx-remember-the-desktop-assignment-of-different-chrome-windows
+#   Original bug: https://bugs.chromium.org/p/chromium/issues/detail?id=74812#c117
+#   Followup bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1012034
+defaults write com.google.Chrome NSWindowRestoresWorkspaceAtLaunch -bool YES
+
 ###############################################################################
 # Mac App Store                                                               #
 ###############################################################################
