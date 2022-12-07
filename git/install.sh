@@ -5,4 +5,6 @@ source "${ZSH}/lib/_helpers"
 
 check_installed brew
 
-brew install hub # https://hub.github.com
+# brew install hub                        # https://hub.github.com
+brew install gh                         # https://github.com/cli/cli
+brew install git-delete-merged-branches # https://github.com/hartwork/git-delete-merged-branches
