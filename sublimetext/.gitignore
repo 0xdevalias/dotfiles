@@ -1,1 +1,5 @@
 SublimeSettings/Package Control.user-ca-bundle
+
+# I think the following relate to the 'Compare Side-By-Side' addon package, and should get reinstalled alongside it automagically
+SublimeSettings/SBSCompareScheme.hidden-color-scheme
+SublimeSettings/SBSCompareTheme.hidden-tmTheme
