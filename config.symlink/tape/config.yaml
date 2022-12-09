@@ -1,0 +1,8 @@
+---
+#backup_to: "/Users/devalias/.config/tape/Backups"
+backup_to: "/Users/devalias/Dropbox/Backup/Tape"
+keep: 5
+exclude:
+- ssh
+- "Google Chrome"
+include:

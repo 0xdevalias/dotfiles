@@ -1,0 +1,24 @@
+configstore/
+
+gcloud/
+
+gh/hosts.yml
+
+github-copilot/hosts.json
+
+github-repos/
+
+gtk-2.0/
+
+iterm2/
+
+jgit/
+
+MusicBrainz/
+
+pudb/
+
+# TODO: can we figure a way to track rclone config without risking exposing credentials?
+rclone/rclone.conf
+
+tape/Definitions/
