@@ -23,6 +23,7 @@ mv
 pax
 ps
 pwd
+realpath
 rm
 rmdir
 sh

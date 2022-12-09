@@ -1,5 +1,7 @@
 homebrew/bundle
 homebrew/cask
-homebrew/cask-versions
+homebrew/cask-fonts
 homebrew/core
-twilio/brew
+turbot/tap
+vitorgalvao/tiny-scripts
+zero-sh/tap
