@@ -109,6 +109,14 @@
   edit-aliases = !subl $ZSH/git/gitconfig.symlink
   aliases-edit = edit-aliases
 
+  # Pull Requests (PRs)
+  # Ref: https://stackoverflow.com/questions/14848274/git-log-to-get-commits-only-for-a-specific-branch/24668421#24668421
+  deploy-list-commits          = !echo See git aliases for pr-list-commits-*
+  pr-list-commits-master       = cherry -v master
+  pr-list-commits-main         = cherry -v main
+  pr-list-commits-staging      = cherry -v staging
+  pr-list-commits-staging-ghio = cherry -v staging-ghio
+
   # Searching
   #
   # Refs:
