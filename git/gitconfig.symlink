@@ -151,6 +151,19 @@
   diff-staged = diff --staged
   diff-staged-list-files = diff --staged --name-only
 
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---color-movedltmodegt
+  # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---color-moved-wsltmodesgt
+  # https://git-scm.com/docs/git-config#Documentation/git-config.txt-color
+  # https://git-scm.com/docs/git-config#Documentation/git-config.txt-colordiffltslotgt
+  diff-refactor = \
+    -c color.diff.oldMoved='white dim' \
+    -c color.diff.oldMovedAlternative='white dim' \
+    -c color.diff.newMoved='white dim' \
+    -c color.diff.newMovedAlternative='white dim' \
+    -c color.diff.newMovedDimmed='white dim' \
+    -c color.diff.newMovedAlternativeDimmed='white dim' \
+    diff --ignore-blank-lines --color-moved=dimmed-zebra --color-moved-ws=ignore-all-space --minimal
+
   #  Ref: https://stackoverflow.com/questions/3801321/git-list-only-untracked-files-also-custom-commands/3801554#3801554
   list-unstaged-and-untracked-files = ls-files --modified --others --exclude-standard
   list-untracked-files = ls-files --others --exclude-standard
