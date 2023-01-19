@@ -16,6 +16,8 @@ jgit/
 
 MusicBrainz/
 
+OpenRGB/logs/*.log
+
 pudb/
 
 # TODO: can we figure a way to track rclone config without risking exposing credentials?
