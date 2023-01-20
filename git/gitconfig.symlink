@@ -310,6 +310,8 @@
 [include]
   path = ~/.gitconfig.local
 
+[tag]
+	forceSignAnnotated = true
 [credential "https://github.com"]
 	helper =
 	helper = !/usr/local/bin/gh auth git-credential
