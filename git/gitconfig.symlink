@@ -163,6 +163,22 @@
     -c color.diff.newMovedDimmed='white dim' \
     -c color.diff.newMovedAlternativeDimmed='white dim' \
     diff --ignore-blank-lines --color-moved=dimmed-zebra --color-moved-ws=ignore-all-space --minimal
+  # For more info on parsing the --color-moved output to simplify things even more:
+  #   https://gist.github.com/0xdevalias/1245fe66ac6953d490114b417a0075e3
+  #     > Some tips/tricks/hacks for working with git diff --color-moved to simplify refactor code reviews
+  #     Originally posted at: https://github.com/orgs/community/discussions/9632#discussioncomment-4702442
+  #
+  # The following will use the diff-refactor alias and sed to match all of the lines that use dimmed white (we need to explicitly enable --color so that color isn't disabled when piped to sed):
+  #   git diff-refactor --color | sed -n '/\x1b\[2;37m/p'
+  # The following will attempt to delete all matching lines that use dimmed white / dimmed:
+  #   git diff-refactor --color | sed '/\x1b\[2;37m/d' | sed '/\x1b\[2m/d'
+  # Strip 'dim white' `+`:
+  #   sed -r "s/\x1B\[2;37m\+(.*)\x1B\[m/\1/g"
+  # Strip 'dim' `-`, keeping the content between:
+  #   sed -r "s/\x1B\[2m-(.*)\x1B\[m/\1/g"
+  # Strip all colour codes:
+  #   sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"
+  # If we then put that colour stripped output into a standard GitHub code block with diff formatting, it will only use the + and - lines to determine the colouring to show, and so will highlight the 'actual' changes in red/green.
 
   #  Ref: https://stackoverflow.com/questions/3801321/git-list-only-untracked-files-also-custom-commands/3801554#3801554
   list-unstaged-and-untracked-files = ls-files --modified --others --exclude-standard
