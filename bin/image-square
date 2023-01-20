@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# TODO: explore doing this with #!/usr/bin/env magick-script
+#
+# refs:
+#   https://imagemagick.org/script/magick-script.php
+#   https://imagemagick.org/script/command-line-processing.php
+#   https://imagemagick.org/Usage/bugs/IMv7_Scripting.txt
+#   https://github.com/ImageMagick/ImageMagick/tree/master/api_examples
+
+-resize 900x900 -background Black -gravity center -extent 900x900 out.png
