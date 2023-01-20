@@ -287,3 +287,10 @@
 # Ref: https://git-scm.com/docs/git-config#_includes (include since v1.7.10, includeIf since v2.13)
 [include]
   path = ~/.gitconfig.local
+
+[credential "https://github.com"]
+	helper =
+	helper = !/usr/local/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/usr/local/bin/gh auth git-credential
