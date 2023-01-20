@@ -319,3 +319,5 @@
 [credential "https://gist.github.com"]
 	helper =
 	helper = !/usr/local/bin/gh auth git-credential
+[init]
+	defaultBranch = main
