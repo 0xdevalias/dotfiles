@@ -118,6 +118,11 @@
   pr-list-commits-staging      = cherry -v staging
   pr-list-commits-staging-ghio = cherry -v staging-ghio
 
+  prs-for-commit               = !"f() { gh api /repos/{owner}/{repo}/commits/${1}/pulls; }; f"
+  list-prs-for-commit          = prs-for-commit
+  show-prs-for-commit          = prs-for-commit
+  find-prs-for-commit          = prs-for-commit
+
   # Searching
   #
   # Refs:
