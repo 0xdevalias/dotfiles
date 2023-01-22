@@ -53,8 +53,7 @@ list_antigen_files() {
 antigen_list_files() { list_antigen_files }
 
 # Load antigen files
-for file in ${antigen_files}
-do
+for file in ${antigen_files}; do
   echo "  $file"
   source $file
 done
