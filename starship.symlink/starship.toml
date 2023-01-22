@@ -1,0 +1,15 @@
+# Ref:
+#   https://starship.rs/config/
+#   https://starship.rs/advanced-config/
+
+# Get editor completions based on the config schema
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# # https://starship.rs/config/#prompt
+# format = '$all'
+
+# # https://starship.rs/advanced-config/#enable-right-prompt
+# right_format = '$all'
+
+# Inserts a blank line between shell prompts
+add_newline = false

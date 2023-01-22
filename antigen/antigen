@@ -77,13 +77,18 @@ antigen bundle github
 #antigen bundle wd
 
 # Load the theme
-# export ANTIGEN_THEME='pygmalion'      # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/pygmalion.zsh-theme
-# export ANTIGEN_THEME='robbyrussell'   # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/robbyrussell.zsh-theme
-# export ANTIGEN_THEME='amuse'          # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/amuse.zsh-theme
-# export ANTIGEN_THEME='dallas'         # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/dallas.zsh-theme
-export ANTIGEN_THEME='sunrise'        # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/sunrise.zsh-theme
+if (( $+commands[starship] )); then
+  echo "  [antigen] It looks like starship is installed, so we won't load antigen theme..."
+  export ANTIGEN_THEME=''
+else
+  export ANTIGEN_THEME='pygmalion'      # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/pygmalion.zsh-theme
+  # export ANTIGEN_THEME='robbyrussell'   # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/robbyrussell.zsh-theme
+  # export ANTIGEN_THEME='amuse'          # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/amuse.zsh-theme
+  # export ANTIGEN_THEME='dallas'         # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/dallas.zsh-theme
+  # export ANTIGEN_THEME='sunrise'        # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/sunrise.zsh-theme
 
-antigen theme "$ANTIGEN_THEME"
+  antigen theme "$ANTIGEN_THEME"
+fi
 
 # Tell antigen we're done
 antigen apply

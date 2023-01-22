@@ -2,6 +2,11 @@
 #   /Users/devalias/.dotfiles/antigen/antigen
 #     antigen theme pygmalion
 
+if (( $+commands[starship] )); then
+  echo "[prompt.zsh] It looks like starship is installed, so we won't run the customisations in prompt.zsh..."
+  return
+fi
+
 autoload colors && colors
 # cheers, @ehrenmurdick
 # http://github.com/ehrenmurdick/config/blob/master/zsh/prompt.zsh
