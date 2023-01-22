@@ -41,6 +41,17 @@ antigen use oh-my-zsh
 typeset -U antigen_files
 antigen_files=($ZSH/**/*.anti)
 
+# Create a function we can call later to see what was loaded
+list_antigen_files() {
+  echo "Custom antigen files loaded for $ZSH:"
+  for file in ${antigen_files}; do
+    echo "  $file"
+  done
+}
+
+# And alias the function to start with antigen_ so we can remember how to find it
+antigen_list_files() { list_antigen_files }
+
 # Load antigen files
 for file in ${antigen_files}
 do
