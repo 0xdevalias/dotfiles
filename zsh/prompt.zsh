@@ -1,3 +1,7 @@
+# TODO: It seems that the prompt being set here is being overridden by the antigen theme we are loading in
+#   /Users/devalias/.dotfiles/antigen/antigen
+#     antigen theme pygmalion
+
 autoload colors && colors
 # cheers, @ehrenmurdick
 # http://github.com/ehrenmurdick/config/blob/master/zsh/prompt.zsh
