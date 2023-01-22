@@ -71,6 +71,13 @@ directory_name() {
   echo "%{$fg_bold[cyan]%}%1/%\/%{$reset_color%}"
 }
 
+# Note: This was originally at the top of config.zsh, but was moved here to unify things that modify the prompt. Unsure if we even need it anymore..?
+if [[ -n $SSH_CONNECTION ]]; then
+  export PS1='%m:%3~$(git_info_for_prompt)%# '
+else
+  export PS1='%3~$(git_info_for_prompt)%# '
+fi
+
 export PROMPT=$'\n$(rb_prompt)in $(directory_name) $(git_dirty)$(need_push)\n› '
 set_prompt () {
   export RPROMPT="%{$fg_bold[cyan]%}%{$reset_color%}"
