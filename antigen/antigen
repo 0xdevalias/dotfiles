@@ -77,11 +77,13 @@ antigen bundle github
 #antigen bundle wd
 
 # Load the theme
-#antigen theme robbyrussell
-#antigen theme amuse
-#antigen theme dallas
-antigen theme pygmalion
-#antigen theme sunrise
+# export ANTIGEN_THEME='pygmalion'      # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/pygmalion.zsh-theme
+# export ANTIGEN_THEME='robbyrussell'   # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/robbyrussell.zsh-theme
+# export ANTIGEN_THEME='amuse'          # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/amuse.zsh-theme
+# export ANTIGEN_THEME='dallas'         # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/dallas.zsh-theme
+export ANTIGEN_THEME='sunrise'        # https://github.com/ohmyzsh/ohmyzsh/blob/master/themes/sunrise.zsh-theme
+
+antigen theme "$ANTIGEN_THEME"
 
 # Tell antigen we're done
 antigen apply
