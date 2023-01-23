@@ -7,9 +7,54 @@
 
 # # https://starship.rs/config/#prompt
 # format = '$all'
+format = '$username([@](cyan)$hostname)([:](red)$directory)[|](red)($git_branch$git_status$git_state )$character'
 
 # # https://starship.rs/advanced-config/#enable-right-prompt
 # right_format = '$all'
 
 # Inserts a blank line between shell prompts
 add_newline = false
+
+# https://starship.rs/config/#username
+[username]
+style_root = 'red bold'
+style_user = 'purple'
+format = '[$user]($style)'
+show_always = true
+
+# https://starship.rs/config/#hostname
+[hostname]
+style = 'yellow'
+format = '[$ssh_symbol$hostname]($style)'
+ssh_only = false
+
+# https://starship.rs/config/#directory
+[directory]
+style = 'cyan'
+read_only_style = 'red'
+format = '[$path]($style)[$read_only]($read_only_style)'
+truncate_to_repo = false
+truncation_symbol = '.../'
+truncation_length = 0
+
+# https://starship.rs/config/#git-branch
+[git_branch]
+style = 'green'
+format = '[$symbol$branch(:$remote_branch)]($style)'
+symbol = '' # TODO: go back to default once I install a nerd font that has the proper symbols?
+
+# https://starship.rs/config/#git-state
+[git_state]
+style = 'bold yellow'
+format = '\[[$state( $progress_current/$progress_total)]($style)\]'
+
+# https://starship.rs/config/#git-status
+[git_status]
+style = 'red'
+format = '([\[$all_status$ahead_behind\]]($style))'
+
+# https://starship.rs/config/#character
+[character]
+success_symbol = '[⇒](cyan)'
+error_symbol = '[⇒](red)'
+format = '$symbol '
