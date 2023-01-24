@@ -177,6 +177,7 @@
     -c color.diff.newMovedDimmed='white dim' \
     -c color.diff.newMovedAlternativeDimmed='white dim' \
     diff --ignore-blank-lines --color-moved=dimmed-zebra --color-moved-ws=ignore-all-space --minimal
+  diff-refactor-commit = !"f() { git diff-refactor ${1}~1 ${1}; }; f"
   # For more info on parsing the --color-moved output to simplify things even more:
   #   https://gist.github.com/0xdevalias/1245fe66ac6953d490114b417a0075e3
   #     > Some tips/tricks/hacks for working with git diff --color-moved to simplify refactor code reviews
