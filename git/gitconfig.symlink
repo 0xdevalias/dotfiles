@@ -123,6 +123,14 @@
   show-prs-for-commit          = prs-for-commit
   find-prs-for-commit          = prs-for-commit
 
+  # Commits
+  list-commits-shorthash         = "log --pretty=format:'- `%s` %h' --reverse"
+  list-commits-longhash          = "log --pretty=format:'- `%s` %H' --reverse"
+  list-commits-shorthash-count   = list-commits-shorthash -n
+  list-commits-shorthash-count-5 = list-commits-shorthash-count 5
+  list-commits-longhash-count    = list-commits-longhash -n
+  list-commits-longhash-count-5  = list-commits-longhash-count 5
+
   # Searching
   #
   # Refs:
