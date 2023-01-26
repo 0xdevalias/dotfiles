@@ -1,4 +1,6 @@
 {
   // 0 for tabs (default), >0 for number of spaces
   "indent": "2",
+
+  "format_on_save": false,
 }
