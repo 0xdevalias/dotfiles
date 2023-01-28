@@ -33,6 +33,7 @@ Useful Commands:
 
   git new-branch 0xdevalias/add-formula-FORMULA
   git commit -m 'add FORMULA VERSION'
+  git checkout master
 
   gh pr create --repo homebrew/homebrew-core --web
 
@@ -50,6 +51,7 @@ BREW_NEW_CASK_INFO=$(cat <<'END_HEREDOC'
 Docs:
   https://github.com/Homebrew/homebrew-cask/blob/master/CONTRIBUTING.md#adding-a-cask
   https://docs.brew.sh/Adding-Software-to-Homebrew#casks
+  https://docs.brew.sh/Acceptable-Casks#finding-a-home-for-your-cask
   https://docs.brew.sh/Cask-Cookbook
     https://docs.brew.sh/Cask-Cookbook#stanza-livecheck
   https://docs.brew.sh/Brew-Livecheck
@@ -69,10 +71,12 @@ Useful Commands:
     brew create --cask URL
     brew create --cask --tap Homebrew/homebrew-cask-versions URL
 
+  brew install --cask CASK
+
   brew createzap CASK
 
   brew livecheck -h
-  brew livecheck CASK
+  brew livecheck --cask CASK
   $(brew --repository homebrew/cask)/developer/bin/find-appcast '/path/to/application.app'
 
   brew style --fix CASK
@@ -89,6 +93,7 @@ Useful Commands:
 
   git new-branch 0xdevalias/add-cask-CASK
   git commit -m 'add CASK VERSION'
+  git checkout master
 
   One of:
     gh pr create --repo homebrew/homebrew-cask --web
