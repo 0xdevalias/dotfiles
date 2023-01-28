@@ -93,3 +93,4 @@ END_HEREDOC
 )
 
 alias brew-new-cask="echo '$BREW_NEW_CASK_INFO'"
+alias brew-new-cask-search-existing='f() { echo "Checking Homebrew/homebrew-cask.."; gh search issues --include-prs --repo=Homebrew/homebrew-cask "$1"; echo "Checking Homebrew/homebrew-cask-versions.."; gh search issues --include-prs --repo=Homebrew/homebrew-cask-versions "$1"; }; f'
