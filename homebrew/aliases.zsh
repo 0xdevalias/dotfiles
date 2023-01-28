@@ -6,6 +6,7 @@ alias brew-tapsdir="cd $(brew --prefix)/Homebrew/Library/Taps && pwd"
 alias brew-tapsdir-homebrew="cd $(brew --prefix)/Homebrew/Library/Taps/homebrew/ && pwd"
 alias brew-tapsdir-core="cd $(brew --prefix)/Homebrew/Library/Taps/homebrew/homebrew-core/Formula && pwd"
 alias brew-tapsdir-cask="cd $(brew --prefix)/Homebrew/Library/Taps/homebrew/homebrew-cask/Casks && pwd"
+alias brew-tapsdir-cask-versions="cd $(brew --prefix)/Homebrew/Library/Taps/homebrew/homebrew-cask-versions/Casks && pwd"
 alias brew-add="echo Try one of: 'brew create -h', brew-new-formula, brew-new-cask"
 alias brew-commands="brew commands"
 
