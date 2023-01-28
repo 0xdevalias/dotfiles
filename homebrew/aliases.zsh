@@ -28,7 +28,9 @@ Useful Commands:
   brew audit --online FORMULA
   brew audit --strict FORMULA
 
-  git remote add 0xdevalias git@github.com:0xdevalias/homebrew-core.git
+  Once off:
+    git remote add 0xdevalias git@github.com:0xdevalias/homebrew-core.git
+
   git new-branch 0xdevalias/add-formula-FORMULA
   git commit -m 'add FORMULA VERSION'
 
