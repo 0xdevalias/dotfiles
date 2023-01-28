@@ -118,3 +118,29 @@ weight of my changes and tweaks inspired me to finally roll my own. But Ryan's
 dotfiles were an easy way to get into bash customization, and then to jump ship
 to zsh a bit later. A decent amount of the code in these dotfiles stem or are
 inspired from Ryan's original project.
+
+## See Also
+
+### Other things by me
+
+- https://www.devalias.net/ ([source](https://github.com/0xdevalias/devalias.net))
+  - My Blog
+- https://github.com/0xdevalias ([profile source](https://github.com/0xdevalias/0xdevalias))
+  - My GitHub Profile
+  - [My Repos](https://github.com/0xdevalias?tab=repositories)
+    - [`chrome-*` (Chrome Extension) repos](https://github.com/0xdevalias?tab=repositories&q=chrome-&type=&language=&sort=)
+    - [`poc-*` (Proof of Concept) repos](https://github.com/0xdevalias?tab=repositories&q=poc-&type=&language=&sort=)
+- https://github.com/0xdevalias/dotfiles (this repo!)
+  - > devalias does dotfiles
+- https://github.com/0xdevalias/chrome-NewWindowWithTabsToRight ([Announcement Blog](https://www.devalias.net/dev/chrome-extensions/new-window-with-tabs-to-right/), [Chrome Webstore](https://chrome.google.com/webstore/detail/new-window-with-tabs-to-r/ldahcfljppchbfgdokomobmfdfplaman))
+  - > Create a new window from the tabs to the right of the currently selected tab.
+- https://github.com/0xdevalias/userscripts
+  - > My user scripts to add functionality to various sites around the web (that were too small for me to bother turning into a full-fledged Chrome extension)
+- https://github.com/0xdevalias/awesome-gmail-filters
+  - > Awesome list of Gmail filters and related resources
+- My [Homebrew](https://brew.sh/) Contributions
+  - [Homebrew/homebrew-core PRs](https://github.com/Homebrew/homebrew-core/pulls?q=is%3Apr+author%3A0xdevalias)
+  - [Homebrew/homebrew-cask PRs](https://github.com/Homebrew/homebrew-cask/pulls?q=is%3Apr+author%3A0xdevalias)
+  - [Homebrew/homebrew-cask-versions PRs](https://github.com/Homebrew/homebrew-cask-versions/pulls?q=is%3Apr+author%3A0xdevalias)
+  - etc
+- Probably a lot more around the net that I haven't thought to link to here.. hope you find something cool/useful out there!
