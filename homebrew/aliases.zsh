@@ -15,6 +15,10 @@ Docs:
   TODO
 
 Useful Commands:
+  brew-new-formula-search-existing FORMULA
+    Which is an alias for:
+      gh search issues --include-prs --repo=Homebrew/homebrew-core FORMULA
+
   brew create --help
 
   brew-tapsdir-core
