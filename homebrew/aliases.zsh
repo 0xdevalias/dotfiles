@@ -52,19 +52,38 @@ Docs:
 
 Useful Commands:
   gh search issues --include-prs --repo=Homebrew/homebrew-cask \"CASK\"
+  gh search issues --include-prs --repo=Homebrew/homebrew-cask-versions \"CASK\"s
+
   brew create --help
-  brew create --cask
+
+  One of:
+    brew create --cask
+    brew create --cask --tap Homebrew/homebrew-cask-versions
+
   brew createzap CASK
+
   brew livecheck -h
   brew livecheck CASK
   $(brew --repository homebrew/cask)/developer/bin/find-appcast '/path/to/application.app'
+
   brew style --fix CASK
   brew audit --new-cask CASK
   brew audit --cask --online CASK
-  brew-tapsdir-cask
+
+  One of:
+    brew-tapsdir-cask
+    brew-tapsdir-cask-versions
+
+  One of (once off):
+    git remote add 0xdevalias git@github.com:0xdevalias/homebrew-cask.git
+    git remote add 0xdevalias git@github.com:0xdevalias/homebrew-cask-versions.git
+
   git new-branch 0xdevalias/add-cask-CASK
   git commit -m 'add CASK VERSION'
-  gh pr create --repo homebrew/homebrew-cask --web
+
+  One of:
+    gh pr create --repo homebrew/homebrew-cask --web
+    gh pr create --repo homebrew/homebrew-cask-versions --web
 
 TODO: add more/better instructions/automations here..
 
