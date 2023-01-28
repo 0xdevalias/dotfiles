@@ -7,8 +7,36 @@ alias brew-tapsdir-homebrew="cd $(brew --prefix)/Homebrew/Library/Taps/homebrew/
 alias brew-tapsdir-core="cd $(brew --prefix)/Homebrew/Library/Taps/homebrew/homebrew-core/Formula && pwd"
 alias brew-tapsdir-cask="cd $(brew --prefix)/Homebrew/Library/Taps/homebrew/homebrew-cask/Casks && pwd"
 alias brew-add="echo Try one of: 'brew create -h', brew-new-formula, brew-new-cask"
-alias brew-new-formula="echo 'brew create --help\nbrew-tapsdir-core\nbrew style --fix FORMULA\nbrew audit --new FORMULA\nbrew audit --online FORMULA\nbrew audit --strict FORMULA\ngit new-branch 0xdevalias/add-formula-FORMULA\ngit remote add 0xdevalias git@github.com:0xdevalias/homebrew-core.git\ngh pr create --repo homebrew/homebrew-core --web\nTODO: add more/better instructions/automations here.. See also this PR I created, and might be usable as a reference: https://github.com/Homebrew/homebrew-core/pull/120044\nOr all my PRs: https://github.com/Homebrew/homebrew-core/pulls?q=is%3Apr+author%3A0xdevalias'"
 alias brew-commands="brew commands"
+
+BREW_NEW_FORMULA_INFO=$(cat <<'END_HEREDOC'
+Docs:
+  TODO
+
+Useful Commands:
+  brew create --help
+
+  brew-tapsdir-core
+
+  brew style --fix FORMULA
+  brew audit --new FORMULA
+  brew audit --online FORMULA
+  brew audit --strict FORMULA
+
+  git remote add 0xdevalias git@github.com:0xdevalias/homebrew-core.git
+  git new-branch 0xdevalias/add-formula-FORMULA
+  git commit -m 'add FORMULA VERSION'
+
+  gh pr create --repo homebrew/homebrew-core --web
+
+TODO: add more/better instructions/automations here..
+
+See also this PR I created, and might be usable as a reference: https://github.com/Homebrew/homebrew-core/pull/120044
+Or all my PRs: https://github.com/Homebrew/homebrew-core/pulls?q=is%3Apr+author%3A0xdevalias
+END_HEREDOC
+)
+
+alias brew-new-formula="echo '$BREW_NEW_FORMULA_INFO'"
 
 BREW_NEW_CASK_INFO=$(cat <<'END_HEREDOC'
 Docs:
