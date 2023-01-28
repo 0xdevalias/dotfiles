@@ -51,8 +51,10 @@ Docs:
     https://rubydoc.brew.sh/Homebrew/Livecheck/Strategy
 
 Useful Commands:
-  gh search issues --include-prs --repo=Homebrew/homebrew-cask \"CASK\"
-  gh search issues --include-prs --repo=Homebrew/homebrew-cask-versions \"CASK\"s
+  brew-new-cask-search-existing CASK
+    Which is an alias for:
+      gh search issues --include-prs --repo=Homebrew/homebrew-cask CASK
+      gh search issues --include-prs --repo=Homebrew/homebrew-cask-versions CASK
 
   brew create --help
 
