@@ -38,6 +38,7 @@ END_HEREDOC
 )
 
 alias brew-new-formula="echo '$BREW_NEW_FORMULA_INFO'"
+alias brew-new-formula-search-existing='f() { echo "Checking Homebrew/homebrew-core.."; gh search issues --include-prs --repo=Homebrew/homebrew-core "$1"; }; f'
 
 BREW_NEW_CASK_INFO=$(cat <<'END_HEREDOC'
 Docs:
