@@ -66,8 +66,8 @@ Useful Commands:
   brew create --help
 
   One of:
-    brew create --cask
-    brew create --cask --tap Homebrew/homebrew-cask-versions
+    brew create --cask URL
+    brew create --cask --tap Homebrew/homebrew-cask-versions URL
 
   brew createzap CASK
 
