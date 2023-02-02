@@ -50,7 +50,7 @@ format = '\[[$state( $progress_current/$progress_total)]($style)\]'
 
 # https://starship.rs/config/#git-status
 [git_status]
-style = 'red'
+style = 'dimmed white'
 format = '([\[$all_status$ahead_behind\]]($style))'
 
 # https://starship.rs/config/#character
