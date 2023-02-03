@@ -9,9 +9,27 @@
         {
             "commands":
             [
-                ["insert_snippet", { "contents": "[${SELECTION}](url)" }],
-                ["move", {"by": "words", "forward": false}],
-                ["move", {"by": "wordends", "forward": true, "extend": true}]
+                [
+                    "insert_snippet",
+                    {
+                        "contents": "[${SELECTION}](url)"
+                    }
+                ],
+                [
+                    "move",
+                    {
+                        "by": "words",
+                        "forward": false
+                    }
+                ],
+                [
+                    "move",
+                    {
+                        "by": "wordends",
+                        "forward": true,
+                        "extend": true
+                    }
+                ]
             ]
         },
         "context":
