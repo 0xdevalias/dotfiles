@@ -40,5 +40,24 @@
                 "operand": "text.html.markdown"
             }
         ]
+    },
+    {
+        "keys":
+        [
+            "super+b"
+        ],
+        "command": "insert_snippet",
+        "args":
+        {
+            "contents": "**${SELECTION}**"
+        },
+        "context":
+        [
+            {
+                "key": "selector",
+                "operator": "equal",
+                "operand": "text.html.markdown"
+            }
+        ]
     }
 ]
