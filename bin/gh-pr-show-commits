@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+# Originally shared this as part of the sparkletown/sparkle repo in https://github.com/sparkletown/sparkle/pull/1466
+
+# https://cli.github.com/
+# https://github.com/octokit/core.js
+#   TODO: rewrite this so that it uses octokit core, and then maybe do it as a GitHub action/similar?
+#   https://github.com/octokit/graphql.js
+#   https://github.com/octokit/action.js
+#   https://github.com/octokit/request-action
+#   https://github.com/actions/toolkit
+
+# Uses the GitHub CLI to call the GitHub API to retrieve all of the commits for a given PR.
+# Useful for generating the list of included commits for the description in deployment PRs.
+#
+# Usage:
+#   Retrieve a markdown formatted list of the first line of commit message for each commit in the specified PR
+#     ./pr-show-commits 1138
+#
+#   Count of commits in PR
+#     ./pr-show-commits 1138 | wc -l
+
+PR=$1
+
+gh api "/repos/:owner/:repo/pulls/$PR/commits" --jq 'map(.commit.message |= "- " + split("(?:\r\n|\n)"; "")[0]) | .[] | .commit.message'
