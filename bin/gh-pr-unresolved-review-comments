@@ -43,10 +43,10 @@ else
     exit 1
 fi
 
-gh api graphql -f query="
-  query FetchReviewComments {
-    repository(owner: \"$OWNER\", name: \"$REPO\") {
-      pullRequest(number: $PR) {
+gh api graphql -f owner="$OWNER" -f repo="$REPO" -F pr="$PR" -f query='
+  query FetchReviewComments($owner: String!, $repo: String!, $pr: Int!) {
+    repository(owner: $owner, name: $repo) {
+      pullRequest(number: $pr) {
         url
         reviewDecision
         reviewThreads(first: 100) {
@@ -71,4 +71,4 @@ gh api graphql -f query="
       }
     }
   }
-" | jq '.data.repository.pullRequest.reviewThreads.edges | map(select(.node.isResolved == false))'
+' | jq '.data.repository.pullRequest.reviewThreads.edges | map(select(.node.isResolved == false))'
