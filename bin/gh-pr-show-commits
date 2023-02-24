@@ -1,7 +1,5 @@
 #!/usr/bin/env sh
 
-# Originally shared this as part of the sparkletown/sparkle repo in https://github.com/sparkletown/sparkle/pull/1466
-
 # https://cli.github.com/
 # https://github.com/octokit/core.js
 #   TODO: rewrite this so that it uses octokit core, and then maybe do it as a GitHub action/similar?
@@ -12,14 +10,47 @@
 
 # Uses the GitHub CLI to call the GitHub API to retrieve all of the commits for a given PR.
 # Useful for generating the list of included commits for the description in deployment PRs.
-#
-# Usage:
-#   Retrieve a markdown formatted list of the first line of commit message for each commit in the specified PR
-#     ./pr-show-commits 1138
-#
-#   Count of commits in PR
-#     ./pr-show-commits 1138 | wc -l
 
-PR=$1
+# Note: I contributed the first minimal version of this to the sparkletown/sparkle repo in https://github.com/sparkletown/sparkle/pull/1466
 
-gh api "/repos/:owner/:repo/pulls/$PR/commits" --jq 'map(.commit.message |= "- " + split("(?:\r\n|\n)"; "")[0]) | .[] | .commit.message'
+if [ "$#" -eq 1 ]; then
+    PR=$1
+    OWNER=":owner"
+    REPO=":repo"
+elif [ "$#" -eq 2 ]; then
+    IFS='/' read -r OWNER REPO <<< "$1"
+    PR=$2
+
+    if [ -z "$OWNER" ] || [ -z "$REPO" ]; then
+        echo "Error: Invalid repository format. Please use the format <owner>/<repo>."
+        exit 1
+    fi
+elif [ "$#" -eq 3 ]; then
+    OWNER=$1
+    REPO=$2
+    PR=$3
+else
+    echo "Usage:"
+    echo "  Retrieve a markdown formatted list of the first line of commit message for each commit in the specified PR"
+    echo "    ./gh-pr-show-commits <pr>"
+    echo "    ./gh-pr-show-commits <owner/repo> <pr>"
+    echo "    ./gh-pr-show-commits <owner> <repo> <pr>"
+    echo
+    echo "  Count of commits in PR"
+    echo "    ./gh-pr-show-commits <pr> | wc -l"
+    echo "    ./gh-pr-show-commits <owner/repo> <pr> | wc -l"
+    echo "    ./gh-pr-show-commits <owner> <repo> <pr> | wc -l"
+    exit 1
+fi
+
+gh api "/repos/${OWNER}/${REPO}/pulls/${PR}/commits" --jq '
+  def onlyFirstLine: . | split("(?:\r\n|\n)"; "")[0];
+
+  def splitMessageFromPR: . | capture("(?<message>[^(\r\n#]+)(?:\\(?(?<pr>#\\d+)\\)?)?");
+
+  def outputPrOrMessage: . | .pr // .message;
+
+  .[]
+  | (.commit.message | onlyFirstLine | splitMessageFromPR | outputPrOrMessage) as $prOrCommitMessage
+  | "- \(.sha) \($prOrCommitMessage)"
+'
