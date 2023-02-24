@@ -14,18 +14,34 @@
 #   https://stackoverflow.com/questions/55713929/list-all-unresolved-pull-request-comments/66072198#66072198
 #   https://github.community/t/state-of-conversation-marked-resolved/14355/3?u=0xdevalias
 
+# Uses the GitHub CLI to call the GitHub GraphQL API to retrieve all unresolved review comments for a given PR.
+# Useful for quickly finding unresolved comment threads in large PR's with tons of review comments.
+
 # Note: I contributed the first minimal version of this to the sparkletown/sparkle repo in https://github.com/sparkletown/sparkle/pull/1466
 
-# Usage:
-#   Retrieve unresolved review comments
-#     ./gh-pr-unresolved-review-comments sparkletown sparkle 1016
-#
-#   Count of unresolved review comment threads
-#     ./gh-pr-unresolved-review-comments sparkletown sparkle 1016 | jq length
+if [ "$#" -eq 2 ]; then
+    IFS='/' read -r OWNER REPO <<< "$1"
+    PR=$2
 
-OWNER=$1
-REPO=$2
-PR=$3
+    if [ -z "$OWNER" ] || [ -z "$REPO" ]; then
+        echo "Error: Invalid repository format. Please use the format <owner>/<repo>."
+        exit 1
+    fi
+elif [ "$#" -eq 3 ]; then
+    OWNER=$1
+    REPO=$2
+    PR=$3
+else
+    echo "Usage:"
+    echo "  Retrieve unresolved review comments"
+    echo "    ./gh-pr-unresolved-review-comments <owner/repo> <pr>"
+    echo "    ./gh-pr-unresolved-review-comments <owner> <repo> <pr>"
+    echo
+    echo "  Count of unresolved review comment threads"
+    echo "    ./gh-pr-unresolved-review-comments <owner/repo> <pr> | jq length"
+    echo "    ./gh-pr-unresolved-review-comments <owner> <repo> | jq length"
+    exit 1
+fi
 
 gh api graphql -f query="
   query FetchReviewComments {
