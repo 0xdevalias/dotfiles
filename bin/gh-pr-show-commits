@@ -43,7 +43,7 @@ else
     exit 1
 fi
 
-gh api "/repos/${OWNER}/${REPO}/pulls/${PR}/commits" --jq '
+gh api --paginate "/repos/${OWNER}/${REPO}/pulls/${PR}/commits" --jq '
   def onlyFirstLine: . | split("(?:\r\n|\n)"; "")[0];
 
   def splitMessageFromPR: . | capture("(?<message>[^(\r\n#]+)(?:\\(?(?<pr>#\\d+)\\)?)?");
