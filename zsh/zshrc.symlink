@@ -28,8 +28,14 @@ do
   source $file
 done
 
-# load everything but the path, completion and install files
-for file in ${${${config_files:#*/path.zsh}:#*/completion.zsh}:#*/install.zsh}
+# load nodenv/pyenv/rbenv/jenv/etc first
+source $ZSH/node/nodenv.zsh
+source $ZSH/python/pyenv.zsh
+source $ZSH/ruby/rbenv.zsh
+source $ZSH/java/jenv.zsh
+
+# load everything but the path, completion, install and *env manager files
+for file in ${${${${${${${config_files:#*/path.zsh}:#*/completion.zsh}:#*/install.zsh}:#*/nodenv.zsh}:#*/pyenv.zsh}:#*/rbenv.zsh}:#*/jenv.zsh}
 do
   source $file
 done
