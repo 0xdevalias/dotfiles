@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Ref:
 #   https://itsfoss.com/youtube-dl-audio-only/
