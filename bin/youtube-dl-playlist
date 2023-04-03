@@ -1,0 +1,235 @@
+#!/usr/bin/env bash
+
+# Ref:
+#   https://chat.openai.com/chat/afcbbd9f-bf96-45f2-9f7c-e07dbf7678a2
+#     How can I use youtube-dl to make an offline backup of videos from a youtube playlist, in the highest possible quality
+#
+#   https://www.reddit.com/r/DataHoarder/comments/aoemi7/can_you_resume_youtubedl_channelplaylist_download/
+#     --download-archive done.txt
+#
+#   https://stackoverflow.com/questions/35982269/youtube-dl-how-do-i-resume-a-download-after-error
+#      --continue --ignore-errors --no-overwrites
+#      -ciw
+#
+#   https://github.com/ytdl-org/youtube-dl/blob/master/README.md#format-selection
+#     By default youtube-dl tries to download the best available quality, i.e. if you want the best quality you don't need to pass any special options, youtube-dl will guess it for you by default.
+#     ..snip..
+#     You can merge the video and audio of two formats into a single file using -f <video-format>+<audio-format> (requires ffmpeg or avconv installed), for example -f bestvideo+bestaudio will download the best video-only format, the best audio-only format and mux them together with ffmpeg/avconv.
+#     ..snip..
+#     Since the end of April 2015 and version 2015.04.26, youtube-dl uses -f bestvideo+bestaudio/best as the default format selection (see #5447, #5456). If ffmpeg or avconv are installed this results in downloading bestvideo and bestaudio separately and muxing them together into a single file giving the best overall quality available. Otherwise it falls back to best and results in downloading the best available quality served as a single file. best is also needed for videos that don't come from YouTube because they don't provide the audio and video in two different files.
+#
+#   youtube-dl -h
+#     ..snip..
+#     --flat-playlist                      Do not extract the videos of a playlist, only list them.
+#     ..snip..
+#     --playlist-start NUMBER              Playlist video to start at (default is 1)
+#     --playlist-end NUMBER                Playlist video to end at (default is last)
+#     --playlist-items ITEM_SPEC           Playlist video items to download. Specify indices of the videos in the
+#                                            playlist separated by commas like: "--playlist-items 1,2,5,8" if you want to
+#                                            download videos indexed 1, 2, 5, 8 in the playlist. You can specify range: "--
+#                                            playlist-items 1-3,7,10-13", it will download the videos at index 1, 2, 3, 7,
+#                                            10, 11, 12 and 13.
+#     ..snip..
+#     --download-archive FILE              Download only videos not listed in the archive file. Record the IDs of all downloaded videos in it.
+#     ..snip..
+#     --hls-prefer-native                  Use the native HLS downloader instead of ffmpeg
+#     --hls-prefer-ffmpeg                  Use ffmpeg instead of the native HLS downloader
+#     ..snip..
+#     --external-downloader COMMAND        Use the specified external downloader. Currently supports
+#                                            aria2c,avconv,axel,curl,ffmpeg,httpie,wget
+#     --external-downloader-args ARGS      Give these arguments to the external downloader
+#     ..snip..
+#     -a, --batch-file FILE                File containing URLs to download ('-' for stdin), one URL per line. Lines
+#                                            starting with '#', ';' or ']' are considered as comments and ignored.
+#     ..snip..
+#     -o, --output TEMPLATE                Output filename template, see the "OUTPUT TEMPLATE" for all the info
+#     ..snip..
+#     -w, --no-overwrites                  Do not overwrite files
+#     -c, --continue                       Force resume of partially downloaded files. By default, youtube-dl will resume
+#                                            downloads if possible.
+#     ..snip..
+#     --write-description                  Write video description to a .description file
+#     --write-info-json                    Write video metadata to a .info.json file
+#     --write-annotations                  Write video annotations to a .annotations.xml file
+#     ..snip..
+#     --list-thumbnails                    Simulate and list all available thumbnail formats
+#     ..snip..
+#     -s, --simulate                       Do not download the video and do not write anything to disk
+#     --skip-download                      Do not download the video
+#     -g, --get-url                        Simulate, quiet but print URL
+#     -e, --get-title                      Simulate, quiet but print title
+#     --get-id                             Simulate, quiet but print id
+#     --get-thumbnail                      Simulate, quiet but print thumbnail URL
+#     --get-description                    Simulate, quiet but print video description
+#     --get-duration                       Simulate, quiet but print video length
+#     --get-filename                       Simulate, quiet but print output filename
+#     --get-format                         Simulate, quiet but print output format
+#     -j, --dump-json                      Simulate, quiet but print JSON information. See the "OUTPUT TEMPLATE" for a
+#                                          description of available keys.
+#     -J, --dump-single-json               Simulate, quiet but print JSON information for each command-line argument. If
+#                                          the URL refers to a playlist, dump the whole playlist information in a single line.
+#     ..snip..
+#     -f, --format FORMAT                  Video format code, see the "FORMAT SELECTION" for all the info
+#     -F, --list-formats                   List all available formats of requested video
+#     ..snip..
+#     --write-sub                          Write subtitle file
+#     --list-subs                          List all available subtitles for the video
+#     --sub-lang LANGS                     Languages of the subtitles to download (optional) separated by commas, use
+#                                            --list-subs for available language tags
+#     ..snip..
+#     --embed-subs                         Embed subtitles in the video (only for mp4, webm and mkv videos)
+#     ..snip..
+#     --convert-subs FORMAT                Convert the subtitles to other format (currently supported: srt|ass|vtt|lrc)
+#     ..snip..
+
+SCRIPT_NAME="$(basename "$0")"
+
+# Note the extra escaping we need to use here to make the format work properly..
+FORMAT_ARGS="--format \'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best\'"
+SUBS_ARGS="--write-subs --write-auto-subs --embed-subs --sub-langs en,en-orig"
+EXTRA_ARGS=""
+
+function show_usage {
+  echo "Download the specified videos from a youtube playlist."
+  echo ""
+  echo "Usage: $SCRIPT_NAME [OPTIONS] <YOUTUBE_PLAYLIST_URL>"
+  echo ""
+  echo "Options:"
+  echo "  --playlist-start NUMBER      Playlist video to start at (default is 1)"
+  echo "  --playlist-end NUMBER        Playlist video to end at (default is last)"
+  echo "  --playlist-items ITEM_SPEC   Playlist video items to download. Specify indices of the videos in the"
+  echo "                               playlist separated by commas like: "--playlist-items 1,2,5,8" if you want to"
+  echo "                               download videos indexed 1, 2, 5, 8 in the playlist. You can specify range: \"--"
+  echo "                               playlist-items 1-3,7,10-13\", it will download the videos at index 1, 2, 3, 7,"
+  echo "                               10, 11, 12 and 13."
+  echo "  -f, --format FORMAT          Video format code, see \"FORMAT SELECTION\""
+  echo "                               for more details: https://github.com/ytdl-org/youtube-dl/blob/master/README.md#format-selection"
+  echo "  --dry-run                    Passes the --simulate flag through to youtube-dl (Do not download the video and do not write anything to disk)"
+  echo "  -h, --help                   Show this help message and exit"
+  echo ""
+  echo "Automatically sets the following defaults:"
+  echo "  FORMAT_ARGS:                 $FORMAT_ARGS"
+  echo "  SUBS_ARGS:                   $SUBS_ARGS"
+  echo ""
+  echo "Eg."
+  echo "  $SCRIPT_NAME <extra args> YOUTUBE_PLAYLIST_URL"
+  echo "  $SCRIPT_NAME --playlist-start N --playlist-end M YOUTUBE_PLAYLIST_URL"
+  echo "  $SCRIPT_NAME --playlist-items ITEM1,ITEM2,... YOUTUBE_PLAYLIST_URL"
+  echo ""
+  echo "  $SCRIPT_NAME --playlist-items 1 --list-formats YOUTUBE_PLAYLIST_URL"
+  echo "  $SCRIPT_NAME --playlist-items 1 --list-subs YOUTUBE_PLAYLIST_URL"
+  echo "  $SCRIPT_NAME --playlist-items 1,2,3 --get-filename YOUTUBE_PLAYLIST_URL"
+  echo "  $SCRIPT_NAME --playlist-items 1,2,3 --format 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best' --write-subs --write-auto-subs --sub-langs en,en-orig --embed-subs --dry-run YOUTUBE_PLAYLIST_URL"
+  echo ""
+}
+
+# Check if we should show the help/usage details, and process the arguments
+# TODO: theoretically these regex should be able to match our args.. but it doesn't seem to be working. Making it work would simplify the code here.
+# # if [[ -z "$1" || "$@" =~ (^|\W)(-h|--help)(\W|$) ]]; then
+# if [[ -z "$1" || "$@" =~ (^|\s)(-h|--help)(\s|$) ]]; then
+#   show_usage
+#   exit 1
+# fi
+if [[ -z "$1" ]]; then
+    show_usage
+    exit 1
+fi
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      show_usage
+      exit 0
+      ;;
+    --playlist-start)
+      PLAYLIST_START="--playlist-start $2"
+      shift 2  # Remove the option and its argument
+      ;;
+    --playlist-end)
+      PLAYLIST_END="--playlist-end $2"
+      shift 2  # Remove the option and its argument
+      ;;
+    --playlist-items)
+      PLAYLIST_ITEMS="--playlist-items $2"
+      shift 2  # Remove the option and its argument
+      ;;
+    -f|--format)
+      FORMAT_ARGS="--format $2"
+      shift 2  # Remove the option and its argument
+      ;;
+    --dry-run|-s|--simulate)
+      DRY_RUN_ARGS="--simulate"
+      shift
+      ;;
+    *)
+      # Check if this is the last argument
+      if [[ $# -eq 1 ]]; then
+        YOUTUBE_PLAYLIST_URL="$1"
+      else
+        # Capture the extra args
+        if [[ -z "$EXTRA_ARGS" ]]; then
+          EXTRA_ARGS="$1"
+        else
+          EXTRA_ARGS+=" $1"
+        fi
+      fi
+
+      # Shift the positional parameters to remove the handled argument
+      shift
+      ;;
+  esac
+done
+
+# Check our playlist args are valid
+if [[ -n "$PLAYLIST_START" && -n "$PLAYLIST_END" && -n "$PLAYLIST_ITEMS" ]]; then
+  echo "Error: Either --playlist-start and --playlist-end must be defined, or --playlist-items must be defined; but not both"
+  echo "  PLAYLIST_START: $PLAYLIST_START"
+  echo "  PLAYLIST_END:   $PLAYLIST_END"
+  echo "  PLAYLIST_ITEMS: $PLAYLIST_ITEMS"
+  exit 1
+elif [[ -n "$PLAYLIST_START" && -n "$PLAYLIST_END" ]]; then
+  PLAYLIST_ARGS="$PLAYLIST_START $PLAYLIST_END"
+elif [[ -n "$PLAYLIST_ITEMS" ]]; then
+  PLAYLIST_ARGS="$PLAYLIST_ITEMS"
+else
+  echo "Error: Either --playlist-start and --playlist-end must be defined, or --playlist-items must be defined"
+  echo "  PLAYLIST_START: $PLAYLIST_START"
+  echo "  PLAYLIST_END:   $PLAYLIST_END"
+  echo "  PLAYLIST_ITEMS: $PLAYLIST_ITEMS"
+  exit 1
+fi
+
+# Check our playlist url is valid
+if [[ -z "$YOUTUBE_PLAYLIST_URL" ]]; then
+  echo "Error: YOUTUBE_PLAYLIST_URL is a required parameter"
+  exit 1
+fi
+
+# Check if we have yt-dlp or youtube-dl installed
+if command -v yt-dlp &>/dev/null; then
+  YOUTUBE_DL_BIN="yt-dlp"
+elif command -v youtube-dl &>/dev/null; then
+  YOUTUBE_DL_BIN="youtube-dl"
+else
+  echo "Error: neither yt-dlp nor youtube-dl is installed. Please install either one using your system's package manager, such as brew for macOS, and try again."
+  echo ""
+  echo "eg."
+  echo "  brew install yt-dlp"
+  echo "  brew install youtube-dl"
+  echo ""
+  echo "Note that yt-dlp appears to be the more regularly maintained/updated version at time of writing."
+  exit 1
+fi
+
+# Show our processed arguments
+echo "[$SCRIPT_NAME] Processed args:"
+echo "  YOUTUBE_DL_BIN:        $YOUTUBE_DL_BIN"
+echo "  PLAYLIST_ARGS:         $PLAYLIST_ARGS"
+echo "  FORMAT_ARGS:           $FORMAT_ARGS"
+echo "  SUBS_ARGS:             $SUBS_ARGS"
+echo "  EXTRA_ARGS:            $EXTRA_ARGS"
+echo "  DRY_RUN_ARGS:          $DRY_RUN_ARGS"
+echo "  YOUTUBE_PLAYLIST_URL:  $YOUTUBE_PLAYLIST_URL"
+echo ""
+
+# Run the final command
+(set -x; "$YOUTUBE_DL_BIN" --continue --ignore-errors --no-overwrites $PLAYLIST_ARGS $FORMAT_ARGS $SUBS_ARGS $EXTRA_ARGS $DRY_RUN_ARGS "$YOUTUBE_PLAYLIST_URL")
