@@ -15,4 +15,20 @@ if [ -z "$1" ]; then
   exit
 fi
 
-youtube-dl -x --audio-format mp3 --ignore-errors --no-overwrites --download-archive youtube-download-mp3.txt $@
+# Check if we have yt-dlp or youtube-dl installed
+if command -v yt-dlp &>/dev/null; then
+  YOUTUBE_DL_BIN="yt-dlp"
+elif command -v youtube-dl &>/dev/null; then
+  YOUTUBE_DL_BIN="youtube-dl"
+else
+  echo "Error: neither yt-dlp nor youtube-dl is installed. Please install either one using your system's package manager, such as brew for macOS, and try again."
+  echo ""
+  echo "eg."
+  echo "  brew install yt-dlp"
+  echo "  brew install youtube-dl"
+  echo ""
+  echo "Note that yt-dlp appears to be the more regularly maintained/updated version at time of writing."
+  exit 1
+fi
+
+(set -x; "$YOUTUBE_DL_BIN" -x --audio-format mp3 --ignore-errors --no-overwrites --download-archive youtube-download-mp3.txt $@)
