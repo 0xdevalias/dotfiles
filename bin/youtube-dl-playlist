@@ -102,8 +102,17 @@ function show_usage {
   echo "                               download videos indexed 1, 2, 5, 8 in the playlist. You can specify range: \"--"
   echo "                               playlist-items 1-3,7,10-13\", it will download the videos at index 1, 2, 3, 7,"
   echo "                               10, 11, 12 and 13."
+  echo ""
+  echo "  --get-id                     Simulate, quiet but print id"
+  echo "  --get-thumbnail              Simulate, quiet but print thumbnail URL"
+  echo "  --get-description            Simulate, quiet but print video description"
+  echo "  --get-duration               Simulate, quiet but print video length"
+  echo "  --get-filename               Simulate, quiet but print output filename"
+  echo "  --get-format                 Simulate, quiet but print output format"
+  echo ""
   echo "  -f, --format FORMAT          Video format code, see \"FORMAT SELECTION\""
   echo "                               for more details: https://github.com/ytdl-org/youtube-dl/blob/master/README.md#format-selection"
+  echo ""
   echo "  --dry-run                    Passes the --simulate flag through to youtube-dl (Do not download the video and do not write anything to disk)"
   echo "  -h, --help                   Show this help message and exit"
   echo ""
@@ -139,6 +148,14 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       show_usage
       exit 0
+      ;;
+    --get-id|--get-thumbnail|--get-description|--get-duration|--get-filename|--get-format)
+      if [[ -z "$GET_ARGS" ]]; then
+          GET_ARGS="$1"
+        else
+          GET_ARGS+=" $1"
+        fi
+      shift # Remove the option
       ;;
     --playlist-start)
       PLAYLIST_START="--playlist-start $2"
@@ -190,11 +207,15 @@ elif [[ -n "$PLAYLIST_START" && -n "$PLAYLIST_END" ]]; then
   PLAYLIST_ARGS="$PLAYLIST_START $PLAYLIST_END"
 elif [[ -n "$PLAYLIST_ITEMS" ]]; then
   PLAYLIST_ARGS="$PLAYLIST_ITEMS"
-else
-  echo "Error: Either --playlist-start and --playlist-end must be defined, or --playlist-items must be defined"
+fi
+
+if [[ -z "$PLAYLIST_ARGS" && -z "$GET_ARGS" ]]; then
+  echo "Error: Either --playlist-start and --playlist-end must be defined, or --playlist-items must be defined, or at least one of the --get-* args must be defined"
   echo "  PLAYLIST_START: $PLAYLIST_START"
   echo "  PLAYLIST_END:   $PLAYLIST_END"
   echo "  PLAYLIST_ITEMS: $PLAYLIST_ITEMS"
+  echo "  PLAYLIST_ARGS:  $PLAYLIST_ARGS"
+  echo "  GET_ARGS:       $GET_ARGS"
   exit 1
 fi
 
@@ -224,6 +245,7 @@ fi
 echo "[$SCRIPT_NAME] Processed args:"
 echo "  YOUTUBE_DL_BIN:        $YOUTUBE_DL_BIN"
 echo "  PLAYLIST_ARGS:         $PLAYLIST_ARGS"
+echo "  GET_ARGS:              $GET_ARGS"
 echo "  FORMAT_ARGS:           $FORMAT_ARGS"
 echo "  SUBS_ARGS:             $SUBS_ARGS"
 echo "  EXTRA_ARGS:            $EXTRA_ARGS"
@@ -232,4 +254,4 @@ echo "  YOUTUBE_PLAYLIST_URL:  $YOUTUBE_PLAYLIST_URL"
 echo ""
 
 # Run the final command
-(set -x; "$YOUTUBE_DL_BIN" --continue --ignore-errors --no-overwrites $PLAYLIST_ARGS $FORMAT_ARGS $SUBS_ARGS $EXTRA_ARGS $DRY_RUN_ARGS "$YOUTUBE_PLAYLIST_URL")
+(set -x; "$YOUTUBE_DL_BIN" --continue --ignore-errors --no-overwrites $PLAYLIST_ARGS $GET_ARGS $FORMAT_ARGS $SUBS_ARGS $EXTRA_ARGS $DRY_RUN_ARGS "$YOUTUBE_PLAYLIST_URL")
