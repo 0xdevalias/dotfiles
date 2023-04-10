@@ -7,7 +7,7 @@
 
 # # https://starship.rs/config/#prompt
 # format = '$all'
-format = '$username([@](cyan)$hostname)([:](red)$directory)[|](red)($git_branch$git_status$git_state )$character'
+format = '($python )($conda )$username([@](cyan)$hostname)([:](red)$directory)[|](red)($git_branch$git_status$git_state) $character'
 
 # # https://starship.rs/advanced-config/#enable-right-prompt
 # right_format = '$all'
@@ -52,6 +52,19 @@ format = '\[[$state( $progress_current/$progress_total)]($style)\]'
 [git_status]
 style = 'dimmed white'
 format = '([\[$all_status$ahead_behind\]]($style))'
+
+# https://starship.rs/config/#python
+[python]
+style = 'dimmed white'
+format = '[${symbol}(\[($virtualenv[|](bold dimmed white))$version\])]($style)'
+symbol = '🐍'
+
+# https://starship.rs/config/#conda
+[conda]
+style = 'dimmed white'
+format = '[$symbol\[$environment\]]($style)'
+symbol = '[🅒 ](green)'
+ignore_base = true
 
 # https://starship.rs/config/#character
 [character]
