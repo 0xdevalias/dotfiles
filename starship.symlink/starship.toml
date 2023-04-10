@@ -69,7 +69,7 @@ symbol = '🐍'
 [conda]
 style = 'dimmed white'
 format = '[$symbol\[$environment\]]($style)'
-symbol = '[🅒 ](green)'
+symbol = '[🅒 ](dimmed green)'
 ignore_base = true
 
 # https://starship.rs/config/#character
