@@ -113,10 +113,10 @@
   # Ref: https://stackoverflow.com/questions/14848274/git-log-to-get-commits-only-for-a-specific-branch/24668421#24668421
   deploy-list-commits          = !echo See git aliases for pr-list-commits-*
   pr-list-commits              = cherry -v
-  pr-list-commits-master       = cherry -v master
-  pr-list-commits-main         = cherry -v main
-  pr-list-commits-staging      = cherry -v staging
-  pr-list-commits-staging-ghio = cherry -v staging-ghio
+  pr-list-commits-master       = cherry -v origin/master
+  pr-list-commits-main         = cherry -v origin/main
+  pr-list-commits-staging      = cherry -v origin/staging
+  pr-list-commits-staging-ghio = cherry -v origin/staging-ghio
 
   prs-for-commit               = !"f() { gh api /repos/{owner}/{repo}/commits/${1}/pulls; }; f"
   list-prs-for-commit          = prs-for-commit
