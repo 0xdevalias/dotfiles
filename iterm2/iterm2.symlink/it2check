@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Make sure stdin and stdout are a tty.
 if [ ! -t 0 ] ; then
   exit 1
@@ -43,6 +43,15 @@ function clean_up() {
   stty "$_STTY"            ## Restore terminal settings
 }
 
+# Prepare to silently read any (>=0) characters with no timeout.
+stty -echo -icanon raw min 0 time 0
+
+# Consume all pending input.
+while read none; do :; done
+
+# Reset the TTY, so it behaves as expected for the rest of the it2check script.
+clean_up 
+
 # Enter raw mode and turn off echo so the terminal and I can chat quietly.
 stty -echo -icanon raw
 
@@ -65,7 +74,7 @@ echo -n '[1337n'
 echo -n '[5n'
 
 version_string=$(read_dsr)
-if [ "${version_string}" != "0" -a "${version_string}" != "3" ]; then
+if [ -n "${version_string}" -a "${version_string}" != "0" -a "${version_string}" != "3" ]; then
   # Already read DSR 1337. Read DSR 5 and throw it away.
   dsr=$(read_dsr)
 else
