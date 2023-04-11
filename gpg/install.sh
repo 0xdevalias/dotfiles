@@ -9,6 +9,7 @@ require_installed_brew "gpg"
 require_installed_brew "pinentry-mac"
 
 # Ensure correct pinentry file is configured for gpg-agent.conf
+echo "[gpg] Ensuring correct pinentry-program configured for gpg-agent"
 PINENTRY_BIN="$(brew --prefix)/bin/pinentry-mac"
 sed -i.bak "s|^pinentry-program.*|pinentry-program $PINENTRY_BIN|" ~/.gnupg/gpg-agent.conf
 
