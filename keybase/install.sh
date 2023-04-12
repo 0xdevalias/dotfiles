@@ -7,4 +7,4 @@ echo "[keybase::install]"
 
 check_installed brew
 
-require_installed_brew keybase  # https://keybase.io/
+require_installed_brew_cask keybase  # https://keybase.io/
