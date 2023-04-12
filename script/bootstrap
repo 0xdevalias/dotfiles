@@ -7,7 +7,6 @@ DOTFILES_ROOT=$(pwd -P)
 
 set -e
 
-echo ''
 
 info () {
   printf "\r  [ \033[00;34m..\033[0m ] $1\n"
@@ -183,8 +182,16 @@ install_dotfiles () {
   done
 }
 
+echo ''
+
 setup_computer_name
+
+echo ''
+
 setup_gitconfig
+
+echo ''
+
 install_dotfiles
 
 # # If we're on a Mac, let's install and setup homebrew.
