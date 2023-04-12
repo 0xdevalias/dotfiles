@@ -174,7 +174,6 @@ setup_ssh_key_init () {
   fi
 
   success "$keys_init_path configured"
-  exit
 }
 
 
