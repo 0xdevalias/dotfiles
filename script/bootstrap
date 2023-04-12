@@ -81,10 +81,10 @@ setup_gpg () {
 }
 
 setup_gitconfig () {
+  info 'setup gitconfig.local'
+
   if ! [ -f git/gitconfig.local.symlink ]
   then
-    info 'setup gitconfig.local'
-
     git_credential='cache'
     if [ "$(uname -s)" = "Darwin" ]
     then
@@ -104,9 +104,9 @@ setup_gitconfig () {
     echo "TODO: Setup commit signing automagically https://github.com/pstadler/keybase-gpg-github"
 
     echo "TODO: Setup commit signing https://github.com/pstadler/keybase-gpg-github"
-
-    success 'gitconfig'
   fi
+
+  success 'gitconfig'
 }
 
 setup_github_gh () {
