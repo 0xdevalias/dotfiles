@@ -118,6 +118,28 @@ setup_github_gh () {
   success 'GitHub CLI (gh) configured'
 }
 
+setup_dotfiles_git_remote_ssh () {
+  info 'configure dotfiles git remote'
+
+  local dotfiles_git_repo='0xdevalias/dotfiles'
+
+  user " - What is your dotfiles GitHub repo name [$dotfiles_git_repo]: \c"
+  read new_dotfiles_git_repo
+  dotfiles_git_repo=${new_dotfiles_git_repo:-$dotfiles_git_repo}
+
+  local dotfiles_git_origin="git@github.com:${dotfiles_git_repo}.git"
+
+  user " - What git remote URL should we use for the dotfiles repo [$dotfiles_git_origin]: \c"
+  read new_dotfiles_git_origin
+  dotfiles_git_origin=${new_dotfiles_git_origin:-$dotfiles_git_origin}
+
+  git --git-dir "$DOTFILES_ROOT/.git" remote set-url origin "$dotfiles_git_origin"
+
+  git --git-dir "$DOTFILES_ROOT/.git" remote -v
+
+  success 'dotfiles git remote configured'
+}
+
 
 link_file () {
   local src=$1 dst=$2
@@ -222,6 +244,10 @@ setup_gitconfig
 echo ''
 
 setup_github_gh
+
+echo ''
+
+setup_dotfiles_git_remote_ssh
 
 echo ''
 
