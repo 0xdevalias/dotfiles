@@ -67,6 +67,14 @@ setup_computer_name () {
   success "computer name configured"
 }
 
+setup_keybase () {
+  info 'setup keybase'
+
+  $DOTFILES_ROOT/keybase/install.sh
+
+  success 'keybase configured'
+}
+
 # TODO: make setup_gpg optional? Ask user anything?
 setup_gpg () {
   # TODO: If we move the gpg-agent.conf to gpg-agent.conf.example + fix the sed command in install to write the real one
@@ -267,6 +275,10 @@ install_dotfiles () {
 echo ''
 
 setup_computer_name
+
+echo ''
+
+setup_keybase
 
 echo ''
 
