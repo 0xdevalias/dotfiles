@@ -16,3 +16,10 @@ else
   echo "  npm not found, skipping installation of packages"
 fi
 
+# Authenticate the GitHub CLI + set up SSH key
+if (( $+commands[gh] )); then
+  if ! gh auth status >/dev/null 2>&1; then
+    echo "  GitHub CLI (gh) not authenticated.. please login now"
+    gh auth login
+  fi
+fi
