@@ -2,6 +2,19 @@
 #
 # bootstrap installs things.
 
+# TODO: (maybe do this in a pre-bootstrap script instead.. like a 1 script auto installer?) detect if this is being run from already cloned dotfiles, or if we need to clone and setup the dotfiles first
+#   Ref: https://chat.openai.com/chat/0dbcc25c-ad74-4627-affb-b04cb032d033
+#     #!/bin/bash
+#
+#     if [[ $0 == "-bash" ]]; then
+#       echo "Script is being run from a curl pipe."
+#     else
+#       echo "Script is not being run from a curl pipe."
+#     fi
+#
+#   Can test locally by running the script like this: /bin/bash -c "$(pbpaste | cat)"
+#   Can run with curl like this: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/0xdevalias/dotfiles/HEAD/TODO.sh)"
+
 cd "$(dirname "$0")/.."
 DOTFILES_ROOT=$(pwd -P)
 
@@ -25,45 +38,6 @@ fail () {
   printf "\r\033[2K  [\033[0;31mFAIL\033[0m] $1\n"
   echo ''
   exit
-}
-
-setup_computer_name () {
-  info 'setup computer name'
-
-  local did_change_something="false"
-
-  read_and_update_scutil_key () {
-    local scutil_key="$1"
-    local prompt_label_text=${2:-$scutil_key}
-    local old_name="$(scutil --get $scutil_key 2>&1)"
-    local new_name
-
-    user " - $prompt_label_text [$old_name]: \c"
-    read new_name
-    new_name=${new_name:-$old_name}
-
-    if [ "$old_name" != "$new_name" ]; then
-      did_change_something="true"
-
-      scutil --set $scutil_key "$new_name"
-
-      success "$scutil_key set to $new_name"
-    else
-      success "$scutil_key not modified"
-    fi
-  }
-
-  read_and_update_scutil_key "ComputerName"
-  read_and_update_scutil_key "LocalHostName"
-  read_and_update_scutil_key "HostName" "HostName (usually leave this blank)"
-
-  if [ "$did_change_something" = "true" ]; then
-    # Flush the DNS cache:
-    dscacheutil -flushcache
-    success "DNS cache flushed"
-  fi
-
-  success "computer name configured"
 }
 
 setup_gitconfig () {
@@ -180,7 +154,6 @@ install_dotfiles () {
   done
 }
 
-setup_computer_name
 setup_gitconfig
 install_dotfiles
 
@@ -198,3 +171,15 @@ install_dotfiles
 
 echo ''
 echo '  All installed!'
+
+echo "AAA$ZSH"
+
+set +e
+source ~/.zshrc
+
+echo "BBB$ZSH"
+
+# TODO: could we use this sort of pattern to automatically configure a bunch of our other files once the defaults have been symlinked?
+# echo 'Starting zsh so you dont need to restart shell to make use of dotfiles config:'
+
+# exec /usr/bin/env zsh -c "source ~/.zshrc; echo \"In the new shell $ZSH\""
