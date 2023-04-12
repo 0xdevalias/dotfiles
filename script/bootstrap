@@ -140,6 +140,43 @@ setup_dotfiles_git_remote_ssh () {
   success 'dotfiles git remote configured'
 }
 
+setup_ssh_key_init () {
+  local ssh_key_path="$HOME/.ssh"
+  local keys_init_path="$DOTFILES_ROOT/ssh/keys.init"
+  local existing_keys=""
+  local keys_for_init
+
+  info "configure $keys_init_path"
+
+  info "The following files exist in $ssh_key_path"
+  ls "$ssh_key_path"
+
+  if [ -e "$keys_init_path" ]; then
+    existing_keys=$(cat "$keys_init_path")
+
+    info "The following key names currently exist in $keys_init_path:"
+    info "  $existing_keys"
+  else
+    info "There are currently no key names in $keys_init_path"
+  fi
+
+  user " - Which key names would you like to add to keys.init for ssh-keyinit (separate with spaces, this will overwrite all existing key names) [$existing_keys]: \c"
+  read keys_for_init
+
+  keys_for_init=${keys_for_init:-$existing_keys}
+
+  if [ -n "$keys_for_init" ]; then
+    echo "$keys_for_init" > "$keys_init_path"
+    success "Wrote key names to $keys_init_path:"
+    cat "$keys_init_path"
+  else
+    success 'No key names to configure'
+  fi
+
+  success "$keys_init_path configured"
+  exit
+}
+
 
 link_file () {
   local src=$1 dst=$2
@@ -248,6 +285,10 @@ setup_github_gh
 echo ''
 
 setup_dotfiles_git_remote_ssh
+
+echo ''
+
+setup_ssh_key_init
 
 echo ''
 
