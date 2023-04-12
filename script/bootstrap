@@ -5,8 +5,10 @@
 cd "$(dirname "$0")/.."
 DOTFILES_ROOT=$(pwd -P)
 
-set -e
+# This is a workaround for install scripts/etc that expect this env var to be set
+export ZSH="$DOTFILES_ROOT"
 
+set -e
 
 info () {
   printf "\r  [ \033[00;34m..\033[0m ] $1\n"
@@ -63,6 +65,19 @@ setup_computer_name () {
   fi
 
   success "computer name configured"
+}
+
+# TODO: make setup_gpg optional? Ask user anything?
+setup_gpg () {
+  # TODO: If we move the gpg-agent.conf to gpg-agent.conf.example + fix the sed command in install to write the real one
+  #   then we could check if it exists here, and not run this if we don't need to?
+  # if ! [ -f git/gitconfig.local.symlink ]
+  # then
+  info 'setup gpg'
+
+  $DOTFILES_ROOT/gpg/install.sh
+
+  success 'gpg configured'
 }
 
 setup_gitconfig () {
@@ -185,6 +200,11 @@ install_dotfiles () {
 echo ''
 
 setup_computer_name
+
+echo ''
+
+# TODO: move setup_gpg after setup_gitconfig (or part of it?) and make it conditionally enable commit signing?
+setup_gpg
 
 echo ''
 
