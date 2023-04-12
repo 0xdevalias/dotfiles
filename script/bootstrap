@@ -109,6 +109,15 @@ setup_gitconfig () {
   fi
 }
 
+setup_github_gh () {
+  info 'setup GitHub CLI (gh)'
+
+  # Install gh + related tools + authenticate the GitHub CLI + set up git SSH key
+  $DOTFILES_ROOT/git/install.sh
+
+  success 'GitHub CLI (gh) configured'
+}
+
 
 link_file () {
   local src=$1 dst=$2
@@ -209,6 +218,10 @@ setup_gpg
 echo ''
 
 setup_gitconfig
+
+echo ''
+
+setup_github_gh
 
 echo ''
 
