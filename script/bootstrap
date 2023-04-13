@@ -75,11 +75,7 @@ setup_computer_name () {
     local scutil_key="$1"
     local prompt_label_text=${2:-$scutil_key}
     local old_name="$(scutil --get $scutil_key 2>&1)"
-    local new_name
-
-    user " - $prompt_label_text [$old_name]: \c"
-    read new_name
-    new_name=${new_name:-$old_name}
+    local new_name="$(read_user_input "$prompt_label_text" "$old_name")"
 
     if [ "$old_name" != "$new_name" ]; then
       did_change_something="true"
