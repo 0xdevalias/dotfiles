@@ -44,6 +44,28 @@ confirm () {
     return 1
   fi
 }
+
+# Example Usage: local foo=$(read_user_input "Some prompt text" "default response")
+read_user_input () {
+  local prompt_label_text="${1:-Enter a value}"
+  local default_value="$2"
+  local response
+
+  local prompt_text
+  if [ -n "$default_value" ]; then
+    prompt_text=" - $prompt_label_text [$default_value]: \c"
+  else
+    prompt_text=" - $prompt_label_text: \c"
+  fi
+
+  # We output the prompt to the error channel here so we can capture the later echo as the function 'return value'
+  user "$prompt_text" >&2
+  read response
+  response=${response:-$default_value}
+
+  echo "$response"
+}
+
 setup_computer_name () {
   info 'setup computer name'
 
