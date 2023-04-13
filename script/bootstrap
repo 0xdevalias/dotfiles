@@ -28,6 +28,22 @@ fail () {
   exit
 }
 
+confirm () {
+  local prompt_label_text="${1:-Do you want to continue?}"
+  local response
+
+  user " - $prompt_label_text [y/n]: \c"
+  read -k 1 response
+  echo
+
+  if [[ "$response" =~ [yY] ]]; then
+    # This is a return code, so 0 means success (or in this case, continue)
+    return 0
+  else
+    # This is a return code, so non-0 means 'failure' (or in this case, don't continue)
+    return 1
+  fi
+}
 setup_computer_name () {
   info 'setup computer name'
 
