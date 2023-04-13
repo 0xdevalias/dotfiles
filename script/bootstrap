@@ -123,32 +123,48 @@ setup_gpg () {
 }
 
 setup_gitconfig () {
-  info 'setup gitconfig.local'
+  info 'configuring gitconfig.local'
 
-  if ! [ -f git/gitconfig.local.symlink ]
-  then
-    git_credential='cache'
-    if [ "$(uname -s)" = "Darwin" ]
-    then
-      git_credential='osxkeychain'
-    fi
+  local gitconfig_local_example_path="$DOTFILES_ROOT/git/gitconfig.local.symlink.example"
+  local gitconfig_local_path="$DOTFILES_ROOT/git/gitconfig.local.symlink"
 
-    user ' - What is your github author name?'
-    read -e git_authorname
-    user ' - What is your github author email?'
-    read -e git_authoremail
+  local git_credential='cache'
+  if [ "$(uname -s)" = "Darwin" ]; then
+    git_credential='osxkeychain'
+  fi
 
+  local old_git_name="$(git config --global --get user.name)"
+  local old_git_email="$(git config --global --get user.email)"
+
+  local git_authorname="$(read_user_input "What is your GitHub author name?" "$old_git_name")"
+  local git_authoremail="$(read_user_input "What is your GitHub author email?" "$old_git_email")"
+
+  if ! [ -f "$gitconfig_local_path" ]; then
+    # If the file hasn't been setup yet, then create and configure it
     sed -e "s/AUTHORNAME/$git_authorname/g"\
         -e "s/AUTHOREMAIL/$git_authoremail/g"\
         -e "s/GIT_CREDENTIAL_HELPER/$git_credential/g"\
-        git/gitconfig.local.symlink.example > git/gitconfig.local.symlink
+        "$gitconfig_local_example_path" > "$gitconfig_local_path"
 
-    echo "TODO: Setup commit signing automagically https://github.com/pstadler/keybase-gpg-github"
+    success "Created $gitconfig_local_path"
+  else
+    # Otherwise, update the existing file directly
+    git config --file "$gitconfig_local_path" --replace-all user.name "$git_authorname"
+    git config --file "$gitconfig_local_path" --replace-all user.email "$git_authoremail"
+    git config --file "$gitconfig_local_path" --replace-all credential.helper "$git_credential"
 
-    echo "TODO: Setup commit signing https://github.com/pstadler/keybase-gpg-github"
+    success "Updated $gitconfig_local_path"
   fi
 
-  success 'gitconfig'
+  # TODO: configure git commit signing
+  # gpg --list-secret-keys --keyid-format LONG
+  # git config --file ~/.gitconfig.local --replace-all user.signingkey THE16CHARKEYID
+
+  echo "TODO: Setup commit signing automagically https://github.com/pstadler/keybase-gpg-github"
+
+  echo "TODO: Setup commit signing https://github.com/pstadler/keybase-gpg-github"
+
+  success 'gitconfig.local configured'
 }
 
 setup_github_gh () {
