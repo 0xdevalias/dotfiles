@@ -24,6 +24,9 @@ displayHelp() {
   echo ""
   echo "  --settingsPath        : Show the Sublime Text settings path"
   echo "  -h, --help            : Show this help/usage"
+  echo ""
+  echo "You may also want to look at the standard Sublime Text CLI:"
+  echo "  subl -h"
 }
 
 handleCommands() {
