@@ -81,7 +81,6 @@ brew 'pyenv'            # See python/install.sh
 brew 'pyenv-virtualenv' # See python/install.sh
 brew 'jenv'             # See jenv/install.sh
 brew 'git'
-brew 'hub'
 brew 'typesafe-activator'
 brew 'haskell-stack'
 cask 'sublime-text3'
