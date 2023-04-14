@@ -1,0 +1,17 @@
+#!/usr/bin/env zsh
+
+if (( $+commands[subl] )); then
+  echo "Generating a new $ZSH/bin script using Sublime Text ZSH template snippet"
+
+  echo "You could also do this manually within Sublime Text by triggering the zsh_script_template snippet"
+
+  subl --new-window --command "chain {\"commands\":[ \
+      [\"insert_snippet\",{\"name\":\"Packages/User/zsh_script_template.sublime-snippet\"}], \
+      [\"set_file_type\",{\"syntax\": \"Packages/ShellScript/Bash.sublime-syntax\"}], \
+      [\"prompt_save_as\"] \
+    ]}"
+
+    echo "Remember to chmod +x the new script before committing it to git"
+else
+  echo "error: Need Sublime Text's subl CLI to use this helper"
+fi
