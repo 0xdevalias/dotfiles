@@ -8,3 +8,9 @@ then
   alias ll="gls -l --color"
   alias la='gls -A --color'
 fi
+
+# zoxide is a smarter cd command, inspired by z and autojump.
+# https://github.com/ajeetdsouza/zoxide
+if (( $+commands[zoxide] )); then
+  alias zoxide-list-all="zoxide query --list --score"
+fi
