@@ -1,0 +1,79 @@
+<snippet>
+  <tabTrigger>zsh_script_template</tabTrigger>
+  <description>ZSH shell script template, including arg parsing, help, etc</description>
+  <content><![CDATA[
+#!/usr/bin/env zsh
+
+# Ref:
+#   https://gist.github.com/0xdevalias/1097d54352abe232d4e6772eae93e70f
+#     A few notes/references on parsing CLI args to ZSH scripts
+
+SCRIPT_NAME="\$(basename "\$0")"
+
+# TODO: name this based on what the function should be called (make sure to change it below where we call it as well)
+# (( \$+functions[_name] )) || function _name() {
+function ${1:_name}() {
+  local version="0.1.0"
+
+  # TODO: Change this based on the args we want to parse below
+  ${0}local usage=(
+    "Usage: \$SCRIPT_NAME [OPTIONS] [<message...>]"
+    ""
+    "Options:"
+    "  -h,--help             Show this help message and exit"
+    "  --version             Show the version and exit"
+    "  --dry-run             TODO: add an explanation here"
+    "  -v,--verbose          TODO: add an explanation here"
+    "  -f,--filename=<file>  TODO: add an explanation here"
+    ""
+    "Eg."
+    "  \$SCRIPT_NAME <extra args> TODO"
+  )
+
+  # TODO: Change these based on the args we want to parse below
+  local flag_help flag_verbose
+  local arg_filename=(myfile)  # set a default
+
+  # -D pulls parsed flags out of \$@
+  # -E allows flags/args and positionals to be mixed, which we don't want in this example
+  # -F says fail if we find a flag that wasn't defined
+  # -M allows us to map option aliases (ie: h=flag_help -help=h)
+  # -K allows us to set default values without zparseopts overwriting them
+  # Remember that the first dash is automatically handled, so long options are -opt, not --opt
+  zmodload zsh/zutil
+  # TODO: Change this based on the args we want to parse
+  zparseopts -D -E -F -K -- \
+    {h,-help}=flag_help \
+    -version=flag_version \
+    -dry-run=flag_dry_run \
+    {v,-verbose}=flag_verbose \
+    {f,-filename}:=arg_filename ||
+    return 1
+
+  # Show help, then return
+  [[ -z "\$flag_help" ]] || { print -l \$usage && return }
+
+  # Show version, then return
+  [[ -z "\$flag_version" ]] || { print -l \$version && return }
+
+  # TODO: Change this based on the args we parsed above
+  if (( \$#flag_verbose )); then
+    print "verbose mode"
+  fi
+
+  if (( \$#flag_dry_run )); then
+    print "dry run mode"
+  fi
+
+  echo "--dry-run: \$flag_dry_run"
+  echo "--verbose: \$flag_verbose"
+  echo "--filename: \$arg_filename[-1]"
+  echo "positional: \$@"
+
+  # Do something...
+}
+
+# TODO: rename this based on what we called our function above
+${2:_name} "\$@"
+]]></content>
+</snippet>
