@@ -49,6 +49,14 @@ function git-pull-all() {
   # Show version, then return
   [[ -z "$flag_version" ]] || { print -l $version && return }
 
+  if [ ${#git_repo_folder_paths[@]} -eq 0 ]; then
+    echo "error: no git repo paths provided"
+    echo ""
+    echo "You can see the usage with:"
+    echo "  $0 --help"
+    exit 1
+  fi
+
   # echo "[debug] Git Repo Paths:\n  ${(j:\n  :)git_repo_folder_paths}"
 
   for folder in $git_repo_folder_paths; do
