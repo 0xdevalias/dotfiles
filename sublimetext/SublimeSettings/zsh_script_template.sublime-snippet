@@ -17,6 +17,8 @@ function ${1:_name}() {
 
   # TODO: Change this based on the args we want to parse below
   ${0}local usage=(
+    "TODO: add a meaningful program description here"
+    ""
     "Usage: \$SCRIPT_NAME [OPTIONS] [<message...>]"
     ""
     "Options:"
@@ -31,7 +33,9 @@ function ${1:_name}() {
   )
 
   # TODO: Change these based on the args we want to parse below
-  local flag_help flag_verbose
+  local flag_help \
+        flag_verbose \
+        flag_dry_run
   local arg_filename=(myfile)  # set a default
 
   # -D pulls parsed flags out of \$@
@@ -47,8 +51,8 @@ function ${1:_name}() {
     -version=flag_version \
     -dry-run=flag_dry_run \
     {v,-verbose}=flag_verbose \
-    {f,-filename}:=arg_filename ||
-    return 1
+    {f,-filename}:=arg_filename \
+    || return 1
 
   # Show help, then return
   [[ -z "\$flag_help" ]] || { print -l \$usage && return }
