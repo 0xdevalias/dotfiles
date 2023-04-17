@@ -1,0 +1,70 @@
+#!/usr/bin/env zsh
+
+# Ref:
+#   https://gist.github.com/0xdevalias/1097d54352abe232d4e6772eae93e70f
+#     A few notes/references on parsing CLI args to ZSH scripts
+
+SCRIPT_NAME="$(basename "$0")"
+
+function git-pull-all() {
+  local version="0.1.0"
+
+  local usage=(
+    "Execute 'git pull' for all of the specified git repo paths."
+    ""
+    "Usage: $SCRIPT_NAME [OPTIONS] [<git_repo...>]"
+    ""
+    "Options:"
+    "  -h,--help             Show this help message and exit"
+    "  --version             Show the version and exit"
+    "  --dry-run             Simulates the command's execution without performing any actions"
+    ""
+    "Eg."
+    "  $SCRIPT_NAME --dry-run *"
+  )
+
+  local flag_help \
+        flag_verbose \
+        flag_dry_run
+
+  # -D pulls parsed flags out of $@
+  # -E allows flags/args and positionals to be mixed, which we don't want in this example
+  # -F says fail if we find a flag that wasn't defined
+  # -M allows us to map option aliases (ie: h=flag_help -help=h)
+  # -K allows us to set default values without zparseopts overwriting them
+  # Remember that the first dash is automatically handled, so long options are -opt, not --opt
+  zmodload zsh/zutil
+  zparseopts -D -E -F -K -- \
+    {h,-help}=flag_help \
+    -version=flag_version \
+    -dry-run=flag_dry_run ||
+    return 1
+
+  # Read the git repo paths as an array
+  typeset -U git_repo_folder_paths=($@)
+
+  # Show help, then return
+  [[ -z "$flag_help" ]] || { print -l $usage && return }
+
+  # Show version, then return
+  [[ -z "$flag_version" ]] || { print -l $version && return }
+
+  # echo "[debug] Git Repo Paths:\n  ${(j:\n  :)git_repo_folder_paths}"
+
+  for folder in $git_repo_folder_paths; do
+    if [ -d "$folder/.git" ]; then
+      if (( $#flag_dry_run )); then
+        echo "[dry-run] $folder"
+      else
+        echo "[pulling] $folder"
+        cd "$folder"
+        echo git pull
+        cd ..
+      fi
+    else
+      echo "[skipping] not a git repository: $folder"
+    fi
+  done
+}
+
+git-pull-all "$@"
