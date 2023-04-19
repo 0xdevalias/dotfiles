@@ -1,0 +1,89 @@
+#!/usr/bin/env node
+
+const https = require('https');
+
+if (process.argv.length != 3) {
+  console.error('usage: youtube-channel-data-helper URL');
+  process.exit(1);
+}
+
+const API_KEY = process.env.YOUTUBE_API_KEY;
+const CHANNEL_URL = process.argv[2];
+
+if (!API_KEY) {
+  console.error('error: Please set the environment variable YOUTUBE_API_KEY');
+  process.exit(1);
+}
+
+if (!CHANNEL_URL) {
+  console.error('error: Please provide a channel URL as an argument');
+  process.exit(1);
+}
+
+function getChannelData(channelUrl) {
+  const options = {
+    hostname: 'www.youtube.com',
+    port: 443,
+    path: new URL(channelUrl).pathname,
+    headers: {
+      'User-Agent': 'Mozilla/5.0'
+    }
+  };
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let data = '';
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        const channelIdRegex = /<meta itemprop="channelId" content="([^"]+)">/;
+        const channelIdMatch = data.match(channelIdRegex);
+
+        const channelNameRegex = /<meta itemprop="name" content="([^"]+)">/;
+        const channelNameMatch = data.match(channelNameRegex);
+
+        const channelDescriptionRegex = /<meta itemprop="description" content="([^"]+)">/;
+        const channelDescriptionMatch = data.match(channelDescriptionRegex);
+
+        if (channelIdMatch && channelNameMatch && channelDescriptionMatch) {
+          const channelId = channelIdMatch[1];
+          const channelName = channelNameMatch[1];
+          const channelDescription = channelDescriptionMatch[1];
+
+          resolve({
+            channelUrl,
+            channelId,
+            channelName,
+            channelDescription
+          });
+        } else {
+          const errorContext = JSON.stringify({ channelUrl, channelIdMatch, channelNameMatch, channelDescriptionMatch }, null, 2);
+
+          reject(new Error(`Channel data not found in page source: ${errorContext}`));
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      reject(error);
+    });
+
+    req.end();
+  });
+}
+
+async function main() {
+  const channelData = await getChannelData(CHANNEL_URL);
+
+  console.log(JSON.stringify(channelData, null, 2));
+}
+
+main().then(() => {
+  process.exit(0);
+}).catch((error) => {
+  console.error('error:', error);
+  process.exit(1);
+});
