@@ -99,6 +99,7 @@ async function main() {
     channelId: video.snippet.channelId,
     channelTitle: video.snippet.channelTitle,
     id: video.id.videoId,
+    url: `https://www.youtube.com/watch?v=${video.id.videoId}`,
     title: video.snippet.title,
     description: video.snippet.description,
     publishedAt: video.snippet.publishedAt,
