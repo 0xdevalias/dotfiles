@@ -1,0 +1,116 @@
+#!/usr/bin/env node
+
+const https = require('https');
+
+if (process.argv.length != 4) {
+  console.error('usage: youtube-channel-recent-videos CHANNEL_ID PUBLISHED_AFTER');
+  console.error('');
+  console.error('eg. youtube-channel-recent-videos ABC123 2023-04-01T00:00:00Z');
+  process.exit(1);
+}
+
+const API_KEY = process.env.YOUTUBE_API_KEY;
+const CHANNEL_ID = process.argv[2];
+const PUBLISHED_AFTER = process.argv[3];
+
+if (!API_KEY) {
+  console.error('Please set the environment variable YOUTUBE_API_KEY');
+  process.exit(1);
+}
+
+if (!CHANNEL_ID) {
+  console.error('Please provide a channel ID as an argument');
+  process.exit(1);
+}
+
+if (!PUBLISHED_AFTER) {
+  console.error('Please provide a publishedAfter date (eg. 2023-04-01T00:00:00Z) as an argument');
+  process.exit(1);
+}
+
+function getChannelVideos({ channelId, publishedAfter, maxResults, apiKey }) {
+  let path = `/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&order=date&key=${apiKey}`;
+
+  if (publishedAfter) {
+    const encodedDate = encodeURIComponent(publishedAfter);
+    path += `&publishedAfter=${encodedDate}`;
+  }
+
+  if (maxResults) {
+    const encodedNumber = encodeURIComponent(maxResults);
+    path += `&maxResults=${encodedNumber}`;
+  }
+
+  // if (rating) {
+  //   const encodedRating = encodeURIComponent(rating);
+  //   path += `&myRating=${encodedRating}`;
+  // }
+
+  const options = {
+    hostname: 'www.googleapis.com',
+    port: 443,
+    path,
+    method: 'GET'
+  };
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let data = '';
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        try {
+          const videos = JSON.parse(data);
+
+          if (videos.error) {
+            reject(videos.error)
+          }
+
+          resolve(videos);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      reject(error);
+    });
+
+    req.end();
+  });
+}
+
+async function main() {
+  const channelVideosResult = await getChannelVideos({
+    channelId: CHANNEL_ID,
+    publishedAfter: PUBLISHED_AFTER,
+    maxResults: 50,
+    apiKey: API_KEY
+  })
+
+  // console.log(JSON.stringify(channelVideosResult, null, 2));
+  // console.log(`Total Results: ${channelVideosResult.pageInfo.totalResults}`);
+
+  const channelVideos = channelVideosResult.items.map(video => ({
+    channelId: video.snippet.channelId,
+    channelTitle: video.snippet.channelTitle,
+    id: video.id.videoId,
+    title: video.snippet.title,
+    description: video.snippet.description,
+    publishedAt: video.snippet.publishedAt,
+    publishTime: video.snippet.publishTime,
+  }))
+
+  console.log(JSON.stringify(channelVideos, null, 2));
+}
+
+main().then(() => {
+  process.exit(0);
+}).catch((error) => {
+  console.error('error:', error);
+  process.exit(1);
+});
