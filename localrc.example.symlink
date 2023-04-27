@@ -1,2 +1,5 @@
 # Ref: https://github.com/settings/tokens
 HOMEBREW_GITHUB_API_TOKEN=
+
+# Used for bin/youtube-recent-downloads, etc
+export YOUTUBE_API_KEY=
