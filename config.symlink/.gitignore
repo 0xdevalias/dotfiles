@@ -14,13 +14,18 @@ iterm2/
 
 jgit/
 
+karabiner/automatic_backups/
+
 MusicBrainz/
 
+OpenRGB/OpenRGB.json
 OpenRGB/logs/*.log
 
 pudb/
 
 # TODO: can we figure a way to track rclone config without risking exposing credentials?
 rclone/rclone.conf
+
+simple-update-notifier/
 
 tape/Definitions/
