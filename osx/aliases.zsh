@@ -17,3 +17,16 @@ alias show-macos-platform-uuid='ioreg -d2 -c IOPlatformExpertDevice | awk -F\" "
 
 alias show-app-bundle-id-by-name="function _show_app_id() { osascript -e 'id of app \"'\${1:?Error: Please specify an application name.}'\"'; }; _show_app_id"
 alias show-app-bundle-id-by-path="function _show_app_id_2() { mdls -name kMDItemCFBundleIdentifier -r \"\${1:?Error: Please specify path to application.}\"; }; _show_app_id_2"
+
+# Note: You'll need to create a shortcut called 'pbcopy' as follows:
+#   Receive: 'all types of input' from 'Nowhere'
+#     If there's no input: Stop and Respond: Error: No data passed to shortcut, exiting.
+#   Copy 'Shortcut Input' to clipboard
+PBCOPY_PLUS_PLUS_USAGE=$(cat <<EOF
+\nNote: You'll need to create an Apple shortcut called 'pbcopy' as follows:
+  Receive: 'all types of input' from 'Nowhere'
+    If there's no input: Stop and Respond: Error: No data passed to shortcut, exiting.
+  Copy 'Shortcut Input' to clipboard
+EOF
+)
+alias pbcopy++='shortcuts run 'pbcopy' || echo "$PBCOPY_PLUS_PLUS_USAGE"'
