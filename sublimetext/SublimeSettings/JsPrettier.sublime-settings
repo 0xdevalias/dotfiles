@@ -1,0 +1,12 @@
+{
+  "auto_format_on_save": false,
+  "auto_format_on_save_requires_prettier_config": true,
+  "allow_inline_formatting": true,
+  "prettier_options": {
+    "singleQuote": true,
+    "jsxSingleQuote": true,
+    "trailingComma": "es5",
+    "semi": true,
+    "editorconfig": true
+  }
+}
