@@ -1,0 +1,15 @@
+{
+    // prettier --help
+    //   ..snip..
+    //   --parser <flow|babel|babel-flow|babel-ts|typescript|acorn|espree|meriyah|css|less|scss|json|json5|json-stringify|graphql|markdown|mdx|vue|yaml|glimmer|html|angular|lwc>
+    //     Which parser to use.
+    "parser_map":
+    {
+        "Packages/JavaScript/JavaScript.sublime-syntax": "babel",
+        "Packages/TypeScript/TypeScript.sublime-syntax": "typescript",
+        "Packages/HTML/HTML.sublime-syntax": "html",
+        "Packages/CSS/CSS.sublime-syntax": "css",
+        "Packages/JSON/JSON.sublime-syntax": "json",
+        "Packages/Markdown/Markdown.sublime-syntax": "markdown",
+    }
+}

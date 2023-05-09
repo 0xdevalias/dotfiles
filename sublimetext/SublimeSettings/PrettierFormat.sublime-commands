@@ -1,0 +1,6 @@
+[
+  {
+    "caption": "Prettier: Format File",
+    "command": "prettier_format"
+  }
+]
