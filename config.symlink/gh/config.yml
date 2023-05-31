@@ -6,10 +6,14 @@ editor:
 prompt: enabled
 # A pager program to send command output to, e.g. "less". Set the value to "cat" to disable the pager.
 pager:
-# Aliases allow you to create nicknames for gh commands
-aliases:
-    co: pr checkout
 # The path to a unix socket through which send HTTP connections. If blank, HTTP traffic will be handled by net/http.DefaultTransport.
 http_unix_socket:
 # What web browser gh should use when opening URLs. If blank, will refer to environment.
 browser:
+# Aliases allow you to create nicknames for gh commands
+aliases:
+    co: pr checkout
+    init-repo: 'repo create'
+    init-repo-node-private: '!gh repo create $1 --disable-wiki --add-readme --gitignore Node --license MIT --private --clone && cd $1 && pwd && gh repo set-default && (gh repo view --json url,sshUrl,description | jq) && gh init-npm; gh repo view --web $1'
+    init-repo-node-public: '!gh repo create $1 --disable-wiki --add-readme --gitignore Node --license MIT --public --clone && cd $1 && pwd && gh repo set-default && (gh repo view --json url,sshUrl,description | jq) && gh init-npm; gh repo view --web $1'
+    init-npm: '!npm init'
