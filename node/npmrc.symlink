@@ -1,0 +1,11 @@
+// npm init
+init-author-name="Glenn 'devalias' Grant"
+init-author-email = ""
+init-author-url = "https://devalias.net/"
+init-license = "MIT"
+init-version = "0.0.1"
+//init-module = "/Users/devalias/.npm-init.js" // TODO: Potentially customise this later..? https://github.com/npm/init-package-json/blob/main/lib/default-input.js
+
+// npm version
+sign-git-commit = false
+sign-git-tag = false
