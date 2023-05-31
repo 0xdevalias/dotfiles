@@ -14,6 +14,7 @@
 	],
 	"scroll_past_end": true,
 	"show_full_path": true,
+	"show_encoding": true,
 	"tab_size": 2,
 	"theme": "Adaptive.sublime-theme",
 	"translate_tabs_to_spaces": true,
