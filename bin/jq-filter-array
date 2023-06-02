@@ -97,8 +97,8 @@ fi
 # Define our main jq script
 JQ_FILTER_SCRIPT='
   flatten | map(
-    select(. | tostring | if ($includeTerm | length) > 0 then test($includeTerm; "i") else true end) |
-    select(. | tostring | if ($excludeTerm | length) > 0 then (test($excludeTerm; "i") | not) else true end)
+    select(tostring | ($includeTerm | length) == 0 or test($includeTerm; "i")) |
+    select(tostring | ($excludeTerm | length) == 0 or (test($excludeTerm; "i") | not))
   )'
 
 # Define the final command
