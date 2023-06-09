@@ -1,0 +1,103 @@
+#!/bin/bash
+
+# List all local branches that have been merged into the given branch.
+#
+# Ref: https://stackoverflow.com/questions/43489303/how-can-i-delete-all-git-branches-which-have-been-squash-and-merge-via-github/56026209#56026209
+
+SCRIPT_NAME="$(basename "$0")"
+
+function show_usage {
+  echo "List all local branches that have been merged into the given branch."
+  echo ""
+  echo "Usage: $SCRIPT_NAME [OPTIONS] BASE_BRANCH"
+  echo ""
+  echo "Options:"
+  echo "  -h, --help                   Show this help message and exit"
+  echo ""
+  echo "Eg."
+  echo "  $SCRIPT_NAME main"
+  echo ""
+}
+
+# Check if we should show the help/usage details, and process the arguments
+if [[ -z "$1" ]]; then
+  show_usage
+  exit 1
+fi
+
+BASE_BRANCH=""
+EXTRA_PARAMS=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      show_usage
+      exit 0
+      ;;
+    *)
+      # Capture the base branch and extra params
+      if [[ -z "$BASE_BRANCH" ]]; then
+        BASE_BRANCH="$1"
+      else
+        EXTRA_PARAMS+="$1 "
+      fi
+
+      shift
+      ;;
+  esac
+done
+
+# Check if BASE_BRANCH is provided
+if [[ -z "$BASE_BRANCH" ]]; then
+  echo "Error: Base branch must be defined"
+  echo ""
+  echo "For usage, see: $SCRIPT_NAME --help"
+  exit 1
+fi
+
+# Check if any extra params are provided
+if [[ ! -z "$EXTRA_PARAMS" ]]; then
+  echo "Error: Unknown parameters: $EXTRA_PARAMS"
+  echo ""
+  echo "For usage, see: $SCRIPT_NAME --help"
+  exit 1
+fi
+
+# The command will return the hash of the branch if it exists, and nothing if it doesn't
+if ! git show-ref --verify --quiet refs/heads/$BASE_BRANCH; then
+  echo "Error: Branch $BASE_BRANCH does not exist."
+  exit 1
+fi
+
+echo "Listing all local branches that have been merged into base branch: $BASE_BRANCH" >&2
+
+# Remember what branch we were on so we can change back to it later
+ORIGINAL_BRANCH=$(git branch --show-current)
+
+# Silently checkout the base branch
+git checkout -q $BASE_BRANCH
+
+# Iterate over each local branch
+git for-each-ref refs/heads/ "--format=%(refname:short)" | while read branch; do
+  # Determine the common ancestor of the base branch and the current branch
+  mergeBase=$(git merge-base $BASE_BRANCH $branch)
+
+  # Extract the SHA-1 hash of the tree object from the latest commit on the current branch
+  branch_tree=$(git rev-parse $branch^{tree})
+
+  # Create a new commit with the current branch's tree
+  # Set its parent to the common ancestor (merge base)
+  # The new commit message is set to a single underscore '_'
+  commit=$(git commit-tree $branch_tree -p $mergeBase -m _)
+
+  # Determine if the new commit would be a no-op (i.e., it's already in the history of the base branch)
+  is_noop=$(git cherry $BASE_BRANCH $commit)
+
+  # If it's a no-op, print the branch name
+  if [[ $is_noop == "-"* ]]; then
+    echo "$branch"
+  fi
+done
+
+# Silently switch back to the original branch
+git checkout -q $ORIGINAL_BRANCH

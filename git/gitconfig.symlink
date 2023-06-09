@@ -284,11 +284,11 @@
   list-remote-merged-master         = !git list-remote-merged master  | grep -v master | grep -v staging
   list-remote-merged-staging        = !git list-remote-merged staging | grep -v master | grep -v staging
 
-  # List local branches that have been squash merged into {master,staging}
-  list-local-squash-merged-master   = !$ZSH/bin/git-list-local-squash-merged-master
-  list-local-squash-merged-staging  = !$ZSH/bin/git-list-local-squash-merged-staging
-  list-local-squash-merged-github   = !$ZSH/bin/git-list-local-squash-merged-env-github
-  list-local-squash-merged-ohbm     = !$ZSH/bin/git-list-local-squash-merged-env-ohbm
+  # List local branches that have been squash merged into the specified branch
+  list-local-squash-merged          = !$ZSH/bin/git-list-local-squash-merged
+  list-local-squash-merged-main     = list-local-squash-merged main
+  list-local-squash-merged-master   = list-local-squash-merged master
+  list-local-squash-merged-staging  = list-local-squash-merged staging
 
   # Count {local,remote} branches that have been merged into {master,staging}
   count-local-merged-master         = !git list-local-merged-master   | wc -l
@@ -296,9 +296,10 @@
   count-remote-merged-master        = !git list-remote-merged-master  | wc -l
   count-remote-merged-staging       = !git list-remote-merged-staging | wc -l
 
-  # Count local branches that have been squash merged into {master,staging}
-  count-local-squash-merged-master   = !$ZSH/bin/git-list-local-squash-merged-master  | wc -l
-  count-local-squash-merged-staging  = !$ZSH/bin/git-list-local-squash-merged-staging | wc -l
+  # Count local branches that have been squash merged into {main,master,staging}
+  count-local-squash-merged-main     = !$ZSH/bin/git-list-local-squash-merged main    | wc -l
+  count-local-squash-merged-master   = !$ZSH/bin/git-list-local-squash-merged master  | wc -l
+  count-local-squash-merged-staging  = !$ZSH/bin/git-list-local-squash-merged staging | wc -l
 
   # Cleanup {local,remote} merged branches
   cleanup-local-merged-master       = !git list-local-merged-master   | xargs echo RUN THE FOLLOWING IF YOU ARE CERTAIN: git delete-local-branch ;:
