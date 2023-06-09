@@ -276,6 +276,8 @@
 
   # (Ref: https://stackoverflow.com/questions/43489303/how-can-i-delete-all-git-branches-which-have-been-squash-and-merge-via-github/56026209#56026209)
 
+  list-local-with-missing-upstream  = !git for-each-ref --format='%(if:equals=gone)%(upstream:track,nobracket)%(then)%(refname:short)%(end)' refs/heads | grep -v '^$'
+
   # List {local,remote} branches that have been merged into {master,staging}
   list-local-merged-master          = !git list-local-merged master   | grep -v master | grep -v staging
   list-local-merged-staging         = !git list-local-merged staging  | grep -v master | grep -v staging
