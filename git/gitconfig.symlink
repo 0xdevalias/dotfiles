@@ -297,9 +297,9 @@
   count-remote-merged-staging       = !git list-remote-merged-staging | wc -l
 
   # Count local branches that have been squash merged into {main,master,staging}
-  count-local-squash-merged-main     = !$ZSH/bin/git-list-local-squash-merged main    | wc -l
-  count-local-squash-merged-master   = !$ZSH/bin/git-list-local-squash-merged master  | wc -l
-  count-local-squash-merged-staging  = !$ZSH/bin/git-list-local-squash-merged staging | wc -l
+  count-local-squash-merged-main     = !$ZSH/bin/git-list-local-squash-merged --count main
+  count-local-squash-merged-master   = !$ZSH/bin/git-list-local-squash-merged --count master
+  count-local-squash-merged-staging  = !$ZSH/bin/git-list-local-squash-merged --count staging
 
   # Cleanup {local,remote} merged branches
   cleanup-local-merged-master       = !git list-local-merged-master   | xargs echo RUN THE FOLLOWING IF YOU ARE CERTAIN: git delete-local-branch ;:

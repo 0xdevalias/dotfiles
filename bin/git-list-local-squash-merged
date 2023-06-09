@@ -6,16 +6,21 @@
 
 SCRIPT_NAME="$(basename "$0")"
 
+# Initialize the count mode as false
+COUNT_MODE=false
+
 function show_usage {
   echo "List all local branches that have been merged into the given branch."
   echo ""
   echo "Usage: $SCRIPT_NAME [OPTIONS] BASE_BRANCH"
   echo ""
   echo "Options:"
+  echo "  --count                      Only output the number of matching branches"
   echo "  -h, --help                   Show this help message and exit"
   echo ""
   echo "Eg."
   echo "  $SCRIPT_NAME main"
+  echo "  $SCRIPT_NAME --count main"
   echo ""
 }
 
@@ -33,6 +38,10 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       show_usage
       exit 0
+      ;;
+    --count)
+      COUNT_MODE=true
+      shift
       ;;
     *)
       # Capture the base branch and extra params
@@ -69,7 +78,11 @@ if ! git show-ref --verify --quiet refs/heads/$BASE_BRANCH; then
   exit 1
 fi
 
-echo "Listing all local branches that have been merged into base branch: $BASE_BRANCH" >&2
+if [[ "$COUNT_MODE" == "true" ]]; then
+  echo "Listing count of all local branches that have been merged into base branch: $BASE_BRANCH" >&2
+else
+  echo "Listing all local branches that have been merged into base branch: $BASE_BRANCH" >&2
+fi
 
 # Remember what branch we were on so we can change back to it later
 ORIGINAL_BRANCH=$(git branch --show-current)
@@ -77,8 +90,11 @@ ORIGINAL_BRANCH=$(git branch --show-current)
 # Silently checkout the base branch
 git checkout -q $BASE_BRANCH
 
+# Initialize counter
+COUNT=0
+
 # Iterate over each local branch
-git for-each-ref refs/heads/ "--format=%(refname:short)" | while read branch; do
+while read branch; do
   # Determine the common ancestor of the base branch and the current branch
   mergeBase=$(git merge-base $BASE_BRANCH $branch)
 
@@ -93,11 +109,19 @@ git for-each-ref refs/heads/ "--format=%(refname:short)" | while read branch; do
   # Determine if the new commit would be a no-op (i.e., it's already in the history of the base branch)
   is_noop=$(git cherry $BASE_BRANCH $commit)
 
-  # If it's a no-op, print the branch name
+  # If it's a no-op, increment the count and potentially print the branch name
   if [[ $is_noop == "-"* ]]; then
-    echo "$branch"
+    ((COUNT++))
+
+    if [[ "$COUNT_MODE" != "true" ]]; then
+      echo "$branch"
+    fi
   fi
-done
+done < <(git for-each-ref refs/heads/ "--format=%(refname:short)")
+
+if [[ "$COUNT_MODE" == "true" ]]; then
+  echo $COUNT
+fi
 
 # Silently switch back to the original branch
 git checkout -q $ORIGINAL_BRANCH
