@@ -24,17 +24,28 @@
   branch = auto
   diff = auto
   grep = auto
-  ui = true
+  ui = auto
+
+[diff]
+  guitool = opendiff
+  colorMoved = default
 
 [difftool]
   prompt = false
+	guiDefault = false
 
 [difftool "sourcetree"]
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
 	path = 
 
+[merge]
+  tool = opendiff
+	guitool = opendiff
+
 [mergetool]
-  keepBackup = false
+  prompt = false
+  guiDefault = true
+  keepBackup = true
 
 [mergetool "sourcetree"]
 	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
