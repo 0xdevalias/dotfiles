@@ -5,3 +5,6 @@ ssh/keys.init
 
 # System
 .DS_STORE
+
+# IDE
+.idea/
