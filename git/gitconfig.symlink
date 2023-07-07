@@ -170,6 +170,9 @@
   diff-staged = diff --staged
   diff-staged-list-files = diff --staged --name-only
 
+  # Ref: https://stackoverflow.com/questions/49278577/how-to-improve-gits-diff-highlighting/55891251#55891251
+  diff-highlight = "!f() { \"$(realpath \"$(dirname \"$(realpath $(command -v git))\")/../share/git-core/contrib/diff-highlight/diff-highlight\")\" \"$@\"; }; f"
+
   # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---color-movedltmodegt
   # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---color-moved-wsltmodesgt
   # https://git-scm.com/docs/git-config#Documentation/git-config.txt-color
