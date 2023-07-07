@@ -187,8 +187,23 @@
     diff --ignore-blank-lines --color-moved=dimmed-zebra --color-moved-ws=ignore-all-space --minimal
 
   diff-refactor-commit = !"f() { git diff-refactor ${1}~1 ${1}; }; f"
+  diff-refactor-show-lines = !"f() { \
+    if [ $# -lt 2 ]; then \
+      echo 'Usage: diff-refactor-show-lines <diff-refactor-args> <line-range>'; \
+      return 1; \
+    fi; \
+    args=(); \
+    for i in ${@:1:$#-1}; do \
+      args+=(\"$i\"); \
+    done; \
+    git diff-refactor --color=always ${args[@]} | $ZSH/bin/git-diff-line-range --line-range ${@: -1} | git diff-highlight | less; \
+  }; f"
+
+
   diff-color-moved = diff-refactor
   diff-color-moved-commit = diff-refactor-commit
+  diff-color-moved-show-lines = diff-refactor-show-lines
+
   # For more info on parsing the --color-moved output to simplify things even more:
   #   https://gist.github.com/0xdevalias/1245fe66ac6953d490114b417a0075e3
   #     > Some tips/tricks/hacks for working with git diff --color-moved to simplify refactor code reviews
