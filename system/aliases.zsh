@@ -12,5 +12,11 @@ fi
 # zoxide is a smarter cd command, inspired by z and autojump.
 # https://github.com/ajeetdsouza/zoxide
 if (( $+commands[zoxide] )); then
-  alias zoxide-list-all="zoxide query --list --score"
+  alias zoxide-list="zoxide query --list --score"
+  alias zoxide-list-interactive="zoxide query --interactive"
+  alias z-list="zoxide-list"
+  alias zi-list="zoxide-list-interactive"
+
+  alias z-help="zoxide -h"
+  alias zi-help="zoxide -h"
 fi
