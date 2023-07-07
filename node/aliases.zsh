@@ -1,6 +1,9 @@
 alias npm-list="npm list --depth=0"
 alias npm-list-global="npm list -g --depth=0"
 
+alias yarn-list="yarn list --depth=0"
+# alias yarn-list-global="yarn list -g --depth=0" # TODO: Does this actually work as expected?
+
 alias npm-outdated="npm outdated"
 alias npm-outdated-global="npm outdated -g"
 
