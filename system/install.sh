@@ -5,6 +5,13 @@ source "${ZSH}/lib/_helpers"
 
 echo "[system::install]"
 
+# Set up our standard directory structures
+ZSH_DIR_DEV="$HOME/dev"
+
+if [ ! -d "$ZSH_DIR_DEV" ]; then
+  mkdir "$ZSH_DIR_DEV"
+fi
+
 require_installed_brew "coreutils"         # GNU File, Shell, and Text utilities: https://www.gnu.org/software/coreutils
 # require_installed_brew "uutils-coreutils"  # Cross-platform Rust rewrite of the GNU coreutils: https://github.com/uutils/coreutils
 require_installed_brew "grc"               # Colorize logfiles and command output: https://github.com/garabik/grc
