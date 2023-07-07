@@ -164,7 +164,7 @@
   diff-untracked-files = diff --no-index
   diff-renamed = !echo "git diff SOURCEBRANCH:src/foo/bar.ts HEAD:src/foo/baz.ts"
   # diff-renamed = !echo "git diff @{upstream}:src/foo/bar.ts HEAD:src/foo/baz.ts" TODO: Not sure if this is correct?
-  diff-aliases = !echo "TODO: Add aliases for different forms of git diff that are useful in different circumstances. Particularly look at: git diff --color-moved=<mode>, where mode is zebra/dimmed-zebra, etc"
+  diff-aliases = !echo "TODO: Add aliases for different forms of git diff that are useful in different circumstances. Particularly look at: git diff --color-moved=<mode>, where mode is zebra/dimmed-zebra, etc (see also: my git aliases for diff-refactor / diff-refactor-commit that handle this"
   diff-unstaged = diff
   diff-unstaged-list-files = diff --name-only
   diff-staged = diff --staged
@@ -185,7 +185,10 @@
     -c color.diff.newMovedDimmed='white dim' \
     -c color.diff.newMovedAlternativeDimmed='white dim' \
     diff --ignore-blank-lines --color-moved=dimmed-zebra --color-moved-ws=ignore-all-space --minimal
+
   diff-refactor-commit = !"f() { git diff-refactor ${1}~1 ${1}; }; f"
+  diff-color-moved = diff-refactor
+  diff-color-moved-commit = diff-refactor-commit
   # For more info on parsing the --color-moved output to simplify things even more:
   #   https://gist.github.com/0xdevalias/1245fe66ac6953d490114b417a0075e3
   #     > Some tips/tricks/hacks for working with git diff --color-moved to simplify refactor code reviews
