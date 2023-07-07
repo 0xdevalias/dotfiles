@@ -4,6 +4,8 @@
 <dict>
 	<key>Actions</key>
 	<array/>
+	<key>AllowClipboardAccess</key>
+	<false/>
 	<key>AlternateMouseScroll</key>
 	<true/>
 	<key>BracketedPasteMode</key>
