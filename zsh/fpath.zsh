@@ -3,7 +3,7 @@ for topic_folder ($ZSH/*) if [ -d $topic_folder ]; then  fpath=($topic_folder $f
 
 fpath=($ZSH/functions $fpath)
 
-echo Loading completions..
+echo "Loading custom functions.."
 for file in $ZSH/functions/*(:t)
 do
   echo "  $file"
