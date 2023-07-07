@@ -1,0 +1,64 @@
+#!/usr/bin/env node
+
+const readline = require('readline');
+
+// Constants
+const DIFF_FILE_HEADER_PATTERNS = ['diff ', 'index ', '--- ', '+++ '];
+const HUNK_HEADER_PATTERN = /^@@ -(?<oldStart>[0-9]+),(?<oldCount>[0-9]+) \+(?<newStart>[0-9]+),(?<newCount>[0-9]+) @@/;
+
+// Parse command line arguments
+const args = process.argv.slice(2);
+const lineRangeIndex = args.indexOf('--line-range');
+
+if (lineRangeIndex === -1 || typeof args[lineRangeIndex + 1] === 'undefined') {
+    console.error('Usage: git-diff-line-range --line-range <line_number>');
+    process.exit(1);
+}
+
+const lineNumber = parseInt(args[lineRangeIndex + 1], 10);
+
+let inMatchingHunk = false;
+
+const rl = readline.createInterface({
+    input: process.stdin,
+});
+
+// Function to remove ANSI color codes from a string
+function stripAnsiCodes(str) {
+    return str.replace(/\x1B[[(?);]{0,2}(;?\d)*./g, '');
+}
+
+// Function to check if a number is within a range (inclusive)
+function isInRange(number, start, end) {
+    return number >= start && number <= end;
+}
+
+rl.on('line', (line) => {
+    // Strip ANSI color codes for processing
+    const lineWithoutAnsi = stripAnsiCodes(line);
+
+    if (lineWithoutAnsi.startsWith('@@')) {
+        // Parse the hunk header to get the line ranges
+        const match = lineWithoutAnsi.match(HUNK_HEADER_PATTERN);
+        if (match) {
+            const oldStart = parseInt(match.groups.oldStart, 10);
+            const oldCount = parseInt(match.groups.oldCount, 10);
+            const newStart = parseInt(match.groups.newStart, 10);
+            const newCount = parseInt(match.groups.newCount, 10);
+
+            const oldEnd = oldStart + oldCount - 1;
+            const newEnd = newStart + newCount - 1;
+
+            // Check if the line number is in either the old or new range
+            inMatchingHunk = isInRange(lineNumber, oldStart, oldEnd) || isInRange(lineNumber, newStart, newEnd);
+        }
+    }
+
+    // Check if it's part of the diff header
+    const isDiffFileHeader = DIFF_FILE_HEADER_PATTERNS.some(pattern => lineWithoutAnsi.startsWith(pattern));
+
+    // If in a matching hunk or part of diff file header, print the original line with ANSI codes
+    if (isDiffFileHeader || inMatchingHunk) {
+        console.log(line);
+    }
+});
