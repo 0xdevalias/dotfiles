@@ -21,5 +21,8 @@ require_installed_brew "fd"                # Simple, fast and user-friendly alte
 require_installed_brew "bat"               # Clone of cat(1) with syntax highlighting and Git integration: https://github.com/sharkdp/bat
 require_installed_brew "jq"                # Lightweight and flexible command-line JSON processor: https://stedolan.github.io/jq/
 require_installed_brew "xq"                # Command-line XML and HTML beautifier and content extractor: https://github.com/sibprogrammer/xq
+require_installed_brew "pup"               # Parse HTML at the command-line
+require_installed_brew "cascadia"          # Go cascadia package command-line CSS selector
 require_installed_brew "fx"                # Terminal JSON viewer: https://fx.wtf
 require_installed_brew "dasel"             # JSON, YAML, TOML, XML, and CSV query and modification tool: https://github.com/TomWright/dasel
+require_installed_brew "gron"              # Make JSON greppable: https://github.com/tomnomnom/gron
