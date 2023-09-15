@@ -207,7 +207,7 @@ setup_ssh_key_init () {
   info "configure $keys_init_path"
 
   info "The following files exist in $ssh_key_path"
-  ls "$ssh_key_path"
+  ls -L "$ssh_key_path"
 
   if [ -e "$keys_init_path" ]; then
     existing_keys=$(cat "$keys_init_path")
