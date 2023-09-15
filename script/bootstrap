@@ -101,6 +101,15 @@ setup_computer_name () {
   success "computer name configured"
 }
 
+# We have to ensure we install homebrew before trying to run any scripts that rely on it.. which probably means doing so pretty early on..
+setup_homebrew_mas () {
+  info 'setup homebrew / mas'
+
+  # Install homebrew / mas
+  echo "› $DOTFILES_ROOT/homebrew/install.sh"
+  $DOTFILES_ROOT/homebrew/install.sh 2>&1
+}
+
 setup_keybase () {
   info 'setup keybase'
 
@@ -331,6 +340,11 @@ install_dotfiles () {
 echo ''
 
 setup_computer_name
+
+echo ''
+
+# We have to ensure we install homebrew before trying to run any scripts that rely on it..
+setup_homebrew_mas
 
 echo ''
 
