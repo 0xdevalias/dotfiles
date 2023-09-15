@@ -334,12 +334,12 @@ setup_computer_name
 
 echo ''
 
-setup_keybase
+# TODO: move setup_gpg after setup_gitconfig (or part of it?) and make it conditionally enable commit signing?
+setup_gpg
 
 echo ''
 
-# TODO: move setup_gpg after setup_gitconfig (or part of it?) and make it conditionally enable commit signing?
-setup_gpg
+setup_keybase
 
 echo ''
 
