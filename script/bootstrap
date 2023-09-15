@@ -238,7 +238,7 @@ setup_ssh_key_init () {
 link_file () {
   local src=$1 dst=$2
 
-  local overwrite= backup= skip=
+  local overwrite= backup= skip= skipped_because_already_matching_linked=
   local action=
 
   if [ -f "$dst" -o -d "$dst" -o -L "$dst" ]
@@ -253,6 +253,7 @@ link_file () {
       then
 
         skip=true;
+        skipped_because_already_matching_linked=true;
 
       else
 
@@ -299,7 +300,12 @@ link_file () {
 
     if [ "$skip" = "true" ]
     then
-      success "skipped $src"
+      if [ "$skipped_because_already_matching_linked" = "true" ]
+      then
+        success "auto-skipped (already linked properly) $src"
+      else
+        success "skipped $src"
+      fi
     fi
   fi
 
