@@ -1,21 +1,24 @@
 #!/bin/bash
 
+echo "[osx::install]"
+
 if [[ "$(uname)" != "Darwin" ]]; then
-  echo "Not on macOS, skipping: $0"
+  echo "[osx::install] Not on macOS, skipping: $0"
   exit 0
 fi
 
 # Ensure MSI MPG Artymis 343CQR doesn't attempt to mount it's built in driver USB
-echo "Ensure monitor doesn't attempt to automount it's driver USB:"
-echo "  sudo vifs"
+echo "[osx::install] "
+echo "  Ensure monitor doesn't attempt to automount it's driver USB:"
+echo "    sudo vifs"
 echo ""
-echo "Then add the following line:"
-echo "  /dev/disk2 none msdos ro,noauto"
+echo "  Then add the following line:"
+echo "    /dev/disk2 none msdos ro,noauto"
 echo ""
-echo "You can use the following command to check it's the correct drive:"
-echo "  diskutil list"
+echo "  You can use the following command to check it's the correct drive:"
+echo "    diskutil list"
 echo ""
-echo "ChatGPT Ref: https://chat.openai.com/c/6dececbd-5e93-43dd-a16f-f0712190e3bb"
+echo "  ChatGPT Ref: https://chat.openai.com/c/6dececbd-5e93-43dd-a16f-f0712190e3bb"
 
 # TODO:
 #  * Launchpad database stored at: ~/Library/Application Support/Dock/*.db
