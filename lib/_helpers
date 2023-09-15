@@ -128,3 +128,20 @@ require_installed_brew_cask() {
     echo "  Install log: ${logfile}"
   fi
 }
+
+# Function to create symlink if it doesn't exist
+create_symlink() {
+  local target=$1
+  local link_name=$2
+
+  if [ ! -e "$link_name" ]; then
+    if [ -e "$target" ]; then
+      ln -s "$target" "$link_name"
+      echo "[create_symlink] Created symlink: $link_name -> $target"
+    else
+      echo "[create_symlink] Target not found: $target"
+    fi
+  else
+      echo "[create_symlink] Symlink already exists: $link_name"
+  fi
+}
