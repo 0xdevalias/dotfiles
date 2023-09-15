@@ -348,7 +348,6 @@ setup_homebrew_mas
 
 echo ''
 
-# TODO: move setup_gpg after setup_gitconfig (or part of it?) and make it conditionally enable commit signing?
 setup_gpg
 
 echo ''
@@ -357,6 +356,8 @@ setup_keybase
 
 echo ''
 
+# TODO: Conditionally enable commit signing if gpg is available + user chooses to?
+#   We can probably just make git config enable the commit signing part if/when gpg is available instead?
 setup_gitconfig
 
 echo ''
