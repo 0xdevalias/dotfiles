@@ -64,4 +64,6 @@ require_installed_brew "fx"                # Terminal JSON viewer: https://fx.wt
 require_installed_brew "dasel"             # JSON, YAML, TOML, XML, and CSV query and modification tool: https://github.com/TomWright/dasel
 require_installed_brew "gron"              # Make JSON greppable: https://github.com/tomnomnom/gron
 
+require_installed_brew_cask "karabiner-elements"  # A powerful and stable keyboard customizer for macOS
+
 echo "[system::install] Done"
