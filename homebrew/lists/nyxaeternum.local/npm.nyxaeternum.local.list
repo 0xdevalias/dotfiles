@@ -1,5 +1,8 @@
 /Users/devalias/.nodenv/versions/16.15.1/lib
+├── @electron/asar@3.2.3
+├── @githubnext/github-copilot-cli@0.1.33
 ├── corepack@0.10.0
-├── npm@8.19.2
-└── nx@14.5.2
+├── node-green-cli@0.4.1
+├── node-green@0.5.3
+└── npm@9.6.2
 

@@ -1,7 +1,12 @@
+devhubapp/devhub
 homebrew/bundle
 homebrew/cask
 homebrew/cask-fonts
+homebrew/cask-versions
 homebrew/core
+keith/formulae
+nrlquaker/createzap
 turbot/tap
 vitorgalvao/tiny-scripts
+wasmcloud/wasmcloud
 zero-sh/tap
