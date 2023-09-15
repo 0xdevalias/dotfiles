@@ -133,8 +133,8 @@ setup_gitconfig () {
     git_credential='osxkeychain'
   fi
 
-  local old_git_name="$(git config --global --get user.name)"
-  local old_git_email="$(git config --global --get user.email)"
+  local old_git_name="$(git config --get user.name)"
+  local old_git_email="$(git config --get user.email)"
 
   local git_authorname="$(read_user_input "What is your GitHub author name?" "$old_git_name")"
   local git_authoremail="$(read_user_input "What is your GitHub author email?" "$old_git_email")"
