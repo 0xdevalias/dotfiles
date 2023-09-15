@@ -48,6 +48,7 @@ else
   create_symlink "$GOOGLE_DRIVE_DIR" "$HOME/Google Drive"
 fi
 
+echo "[system::install] Checking/installing standard system utilities.."
 require_installed_brew "coreutils"         # GNU File, Shell, and Text utilities: https://www.gnu.org/software/coreutils
 # require_installed_brew "uutils-coreutils"  # Cross-platform Rust rewrite of the GNU coreutils: https://github.com/uutils/coreutils
 require_installed_brew "grc"               # Colorize logfiles and command output: https://github.com/garabik/grc
@@ -62,3 +63,5 @@ require_installed_brew "cascadia"          # Go cascadia package command-line CS
 require_installed_brew "fx"                # Terminal JSON viewer: https://fx.wtf
 require_installed_brew "dasel"             # JSON, YAML, TOML, XML, and CSV query and modification tool: https://github.com/TomWright/dasel
 require_installed_brew "gron"              # Make JSON greppable: https://github.com/tomnomnom/gron
+
+echo "[system::install] Done"
