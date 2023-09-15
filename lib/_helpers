@@ -119,6 +119,8 @@ require_installed_brew() {
     echo "  Required command '${command}' missing. Installing.."
     brew install "${command}" | tee "${logfile}"
     echo "  Install log: ${logfile}"
+  else
+    echo "[require_installed_brew::${command}] already installed. Skipping.."
   fi
 }
 
