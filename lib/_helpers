@@ -76,10 +76,15 @@ check_installed() {
   local command="$1"
   local only_return="$2"
 
+  # Check if command is installed
   local command_path=$(command -v "${command}")
   local command_realpath=$(realpath "${command_path}" 2> /dev/null)
 
-  if [[ ! ( -a "${command_path}" && -x "${command_realpath}" ) ]]; then
+  # Check if package is installed in Homebrew
+  # Note: The '|| true' after the grep command ensures that the command's failure doesn't exit the script, but instead stores an empty string in the variable.
+  local is_brew_installed=$(brew list | grep -w "${command}" || true)
+
+  if [[ ( -z "${command_path}" || ! -x "${command_realpath}" ) && -z "${is_brew_installed}" ]]; then
     echo "[ERROR] Couldn't find '${command}'. Try:"
 
     if [[ "${command}" == "brew" ]]; then
