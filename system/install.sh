@@ -15,6 +15,39 @@ if [ ! -d "$ZSH_DIR_DEV" ]; then
   echo "[system::install]   $ZSH_DIR_DEV"
 fi
 
+# Set up symlinks to cloud storage/etc
+echo "[system::install] Creating symlinks to cloud storage directories.."
+
+CLOUD_STORAGE_DIR="$HOME/Library/CloudStorage"
+DROPBOX_DIR="$CLOUD_STORAGE_DIR/Dropbox"
+ONEDRIVE_DIR="$CLOUD_STORAGE_DIR/OneDrive-Personal"
+
+create_symlink "$DROPBOX_DIR" "$HOME/Dropbox"
+create_symlink "$ONEDRIVE_DIR" "$HOME/OneDrive"
+
+# Handle Google Drive directory selection
+GOOGLE_DRIVE_DIRS=($(find "$CLOUD_STORAGE_DIR" -maxdepth 1 -type d -name 'GoogleDrive-*'))
+
+if [ ${#GOOGLE_DRIVE_DIRS[@]} -eq 0 ]; then
+  echo "[system::install]  No Google Drive directories found. Skipping symlink."
+elif [ ${#GOOGLE_DRIVE_DIRS[@]} -eq 1 ]; then
+  GOOGLE_DRIVE_DIR="${GOOGLE_DRIVE_DIRS[0]}"
+  create_symlink "$GOOGLE_DRIVE_DIR" "$HOME/Google Drive"
+else
+  echo "[system::install]  Multiple Google Drive directories found. Please select one:"
+  select dir in "${GOOGLE_DRIVE_DIRS[@]}"; do
+    if [[ -n $dir ]]; then
+      echo "[system::install]    You selected $dir"
+      GOOGLE_DRIVE_DIR="$dir"
+      break
+    else
+      echo "[system::install]    Invalid selection"
+    fi
+  done
+
+  create_symlink "$GOOGLE_DRIVE_DIR" "$HOME/Google Drive"
+fi
+
 require_installed_brew "coreutils"         # GNU File, Shell, and Text utilities: https://www.gnu.org/software/coreutils
 # require_installed_brew "uutils-coreutils"  # Cross-platform Rust rewrite of the GNU coreutils: https://github.com/uutils/coreutils
 require_installed_brew "grc"               # Colorize logfiles and command output: https://github.com/garabik/grc
