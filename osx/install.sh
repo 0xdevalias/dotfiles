@@ -7,6 +7,16 @@ if [[ "$(uname)" != "Darwin" ]]; then
   exit 0
 fi
 
+# Install macOS Rosetta 2 (to allow running x86 apps through emulation on Apple Silicon)
+#   https://osxdaily.com/2020/12/04/how-install-rosetta-2-apple-silicon-mac/
+if [ "$(arch)" == "arm64" ]; then
+  echo "[osx::install] Apple Silicon detected. Installing Rosetta 2..."
+  softwareupdate --install-rosetta
+  # softwareupdate --install-rosetta --agree-to-license
+else
+  echo "[osx::install] Not running on Apple Silicon. Skipping Rosetta 2 installation."
+fi
+
 # Ensure MSI MPG Artymis 343CQR doesn't attempt to mount it's built in driver USB
 echo "[osx::install] "
 echo "  Ensure monitor doesn't attempt to automount it's driver USB:"
