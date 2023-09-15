@@ -21,10 +21,6 @@ install_macOS() {
   # else
   #   echo "Mas already installed, skipping..: $0"
   fi
-
-  # Install some common core dependencies
-  echo "  Installing coreutils for you."
-  brew install coreutils
 }
 
 install_linux() {
