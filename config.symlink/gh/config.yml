@@ -17,3 +17,11 @@ aliases:
     init-repo-node-private: '!gh repo create $1 --disable-wiki --add-readme --gitignore Node --license MIT --private --clone && cd $1 && pwd && gh repo set-default && (gh repo view --json url,sshUrl,description | jq) && gh init-npm; gh repo view --web $1'
     init-repo-node-public: '!gh repo create $1 --disable-wiki --add-readme --gitignore Node --license MIT --public --clone && cd $1 && pwd && gh repo set-default && (gh repo view --json url,sshUrl,description | jq) && gh init-npm; gh repo view --web $1'
     init-npm: '!npm init'
+    outdated: |
+      !gh extension list &&
+      echo &&
+      (gh extension list | awk '{print $3}' | sed 's#^#https://github.com/#' | sed 's#$#/releases#') &&
+      echo &&
+      gh extension upgrade --all --dry-run &&
+      echo &&
+      brew outdated gh
