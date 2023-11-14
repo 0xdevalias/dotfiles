@@ -14,8 +14,62 @@ browser:
 aliases:
     co: pr checkout
     init-repo: 'repo create'
-    init-repo-node-private: '!gh repo create $1 --disable-wiki --add-readme --gitignore Node --license MIT --private --clone && cd $1 && pwd && gh repo set-default && (gh repo view --json url,sshUrl,description | jq) && gh init-npm; gh repo view --web $1'
-    init-repo-node-public: '!gh repo create $1 --disable-wiki --add-readme --gitignore Node --license MIT --public --clone && cd $1 && pwd && gh repo set-default && (gh repo view --json url,sshUrl,description | jq) && gh init-npm; gh repo view --web $1'
+    init-repo-node: |
+      !init_repo_node() {
+        if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ $# -ne 2 ]; then
+          echo "Usage: gh init-repo-node <repo-name> <visibility>"
+          echo "Create a new GitHub repository with specified name and visibility."
+          echo ""
+          echo "Arguments:"
+          echo "  <repo-name>    Name of the new GitHub repository."
+          echo "  <visibility>   Visibility of the repository ('private' or 'public')."
+          echo ""
+          echo "Options:"
+          echo "  -h, --help     Show this help message and exit."
+          return 0
+        fi
+
+        REPO_NAME=$1
+        VISIBILITY=$2
+
+        case "$VISIBILITY" in
+          private|public)
+            ;; # Continue with the script if valid
+          *)
+            echo "Invalid visibility: $VISIBILITY"
+            echo "Visibility must be either 'private' or 'public'"
+            return 1
+            ;;
+        esac
+
+        echo "This will create a new GitHub repository named '$REPO_NAME' with '$VISIBILITY' visibility, configured with a Node .gitignore, and MIT license."
+        echo "Do you want to continue? (y/n)"
+        read -r confirm
+        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+          echo "Operation cancelled."
+          return 1
+        fi
+
+        echo "Creating + cloning repo..."
+        gh repo create "$REPO_NAME" --disable-wiki --add-readme --gitignore Node --license MIT --"$VISIBILITY" --clone
+        cd "$REPO_NAME"
+
+        echo "Repo cloned to:"
+        pwd
+
+        gh repo set-default
+
+        echo "Repo details:"
+        (gh repo view --json url,sshUrl,description | jq)
+
+        echo "Initing npm package..."
+        gh init-npm
+
+        echo "Opening repo in browser..."
+        gh repo view --web "$REPO_NAME"
+      }; init_repo_node $@
+    init-repo-node-private: 'init-repo-node $1 private'
+    init-repo-node-public: 'init-repo-node $1 public'
     init-npm: '!npm init'
     outdated: |
       !gh extension list &&
