@@ -101,7 +101,6 @@ aliases:
         outdated_extensions=$(gh extension upgrade --all --dry-run)
         outdated_found=false
 
-        # echo "$outdated_extensions" | while read -r line; do
         while read -r line; do
           if [[ $line == *"would have upgraded from"* ]]; then
             outdated_found=true
@@ -117,7 +116,6 @@ aliases:
             #   gh extension upgrade "$extension_name"
             # fi
           fi
-        # done
         done <<< "$outdated_extensions"
 
         if [[ $outdated_found == true ]]; then
