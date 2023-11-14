@@ -72,10 +72,74 @@ aliases:
     init-repo-node-public: 'init-repo-node $1 public'
     init-npm: '!npm init'
     outdated: |
-      !gh extension list &&
-      echo &&
-      (gh extension list | awk '{print $3}' | sed 's#^#https://github.com/#' | sed 's#$#/releases#') &&
-      echo &&
-      gh extension upgrade --all --dry-run &&
-      echo &&
-      brew outdated gh
+      !gh_extensions_outdated() {
+        if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ $# -ne 0 ]; then
+          echo "Usage: gh outdated"
+          echo "Check for outdated GitHub CLI extensions and the gh CLI tool itself."
+          echo ""
+          echo "This command performs the following actions:"
+          echo "  - Lists all installed gh extensions."
+          echo "  - Checks if any installed extensions have updates available."
+          echo "  - Offers to upgrade individual extensions if updates are available."
+          echo "  - Checks if the gh CLI tool is up to date and offers to upgrade it if not."
+          echo ""
+          echo "Options:"
+          echo "  -h, --help     Show this help message and exit."
+          return 0
+        fi
+
+        gh extension list
+
+        echo
+
+        echo "Release notes:"
+        (gh extension list | awk '{print $3}' | sed 's#^#  https://github.com/#' | sed 's#$#/releases#')
+
+        echo
+
+        echo "Checking for outdated extensions..."
+        outdated_extensions=$(gh extension upgrade --all --dry-run)
+        outdated_found=false
+
+        # echo "$outdated_extensions" | while read -r line; do
+        while read -r line; do
+          if [[ $line == *"would have upgraded from"* ]]; then
+            outdated_found=true
+            extension_name=$(echo "$line" | awk '{print $1}' | tr -d '[]:')
+            current_version=$(echo "$line" | awk '{print $(NF-2)}')
+            new_version=$(echo "$line" | awk '{print $NF}')
+
+            echo "  Extension $extension_name is outdated (Current: $current_version, Available: $new_version)"
+
+            # echo "Do you want to upgrade $extension_name? [y/N]"
+            # read -r upgrade_extension
+            # if [ "$upgrade_extension" = "y" ]; then
+            #   gh extension upgrade "$extension_name"
+            # fi
+          fi
+        # done
+        done <<< "$outdated_extensions"
+
+        if [[ $outdated_found == true ]]; then
+          echo "Do you want to upgrade all outdated extensions? [y/N]"
+          read -r answer
+          if [ "$answer" = "y" ]; then
+            gh extension upgrade --all
+          fi
+        else
+          echo "  All extensions are up to date!"
+        fi
+
+        echo
+
+        echo "Checking to see if gh is up to date..."
+        if brew outdated gh | grep -q 'gh'; then
+          echo "gh is outdated. Do you want to upgrade? [y/N]"
+          read -r upgrade_gh
+          if [ "$upgrade_gh" = "y" ]; then
+            brew upgrade gh
+          fi
+        else
+          echo "  gh is up to date!"
+        fi
+      }; gh_extensions_outdated $@
