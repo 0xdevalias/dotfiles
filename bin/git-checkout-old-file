@@ -1,0 +1,44 @@
+#!/usr/bin/env zsh
+#
+# @description Retrieve the last modified version before the current commit of a file in Git and save it with '-old' before the extension.
+
+script_name=$(basename "$0")
+
+show_usage() {
+    echo "Usage: $script_name <filename>"
+    echo "  <filename>: The name of the file to retrieve its pre-last-modified version from Git."
+    echo "  -h, --help: Display this help message."
+}
+
+# Show help if no arguments, -h, or --help is provided
+if [ "$#" -ne 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    show_usage
+    exit 1
+fi
+
+filename="$1"
+
+# Prepend './' if the filename does not contain a path
+if [[ "$filename" != *"/"* ]]; then
+    filename="./$filename"
+fi
+
+# Check if the file exists in the git repository
+if ! git ls-files --error-unmatch "$filename" > /dev/null 2>&1; then
+    echo "Error: File '$filename' not found in the Git repository."
+    exit 1
+fi
+
+last_commit=$(git log -1 --pretty=format:%H -- "$filename")
+current_head=$(git rev-parse HEAD)
+
+if [ "$last_commit" = "$current_head" ]; then
+    # Find the commit before the last commit that modified the file
+    last_commit=$(git log -2 --pretty=format:%H -- "$filename" | tail -n 1)
+fi
+
+if [ -n "$last_commit" ]; then
+    git show "$last_commit:$filename" > "${filename%.*}-old.${filename##*.}"
+else
+    echo "File not found in commit history"
+fi
