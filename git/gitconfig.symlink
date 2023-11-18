@@ -2,6 +2,10 @@
 [core]
   excludesfile = ~/.gitignore_global
   editor = subl -n -w
+  pager = delta                    # https://github.com/dandavison/delta#get-started
+
+[interactive]
+  diffFilter = delta --color-only  # https://github.com/dandavison/delta#get-started
 
 [gpg]
   # Note: install this with 'brew install gpg'
@@ -38,9 +42,19 @@
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
 	path = 
 
+# https://github.com/dandavison/delta#get-started
+[difftool "delta"]
+  cmd = delta "$LOCAL" "$REMOTE"
+
+# https://github.com/dandavison/delta#get-started
+[delta]
+  line-numbers = true
+  navigate = true      # use n and N to move between diff sections
+  light = false        # set to true if you're in a terminal w/ a light background color (e.g. the default macOS terminal)
 [merge]
   tool = opendiff
 	guitool = opendiff
+  conflictstyle = diff3  # https://github.com/dandavison/delta#get-started
 
 [mergetool]
   prompt = false
