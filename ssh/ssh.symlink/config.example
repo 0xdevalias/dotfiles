@@ -1,7 +1,11 @@
-# Note:
-# Create: ssh-keygen -t rsa -b 4096 -f servername_username_rsa -C "your_email@example.com"
-# Store:  ssh-add servername_username_rsa
-# Remove: ssh-add -d servername_username_rsa
+# Create         : ssh-keygen -t ed25519 -f servername_username_ed25519 -C "your_email@example.com"
+# Create (legacy): ssh-keygen -t rsa -b 4096 -f servername_username_rsa -C "your_email@example.com"
+#
+# Store:  ssh-add servername_username_ed25519
+#
+# Remove: ssh-add -d servername_username_ed25519
+#
+# See also: https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
 
 Host example example.com
 Hostname example.com
