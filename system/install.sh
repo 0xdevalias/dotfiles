@@ -65,6 +65,7 @@ require_installed_brew "dasel"                       # JSON, YAML, TOML, XML, an
 require_installed_brew "gron"                        # Make JSON greppable: https://github.com/tomnomnom/gron
 require_installed_brew "ast-grep"                    # A CLI tool for code structural search, lint and rewriting. Written in Rust: https://github.com/ast-grep/ast-grep
 require_installed_brew "git-delta"                   # Syntax-highlighting pager for git and diff output: https://github.com/dandavison/delta
+require_installed_brew "difftastic"                  # Diff that understands syntax: https://github.com/Wilfred/difftastic
 
 require_installed_brew_cask "karabiner-elements"  # A powerful and stable keyboard customizer for macOS
 

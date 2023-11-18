@@ -20,3 +20,9 @@ if (( $+commands[zoxide] )); then
   alias z-help="zoxide -h"
   alias zi-help="zoxide -h"
 fi
+
+# Diff that understands syntax
+# https://github.com/Wilfred/difftastic
+if (( $+commands[difft] )); then
+  alias difftastic="difft"
+fi
