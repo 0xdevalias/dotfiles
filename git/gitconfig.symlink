@@ -54,6 +54,10 @@
 
 [difftool "difftastic"]
   cmd = difft "$LOCAL" "$REMOTE"
+
+[difftool "diffsitter"]
+  cmd = diffsitter "$LOCAL" "$REMOTE"
+
 [merge]
   tool = opendiff
 	guitool = opendiff
