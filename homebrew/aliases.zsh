@@ -68,27 +68,48 @@ Useful Commands:
 
   brew create --help
 
-  One of:
+  Create the new cask, one of:
     brew create --cask URL
     brew create --cask --tap Homebrew/homebrew-cask-versions URL
 
-  brew install --cask PATH_TO_LOCAL_CASK
-  eg. brew install --cask /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask/Casks/f/foo.rb
+  Note: Make sure to edit the cask with any additional things to add manually such as:
+    Mapping the version to the download URL (if required) # (see https://docs.brew.sh/Cask-Cookbook#stanza-version)
+    depends_on macos: ">= :monterey"                      # (see https://docs.brew.sh/Cask-Cookbook#depends_on-macos)
+    auto_updates: true                                    # (see https://docs.brew.sh/Cask-Cookbook#:~:text=parse.rb)-,auto_updates,-no)
 
-  brew createzap CASK
-  $(brew --repository homebrew/cask)/developer/bin/list_ids_in_app /path/to/application.app
-  find ~/Library -iname '*FooApp*' 2>/dev/null | sort
-  find ~/Library -iname '*com.foo.FooApp*' 2>/dev/null | sort
+  Install the basic cask locally, then use the app a bit:
+    brew install --cask PATH_TO_LOCAL_CASK
+    eg. brew install --cask $(brew --repository homebrew/cask)/Casks/f/foo.rb
 
-  brew livecheck -h
-  brew livecheck --cask CASK
-  $(brew --repository homebrew/cask)/developer/bin/find-appcast '/path/to/application.app'
+  Create the 'zap' stanza for cleanup when uninstalling the cask (see https://docs.brew.sh/Cask-Cookbook#stanza-zap):
+    Note: You'll probably need to open/run the app and use it a little bit before running the createzap helper tool
 
-  brew style --fix CASK
-  brew audit --new-cask CASK
-  brew audit --cask --online CASK
+    brew createzap CASK
 
-  One of:
+    Note: If that doesn't work well, then the following more manual steps might:
+
+    $(brew --repository homebrew/cask)/developer/bin/list_ids_in_app /path/to/application.app
+
+    find ~/Library -iname '*FooApp*' 2>/dev/null | sort
+    find ~/Library -iname '*com.foo.FooApp*' 2>/dev/null | sort
+    find ~/.config -iname '*FooApp*' 2>/dev/null | sort
+    find ~/.config -iname '*com.foo.FooApp*' 2>/dev/null | sort
+    find ~/.local -iname '*FooApp*' 2>/dev/null | sort
+    find ~/.local -iname '*com.foo.FooApp*' 2>/dev/null | sorts
+    find / -iname "*FooApp*" | sort
+    find / -iname "*com.foo.FooApp*" | sort
+
+  Create the livecheck section if relevant (see https://docs.brew.sh/Cask-Cookbook#stanza-livecheck):
+    brew livecheck -h
+    brew livecheck --cask CASK
+    $(brew --repository homebrew/cask)/developer/bin/find-appcast '/path/to/application.app'
+
+  Check that all of the style/audit checks pass (and fix anything if they don't):
+    brew style --fix CASK
+    brew audit --new-cask CASK
+    brew audit --cask --online CASK
+
+  Switch to the appropriate directory, one of:
     brew-tapsdir-cask
     brew-tapsdir-cask-versions
 
@@ -96,15 +117,19 @@ Useful Commands:
     git remote add 0xdevalias git@github.com:0xdevalias/homebrew-cask.git
     git remote add 0xdevalias git@github.com:0xdevalias/homebrew-cask-versions.git
 
-  git new-branch 0xdevalias/add-cask-CASK
-  git status
-  git add f/foo.rb
-  git commit -m 'add CASK VERSION'
-  git checkout master
+  Create a new branch and commit your new cask:
+    git new-branch 0xdevalias/add-cask-CASK
+    git status
+    git add f/foo.rb
+    git commit -m 'add CASK VERSION'
+    git push
 
-  One of:
+  Open a PR for your new change (on https://github.com/Homebrew/homebrew-cask), one of:
     gh pr create --repo homebrew/homebrew-cask --web
     gh pr create --repo homebrew/homebrew-cask-versions --web
+
+  Switch your local branch back to main:
+    git checkout master
 
 TODO: add more/better instructions/automations here..
 
