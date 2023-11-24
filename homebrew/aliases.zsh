@@ -71,9 +71,13 @@ Useful Commands:
     brew create --cask URL
     brew create --cask --tap Homebrew/homebrew-cask-versions URL
 
-  brew install --cask CASK
+  brew install --cask PATH_TO_LOCAL_CASK
+  eg. brew install --cask /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask/Casks/f/foo.rb
 
   brew createzap CASK
+  $(brew --repository homebrew/cask)/developer/bin/list_ids_in_app /path/to/application.app
+  find ~/Library -iname '*FooApp*' 2>/dev/null | sort
+  find ~/Library -iname '*com.foo.FooApp*' 2>/dev/null | sort
 
   brew livecheck -h
   brew livecheck --cask CASK
@@ -92,6 +96,8 @@ Useful Commands:
     git remote add 0xdevalias git@github.com:0xdevalias/homebrew-cask-versions.git
 
   git new-branch 0xdevalias/add-cask-CASK
+  git status
+  git add f/foo.rb
   git commit -m 'add CASK VERSION'
   git checkout master
 
