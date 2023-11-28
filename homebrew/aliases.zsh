@@ -44,13 +44,15 @@ Useful Commands:
   brew create --help
 
   Create the new formula, one of (see https://docs.brew.sh/Formula-Cookbook#grab-the-url):
-    brew create --go URL_TO_SOURCE.tar.gz  # (examples https://github.com/search?q=repo%3AHomebrew%2Fhomebrew-core+depends_on+%5C%22go%5C%22&type=code)
+    brew create --go URL_TO_SOURCE.tar.gz                 # (examples https://github.com/search?q=repo%3AHomebrew%2Fhomebrew-core+depends_on+%5C%22go%5C%22&type=code)
+    brew create --go --set-name FOO URL_TO_SOURCE.tar.gz  # (examples https://github.com/search?q=repo%3AHomebrew%2Fhomebrew-core+depends_on+%5C%22go%5C%22&type=code)
     etc
 
   Note: Make sure to edit the formula with any additional things to add manually such as:
-    Add the correct license                                       # (see https://docs.brew.sh/Formula-Cookbook#fill-in-the-license)
-    head "https://github.com/USER/PROJECT.git", branch: "master"  # (see https://docs.brew.sh/Formula-Cookbook#unstable-versions-head)
-    Check for dependencies                                        # (see https://docs.brew.sh/Formula-Cookbook#check-for-dependencies)
+    Add the correct license                                            # (see https://docs.brew.sh/Formula-Cookbook#fill-in-the-license)
+    head "https://github.com/USER/PROJECT.git", branch: "master"       # (see https://docs.brew.sh/Formula-Cookbook#unstable-versions-head)
+    Check for dependencies                                             # (see https://docs.brew.sh/Formula-Cookbook#check-for-dependencies)
+    generate_completions_from_executable(bin/"foo", "completion")  # (see https://rubydoc.brew.sh/Formula.html#generate_completions_from_executable-instance_method)
     etc
 
   Create the livecheck section if needed (usually should work fine without) (see https://docs.brew.sh/Formula-Cookbook#livecheck-blocks):
