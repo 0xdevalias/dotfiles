@@ -11,7 +11,8 @@ alias brew-cask-devbindir="cd $(brew --repository homebrew/cask)/developer/bin &
 alias brew-add="echo Try one of: 'brew create -h', brew-new-formula, brew-new-cask"
 alias brew-commands="brew commands"
 
-BREW_NEW_FORMULA_INFO=$(cat <<'END_HEREDOC'
+_brew_new_formula_info() {
+  cat <<'END_HEREDOC'
 Docs:
   TODO
   https://github.com/Homebrew/homebrew-core/blob/master/CONTRIBUTING.md#to-add-a-new-formula-for-foo-version-234-from-url
@@ -95,12 +96,13 @@ TODO: add more/better instructions/automations here..
 See also this PR I created, and might be usable as a reference: https://github.com/Homebrew/homebrew-core/pull/120044
 Or all my PRs: https://github.com/Homebrew/homebrew-core/pulls?q=is%3Apr+author%3A0xdevalias
 END_HEREDOC
-)
+}
 
-alias brew-new-formula="echo '$BREW_NEW_FORMULA_INFO'"
+alias brew-new-formula="_brew_new_formula_info"
 alias brew-new-formula-search-existing='f() { echo "Checking Homebrew/homebrew-core.."; gh search issues --include-prs --repo=Homebrew/homebrew-core "$1"; }; f'
 
-BREW_NEW_CASK_INFO=$(cat <<'END_HEREDOC'
+_brew_new_cask_info() {
+  cat <<'END_HEREDOC'
 Docs:
   https://github.com/Homebrew/homebrew-cask/blob/master/CONTRIBUTING.md#adding-a-cask
   https://docs.brew.sh/Adding-Software-to-Homebrew#casks
@@ -188,7 +190,7 @@ TODO: add more/better instructions/automations here..
 See also this PR I created, and might be usable as a reference: https://github.com/Homebrew/homebrew-cask/pull/138933
 Or all my PRs: https://github.com/Homebrew/homebrew-cask/pulls?q=is%3Apr+author%3A0xdevalias
 END_HEREDOC
-)
+}
 
-alias brew-new-cask="echo '$BREW_NEW_CASK_INFO'"
+alias brew-new-cask="_brew_new_cask_info"
 alias brew-new-cask-search-existing='f() { echo "Checking Homebrew/homebrew-cask.."; gh search issues --include-prs --repo=Homebrew/homebrew-cask "$1"; echo "Checking Homebrew/homebrew-cask-versions.."; gh search issues --include-prs --repo=Homebrew/homebrew-cask-versions "$1"; }; f'
