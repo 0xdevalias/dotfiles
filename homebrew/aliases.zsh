@@ -53,7 +53,7 @@ Useful Commands:
     Add the correct license                                            # (see https://docs.brew.sh/Formula-Cookbook#fill-in-the-license)
     head "https://github.com/USER/PROJECT.git", branch: "master"       # (see https://docs.brew.sh/Formula-Cookbook#unstable-versions-head)
     Check for dependencies                                             # (see https://docs.brew.sh/Formula-Cookbook#check-for-dependencies)
-    generate_completions_from_executable(bin/"foo", "completion")  # (see https://rubydoc.brew.sh/Formula.html#generate_completions_from_executable-instance_method)
+    generate_completions_from_executable(bin/"foo", "completion")      # (see https://rubydoc.brew.sh/Formula.html#generate_completions_from_executable-instance_method)
     etc
 
   Create the livecheck section if needed (usually should work fine without) (see https://docs.brew.sh/Formula-Cookbook#livecheck-blocks):
