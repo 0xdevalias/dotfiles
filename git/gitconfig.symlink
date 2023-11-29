@@ -87,6 +87,19 @@
 #  The Ultimate Git Alias Setup: https://gist.github.com/mwhite/6887990
 #  https://blog.theodo.com/2017/06/git-game-advanced-git-aliases/
 [alias]
+  # Helper alias for executing a command and displaying its actual form, including complex structures like pipes. Useful for on-the-fly learning in aliases, revealing the underlying command.
+  execute-and-show-command = !"f() { \
+    local cmd=\"$1\"; shift; \
+    local hint=\"$*\"; \
+    \
+    eval \"$cmd\"; \
+    \
+    printf \"\\n\\e[2mNOTE: The canonical command(s) executed by this alias were: $cmd\\e[22m\\n\" >&2; \
+    if [ -n \"$hint\" ]; then \
+        printf \"\\e[2m$hint\\e[22m\\n\" >&2; \
+    fi \
+  }; f"
+
   co = checkout
   count-contributions = shortlog -sn
   all = add -A                                  # Stage all unstaged
