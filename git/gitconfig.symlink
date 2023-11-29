@@ -129,6 +129,9 @@
   switch-new-branch-from-staging = !"f() { git switch -c ${1} staging; }; f"
   switch-new-branch-from-master = !"f() { git switch -c ${1} master; }; f"
 
+  list-branches        = "execute-and-show-command \"git branch --list\"       \"HINT: You could also just use 'git branch'\""
+  list-branches-remote = "execute-and-show-command \"git branch --list --all\" \"HINT: You could also just use 'git branch --all'\""
+
   new-branch = checkout -b
   new-branch-from = !"f() { git checkout -b ${2} ${1}; }; f"
   new-branch-from-staging = !"f() { git checkout -b ${1} staging; }; f"
