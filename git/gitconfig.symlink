@@ -132,11 +132,11 @@
   list-branches        = "execute-and-show-command \"git branch --list\"       \"HINT: You could also just use 'git branch'\""
   list-branches-remote = "execute-and-show-command \"git branch --list --all\" \"HINT: You could also just use 'git branch --all'\""
 
-  new-branch = checkout -b
-  new-branch-from = !"f() { git checkout -b ${2} ${1}; }; f"
-  new-branch-from-staging = !"f() { git checkout -b ${1} staging; }; f"
-  new-branch-from-master = !"f() { git checkout -b ${1} master; }; f"
-  new-branch-from-stash = stash branch
+  new-branch              = !"f() { git execute-and-show-command \"git checkout -b ${1}\"; }; f"
+  new-branch-from         = !"f() { git execute-and-show-command \"git checkout -b ${2} ${1}\"; }; f"
+  new-branch-from-staging = new-branch-from staging
+  new-branch-from-master  = new-branch-from master
+  new-branch-from-stash   = !"f() { git execute-and-show-command \"git stash branch ${2} ${1}\"; }; f"
   #  Note: this doesn't work if you're already in staging.. we could make it better.
   # new-branch-from-staging = !"f() { git sync-staging && git checkout -b ${1} staging; }; f"
   branch-rename = !echo "See grename zsh alias"
