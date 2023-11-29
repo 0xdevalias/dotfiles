@@ -94,7 +94,7 @@
     \
     eval \"$cmd\"; \
     \
-    printf \"\\n\\e[2mNOTE: The canonical command(s) executed by this alias were: $cmd\\e[22m\\n\" >&2; \
+    printf \"\\e[2mNOTE: The canonical command(s) executed by this alias were: $cmd\\e[22m\\n\" >&2; \
     if [ -n \"$hint\" ]; then \
         printf \"\\e[2m$hint\\e[22m\\n\" >&2; \
     fi \
