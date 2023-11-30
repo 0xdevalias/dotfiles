@@ -119,7 +119,14 @@
 
   # http://ses4j.github.io/2020/04/01/git-alias-recent-branches/
   # TODO: this still lists branches that have been deleted already.. would be good to fix that or show them differently..
-  recent-branches-used = !git reflog show --pretty=format:'%gs ~ %gd' --date=relative | grep 'checkout:' | grep -oE '[^ ]+ ~ .*' | awk -F~ '!seen[$1]++' | head -n 10 | awk -F' ~ HEAD@{' '{printf(\"  \\033[33m%s: \\033[37m %s\\033[0m\\n\", substr($2, 1, length($2)-1), $1)}'
+  recent-branches-used = "!\
+    git reflog show --pretty=format:'%gs ~ %gd' --date=relative | \
+    grep 'checkout:' | \
+    grep -oE '[^ ]+ ~ .*' | \
+    awk -F~ '!seen[$1]++' | \
+    head -n 10 | \
+    awk -F' ~ HEAD@{' '{printf(\"  \\033[33m%s: \\033[37m %s\\033[0m\\n\", substr($2, 1, length($2)-1), $1)}' \
+  "
   recent-branches-changed = !git recent # https://github.com/paulirish/git-recent
   last-branches-used      = recent-branches-used
   last-branches-changed   = recent-branches-changed
