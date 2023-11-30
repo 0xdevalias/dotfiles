@@ -117,14 +117,23 @@
 
   checkout-old-file = !$ZSH/bin/git-checkout-old-file
 
-  # TODO: this still lists branches that have been deleted already.. would be good to fix that or show them differently..
   # Originally based on: http://ses4j.github.io/2020/04/01/git-alias-recent-branches/
   recent-branches-used = "!\
     git reflog show --pretty=format:'%gs ~ %gd' --date=relative | \
     sed -nE 's/checkout: moving from .* to (.*) ~ HEAD@\\{(.*)\\}/\\1 ~ \\2/p' | \
     awk -F'~' '!seen[$1]++' | \
     head -n 10 | \
-    awk -F' ~ ' '{printf(\"  \\033[33m%s: \\033[37m %s\\033[0m\\n\", $2, $1)}' \
+    while IFS= read -r line; do \
+      \
+      branch=\"${line%% ~*}\"; \
+      time=\"${line#*~ }\"; \
+      \
+      if git show-ref --quiet --verify \"refs/heads/$branch\"; then \
+          printf \"  \\033[33m%s: \\033[37m%s\\033[0m\\n\" \"$time\" \"$branch\"; \
+      else \
+          printf \"  \\033[2m\\033[33m%s: \\033[37m%s \\033[31m(removed)\\033[0m\\n\" \"$time\" \"$branch\"; \
+      fi; \
+    done \
   "
   recent-branches-changed = !git recent # https://github.com/paulirish/git-recent
   last-branches-used      = recent-branches-used
