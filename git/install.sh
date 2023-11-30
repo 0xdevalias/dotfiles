@@ -8,6 +8,7 @@ echo "[git::install]"
 check_installed brew
 
 require_installed_brew gh                          # GitHub’s official command line tool: https://github.com/cli/cli
+require_installed_brew git-recent                  # See your latest local git branches, formatted real fancy: https://github.com/paulirish/git-recent
 require_installed_brew git-delete-merged-branches  # Command-line tool to delete merged Git branches: https://github.com/hartwork/git-delete-merged-branches
 
 # Authenticate the GitHub CLI + set up SSH key
