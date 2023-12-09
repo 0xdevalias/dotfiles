@@ -128,8 +128,21 @@ Useful Commands:
 
   Note: Make sure to edit the cask with any additional things to add manually such as:
     Mapping the version to the download URL (if required) # (see https://docs.brew.sh/Cask-Cookbook#stanza-version)
-    depends_on macos: ">= :monterey"                      # (see https://docs.brew.sh/Cask-Cookbook#depends_on-macos)
     auto_updates: true                                    # (see https://docs.brew.sh/Cask-Cookbook#:~:text=parse.rb)-,auto_updates,-no)
+
+  Add a depends_on section if needed (see https://docs.brew.sh/Cask-Cookbook#depends_on-macos):
+    plutil -extract LSMinimumSystemVersion raw /Applications/Foo.app/Contents/Info.plist
+
+    https://rubydoc.brew.sh/MacOSVersion.html
+      depends_on macos: ">= :sonoma"      # 14"
+      depends_on macos: ">= :ventura"     # 13
+      depends_on macos: ">= :monterey"    # 12
+      depends_on macos: ">= :big_sur"     # 11
+      depends_on macos: ">= :catalina"    # 10.15
+      depends_on macos: ">= :mojave"      # 10.14
+      depends_on macos: ">= :high_sierra" # 10.13
+      depends_on macos: ">= :sierra"      # 10.12
+      depends_on macos: ">= :el_capitan"  # 10.11
 
   Install the basic cask locally, then use the app a bit:
     brew install --cask PATH_TO_LOCAL_CASK
@@ -161,7 +174,7 @@ Useful Commands:
   Check that all of the style/audit checks pass (and fix anything if they don't):
     brew style --fix CASK
     brew audit --new-cask CASK
-    brew audit --cask --online CASK
+    brew audit --cask --strict --online CASK
 
   Switch to the appropriate directory, one of:
     brew-tapsdir-cask
