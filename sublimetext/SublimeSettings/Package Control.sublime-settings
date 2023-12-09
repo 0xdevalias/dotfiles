@@ -5,6 +5,7 @@
 	],
 	"installed_packages":
 	[
+		"ApplySyntax",
 		"BinaryPlist",
 		"Chain of Command",
 		"Compare Side-By-Side",
