@@ -5,6 +5,7 @@
 	],
 	"installed_packages":
 	[
+		"BinaryPlist",
 		"Chain of Command",
 		"Compare Side-By-Side",
 		"Decent Swift Syntax",
