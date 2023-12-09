@@ -17,5 +17,28 @@
   "debug": false,
 
   // Put your custom syntax rules here:
-  "syntaxes": []
+  "syntaxes": [
+    {
+      "syntax": [
+        "ShellScript/Bash",
+        "ShellScript/Shell-Unix-Generic"
+      ],
+      "rules": [
+        {
+          "globmatch": ["**/.dotfiles/lib/_helpers"]
+        }
+      ]
+    },
+    {
+      "syntax": "Git Formats/Git Config",
+      "rules": [
+        {
+          "globmatch": [
+            "**/.gitconfig*",
+            "**/gitconfig*"
+          ]
+        }
+      ]
+    }
+  ]
 }
