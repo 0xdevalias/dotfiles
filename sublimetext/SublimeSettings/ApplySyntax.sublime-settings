@@ -19,6 +19,14 @@
   // Put your custom syntax rules here:
   "syntaxes": [
     {
+      "syntax": "Markdown/Markdown",
+      "rules": [
+        {
+          "globmatch": ["**/*.txt"]
+        }
+      ]
+    },
+    {
       "syntax": [
         "ShellScript/Bash",
         "ShellScript/Shell-Unix-Generic"
