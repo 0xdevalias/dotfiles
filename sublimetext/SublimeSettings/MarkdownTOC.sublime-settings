@@ -1,0 +1,9 @@
+{
+  "defaults": {
+    "autoanchor": false,
+    "autolink": true,
+    "indent": "  ",
+    "bullets": ["-"],
+    "style": "unordered",
+  },
+}
