@@ -41,6 +41,7 @@ Useful Commands:
   brew-new-formula-search-existing FORMULA
     Which is an alias for:
       gh search issues --include-prs --repo=Homebrew/homebrew-core FORMULA
+      brew search --pull-request FORMULA
 
   brew create --help
 
@@ -99,7 +100,7 @@ END_HEREDOC
 }
 
 alias brew-new-formula="_brew_new_formula_info"
-alias brew-new-formula-search-existing='f() { echo "Checking Homebrew/homebrew-core.."; gh search issues --include-prs --repo=Homebrew/homebrew-core "$1"; }; f'
+alias brew-new-formula-search-existing='f() { echo "Checking Homebrew/homebrew-core.."; gh search issues --include-prs --repo=Homebrew/homebrew-core "$1"; brew search --pull-request "$1"; }; f'
 
 _brew_new_cask_info() {
   cat <<'END_HEREDOC'
@@ -119,6 +120,7 @@ Useful Commands:
     Which is an alias for:
       gh search issues --include-prs --repo=Homebrew/homebrew-cask CASK
       gh search issues --include-prs --repo=Homebrew/homebrew-cask-versions CASK
+      brew search --pull-request CASK
 
   brew create --help
 
@@ -206,4 +208,4 @@ END_HEREDOC
 }
 
 alias brew-new-cask="_brew_new_cask_info"
-alias brew-new-cask-search-existing='f() { echo "Checking Homebrew/homebrew-cask.."; gh search issues --include-prs --repo=Homebrew/homebrew-cask "$1"; echo "Checking Homebrew/homebrew-cask-versions.."; gh search issues --include-prs --repo=Homebrew/homebrew-cask-versions "$1"; }; f'
+alias brew-new-cask-search-existing='f() { echo "Checking Homebrew/homebrew-cask.."; gh search issues --include-prs --repo=Homebrew/homebrew-cask "$1"; echo "Checking Homebrew/homebrew-cask-versions.."; gh search issues --include-prs --repo=Homebrew/homebrew-cask-versions "$1"; brew search --pull-request "$1" }; f'
