@@ -1,0 +1,5 @@
+# ref:
+#   https://eclecticlight.co/tag/plistbuddy/
+#   https://ss64.com/osx/defaults.html
+
+/usr/libexec/PlistBuddy "$@"
