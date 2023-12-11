@@ -1,0 +1,36 @@
+[
+  {
+    "id": "tools",
+    "children": [
+      { "caption": "-", "id": "end" },
+      {
+        "caption": "DevHelpers",
+        "children": [
+          {
+            "caption": "Open Console",
+            "command": "show_panel",
+            "args": { "panel": "console" }
+          },
+          {
+            "caption": "Close Console",
+            "command": "hide_panel",
+            "args": { "panel": "console" }
+          },
+          {
+            "caption": "Start Command Logging in Console",
+            "command": "start_command_logging"
+          },
+          {
+            "caption": "Stop Command Logging in Console",
+            "command": "stop_command_logging"
+          },
+          { "caption": "-" },
+          {
+            "caption": "Prettier: Format File",
+            "command": "prettier_format"
+          }
+        ]
+      }
+    ]
+  }
+]

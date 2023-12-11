@@ -1,0 +1,20 @@
+[
+  {
+    "caption": "DevHelpers: Open Console",
+    "command": "show_panel",
+    "args": {"panel": "console"}
+  },
+  {
+    "caption": "DevHelpers: Close Console",
+    "command": "hide_panel",
+    "args": {"panel": "console"}
+  },
+  {
+    "caption": "DevHelpers: Start Command Logging in Console",
+    "command": "start_command_logging"
+  },
+  {
+    "caption": "DevHelpers: Stop Command Logging in Console",
+    "command": "stop_command_logging"
+  }
+]
