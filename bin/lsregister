@@ -2,4 +2,5 @@
 #   https://eclecticlight.co/2019/03/25/lsregister-a-valuable-undocumented-command-for-launchservices/
 #   https://ss64.com/osx/lsregister.html
 
-/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister $@
+/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister "$@"
+
