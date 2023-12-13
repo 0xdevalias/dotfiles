@@ -70,8 +70,7 @@ Useful Commands:
 
   Check that all of the style/audit checks pass (and fix anything if they don't):
     brew style --fix FORMULA
-    brew audit --new-formula FORMULA
-    brew audit --strict --online FORMULA
+    brew audit --formula --new FORMULA  # (This implies both --strict and --online)
 
   Switch to the appropriate directory:
     brew-tapsdir-core
@@ -175,8 +174,7 @@ Useful Commands:
 
   Check that all of the style/audit checks pass (and fix anything if they don't):
     brew style --fix CASK
-    brew audit --new-cask CASK
-    brew audit --cask --strict --online CASK
+    brew audit --cask --new CASK    # (This implies both --strict and --online)
 
   Switch to the appropriate directory, one of:
     brew-tapsdir-cask
