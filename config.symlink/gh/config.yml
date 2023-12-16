@@ -13,6 +13,8 @@ browser:
 # Aliases allow you to create nicknames for gh commands
 aliases:
     co: pr checkout
+    checkout-pr: pr checkout
+    clone-repo: '!git clone $1'
     init-repo: 'repo create'
     init-repo-node: |
       !init_repo_node() {
@@ -141,3 +143,4 @@ aliases:
           echo "  gh is up to date!"
         fi
       }; gh_extensions_outdated $@
+version: "1"
