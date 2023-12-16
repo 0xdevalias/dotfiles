@@ -17,130 +17,130 @@ aliases:
     clone-repo: '!git clone $1'
     init-repo: 'repo create'
     init-repo-node: |
-      !init_repo_node() {
-        if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ $# -ne 2 ]; then
-          echo "Usage: gh init-repo-node <repo-name> <visibility>"
-          echo "Create a new GitHub repository with specified name and visibility."
-          echo ""
-          echo "Arguments:"
-          echo "  <repo-name>    Name of the new GitHub repository."
-          echo "  <visibility>   Visibility of the repository ('private' or 'public')."
-          echo ""
-          echo "Options:"
-          echo "  -h, --help     Show this help message and exit."
-          return 0
-        fi
+        !init_repo_node() {
+          if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ $# -ne 2 ]; then
+            echo "Usage: gh init-repo-node <repo-name> <visibility>"
+            echo "Create a new GitHub repository with specified name and visibility."
+            echo ""
+            echo "Arguments:"
+            echo "  <repo-name>    Name of the new GitHub repository."
+            echo "  <visibility>   Visibility of the repository ('private' or 'public')."
+            echo ""
+            echo "Options:"
+            echo "  -h, --help     Show this help message and exit."
+            return 0
+          fi
 
-        REPO_NAME=$1
-        VISIBILITY=$2
+          REPO_NAME=$1
+          VISIBILITY=$2
 
-        case "$VISIBILITY" in
-          private|public)
-            ;; # Continue with the script if valid
-          *)
-            echo "Invalid visibility: $VISIBILITY"
-            echo "Visibility must be either 'private' or 'public'"
+          case "$VISIBILITY" in
+            private|public)
+              ;; # Continue with the script if valid
+            *)
+              echo "Invalid visibility: $VISIBILITY"
+              echo "Visibility must be either 'private' or 'public'"
+              return 1
+              ;;
+          esac
+
+          echo "This will create a new GitHub repository named '$REPO_NAME' with '$VISIBILITY' visibility, configured with a Node .gitignore, and MIT license."
+          echo "Do you want to continue? (y/n)"
+          read -r confirm
+          if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+            echo "Operation cancelled."
             return 1
-            ;;
-        esac
+          fi
 
-        echo "This will create a new GitHub repository named '$REPO_NAME' with '$VISIBILITY' visibility, configured with a Node .gitignore, and MIT license."
-        echo "Do you want to continue? (y/n)"
-        read -r confirm
-        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
-          echo "Operation cancelled."
-          return 1
-        fi
+          echo "Creating + cloning repo..."
+          gh repo create "$REPO_NAME" --disable-wiki --add-readme --gitignore Node --license MIT --"$VISIBILITY" --clone
+          cd "$REPO_NAME"
 
-        echo "Creating + cloning repo..."
-        gh repo create "$REPO_NAME" --disable-wiki --add-readme --gitignore Node --license MIT --"$VISIBILITY" --clone
-        cd "$REPO_NAME"
+          echo "Repo cloned to:"
+          pwd
 
-        echo "Repo cloned to:"
-        pwd
+          gh repo set-default
 
-        gh repo set-default
+          echo "Repo details:"
+          (gh repo view --json url,sshUrl,description | jq)
 
-        echo "Repo details:"
-        (gh repo view --json url,sshUrl,description | jq)
+          echo "Initing npm package..."
+          gh init-npm
 
-        echo "Initing npm package..."
-        gh init-npm
-
-        echo "Opening repo in browser..."
-        gh repo view --web "$REPO_NAME"
-      }; init_repo_node $@
+          echo "Opening repo in browser..."
+          gh repo view --web "$REPO_NAME"
+        }; init_repo_node $@
     init-repo-node-private: 'init-repo-node $1 private'
     init-repo-node-public: 'init-repo-node $1 public'
     init-npm: '!npm init'
     outdated: |
-      !gh_extensions_outdated() {
-        if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ $# -ne 0 ]; then
-          echo "Usage: gh outdated"
-          echo "Check for outdated GitHub CLI extensions and the gh CLI tool itself."
-          echo ""
-          echo "This command performs the following actions:"
-          echo "  - Lists all installed gh extensions."
-          echo "  - Checks if any installed extensions have updates available."
-          echo "  - Offers to upgrade individual extensions if updates are available."
-          echo "  - Checks if the gh CLI tool is up to date and offers to upgrade it if not."
-          echo ""
-          echo "Options:"
-          echo "  -h, --help     Show this help message and exit."
-          return 0
-        fi
-
-        gh extension list
-
-        echo
-
-        echo "Release notes:"
-        (gh extension list | awk '{print $3}' | sed 's#^#  https://github.com/#' | sed 's#$#/releases#')
-
-        echo
-
-        echo "Checking for outdated extensions..."
-        outdated_extensions=$(gh extension upgrade --all --dry-run)
-        outdated_found=false
-
-        while read -r line; do
-          if [[ $line == *"would have upgraded from"* ]]; then
-            outdated_found=true
-            extension_name=$(echo "$line" | awk '{print $1}' | tr -d '[]:')
-            current_version=$(echo "$line" | awk '{print $(NF-2)}')
-            new_version=$(echo "$line" | awk '{print $NF}')
-
-            echo "  Extension $extension_name is outdated (Current: $current_version, Available: $new_version)"
-
-            # echo "Do you want to upgrade $extension_name? [y/N]"
-            # read -r upgrade_extension
-            # if [ "$upgrade_extension" = "y" ]; then
-            #   gh extension upgrade "$extension_name"
-            # fi
+        !gh_extensions_outdated() {
+          if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ $# -ne 0 ]; then
+            echo "Usage: gh outdated"
+            echo "Check for outdated GitHub CLI extensions and the gh CLI tool itself."
+            echo ""
+            echo "This command performs the following actions:"
+            echo "  - Lists all installed gh extensions."
+            echo "  - Checks if any installed extensions have updates available."
+            echo "  - Offers to upgrade individual extensions if updates are available."
+            echo "  - Checks if the gh CLI tool is up to date and offers to upgrade it if not."
+            echo ""
+            echo "Options:"
+            echo "  -h, --help     Show this help message and exit."
+            return 0
           fi
-        done <<< "$outdated_extensions"
 
-        if [[ $outdated_found == true ]]; then
-          echo "Do you want to upgrade all outdated extensions? [y/N]"
-          read -r answer
-          if [ "$answer" = "y" ]; then
-            gh extension upgrade --all
+          gh extension list
+
+          echo
+
+          echo "Release notes:"
+          (gh extension list | awk '{print $3}' | sed 's#^#  https://github.com/#' | sed 's#$#/releases#')
+
+          echo
+
+          echo "Checking for outdated extensions..."
+          outdated_extensions=$(gh extension upgrade --all --dry-run)
+          outdated_found=false
+
+          while read -r line; do
+            if [[ $line == *"would have upgraded from"* ]]; then
+              outdated_found=true
+              extension_name=$(echo "$line" | awk '{print $1}' | tr -d '[]:')
+              current_version=$(echo "$line" | awk '{print $(NF-2)}')
+              new_version=$(echo "$line" | awk '{print $NF}')
+
+              echo "  Extension $extension_name is outdated (Current: $current_version, Available: $new_version)"
+
+              # echo "Do you want to upgrade $extension_name? [y/N]"
+              # read -r upgrade_extension
+              # if [ "$upgrade_extension" = "y" ]; then
+              #   gh extension upgrade "$extension_name"
+              # fi
+            fi
+          done <<< "$outdated_extensions"
+
+          if [[ $outdated_found == true ]]; then
+            echo "Do you want to upgrade all outdated extensions? [y/N]"
+            read -r answer
+            if [ "$answer" = "y" ]; then
+              gh extension upgrade --all
+            fi
+          else
+            echo "  All extensions are up to date!"
           fi
-        else
-          echo "  All extensions are up to date!"
-        fi
 
-        echo
+          echo
 
-        echo "Checking to see if gh is up to date..."
-        if brew outdated gh | grep -q 'gh'; then
-          echo "gh is outdated. Do you want to upgrade? [y/N]"
-          read -r upgrade_gh
-          if [ "$upgrade_gh" = "y" ]; then
-            brew upgrade gh
+          echo "Checking to see if gh is up to date..."
+          if brew outdated gh | grep -q 'gh'; then
+            echo "gh is outdated. Do you want to upgrade? [y/N]"
+            read -r upgrade_gh
+            if [ "$upgrade_gh" = "y" ]; then
+              brew upgrade gh
+            fi
+          else
+            echo "  gh is up to date!"
           fi
-        else
-          echo "  gh is up to date!"
-        fi
-      }; gh_extensions_outdated $@
+        }; gh_extensions_outdated $@
 version: "1"
