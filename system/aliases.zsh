@@ -26,3 +26,9 @@ fi
 if (( $+commands[difft] )); then
   alias difftastic="difft"
 fi
+
+# A simple, fast and user-friendly alternative to 'find'
+# https://github.com/sharkdp/fd
+if (( $+commands[fd] )); then
+  alias find-fd="fd --hidden --no-ignore --exclude .git"
+fi
