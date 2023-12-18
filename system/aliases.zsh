@@ -32,3 +32,13 @@ fi
 if (( $+commands[fd] )); then
   alias find-fd="fd --hidden --no-ignore --exclude .git"
 fi
+
+# A cat(1) clone with wings.
+# https://github.com/sharkdp/bat
+if (( $+commands[bat] )); then
+  # A command-line fuzzy finder
+  # https://github.com/junegunn/fzf
+  if (( $+commands[fzf] )); then
+    alias fzf-preview='fzf --preview "bat --color=always --style=numbers --line-range=:500 {}" "$@"'
+  fi
+fi
