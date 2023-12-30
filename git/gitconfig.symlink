@@ -215,6 +215,9 @@
   search-history-string = log -i -S
   search-history-regex = log -i -G
 
+  history = !"f() { if [ $# -eq 0 ]; then git log --oneline; else git log --oneline --follow \"${1}\"; fi; }; f"
+  dotfiles-history = !"f() { if [ $# -eq 0 ]; then git history \"$ZSH\"; else git history \"$ZSH/${1}\"; fi; }; f"
+
   # Diffing
   # https://stackoverflow.com/questions/7759193/git-diff-renamed-file
   # https://stackoverflow.com/questions/1955985/what-does-the-caret-character-mean
