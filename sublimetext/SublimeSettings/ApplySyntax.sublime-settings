@@ -41,6 +41,12 @@
           "globmatch": ["**/.gitconfig*", "**/gitconfig*"]
         }
       ]
+    },
+    {
+      "syntax": "SSH Config/SSH Config",
+      "rules": [
+        { "globmatch": ["**/.ssh/config*", "**/ssh.symlink/config*"] }
+      ]
     }
   ]
 }
