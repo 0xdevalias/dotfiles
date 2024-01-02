@@ -210,13 +210,18 @@
   #   With the -G option, the commit is shown in the log if your search matches any line that was added, removed, or changed.
   #
   # You can combine -p / --patch with any of these methods to get a diff patch of the found commits.
-  find = !echo "Invalid alias. Did you mean: search-history, search-history-string, search-history-regex ?"
-  search-history = !"f() { git search-history-regex \"${1}\" --oneline --patch ${@:2}; }; f"
-  search-history-string = log -i -S
-  search-history-regex = log -i -G
+  find = !echo "Invalid alias. Did you mean: history, history-file, search-history, search-history-patch, search-history-patch-string, search-history-patch-regex, dotfiles-history, dotfiles-history-file, userscripts-history, userscripts-history-file ?"
+  search-history = !"f() { if [ $# -eq 0 ]; then git log --oneline; else git log --oneline --grep \"${1}\"; fi; }; f"
+  search-history-patch = !"f() { git search-history-patch-regex \"${1}\" --oneline --patch ${@:2}; }; f"
+  search-history-patch-string = log --regexp-ignore-case -S
+  search-history-patch-regex = log --regexp-ignore-case -G
 
-  history = !"f() { if [ $# -eq 0 ]; then git log --oneline; else git log --oneline --follow \"${1}\"; fi; }; f"
-  dotfiles-history = !"f() { if [ $# -eq 0 ]; then git history \"$ZSH\"; else git history \"$ZSH/${1}\"; fi; }; f"
+  history = search-history
+  history-file = !"f() { git log --oneline --follow \"${1}\"; }; f"
+  dotfiles-history =      !"f() { git -C "$ZSH" search-history "$@"; }; f"
+  dotfiles-history-file = !"f() { git -C "$ZSH" history-file "$@"; }; f"
+  userscripts-history =      !"f() { git -C '~/dev/0xdevalias/userscripts' search-history "$@"; }; f"
+  userscripts-history-file = !"f() { git -C '~/dev/0xdevalias/userscripts' history-file "$@"; }; f"
 
   # Diffing
   # https://stackoverflow.com/questions/7759193/git-diff-renamed-file
