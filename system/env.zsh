@@ -12,10 +12,3 @@ if (( $+commands[bat] )); then
   # https://github.com/sharkdp/bat#man
   export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 fi
-
-# # A command-line fuzzy finder
-# # https://github.com/junegunn/fzf
-# if (( $+commands[fzf] )); then
-#   FZF_DEFAULT_COMMAND=
-#   FZF_DEFAULT_OPTS=
-# fi
