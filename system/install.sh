@@ -54,6 +54,7 @@ require_installed_brew "coreutils"                   # GNU File, Shell, and Text
 require_installed_brew "grc"                         # Colorize logfiles and command output: https://github.com/garabik/grc
 require_installed_brew "zoxide"                      # zoxide is a smarter cd command, inspired by z and autojump: https://github.com/ajeetdsouza/zoxide
 require_installed_brew "fzf"                         # Command-line fuzzy finder written in Go: https://github.com/junegunn/fzf
+require_installed_brew "tree"                        # This is a handy little utility to display a tree view of directories: https://oldmanprogrammer.net/source.php?dir=projects/tree
 require_installed_brew "fd"                          # Simple, fast and user-friendly alternative to find: https://github.com/sharkdp/fd
 require_installed_brew "bat"                         # Clone of cat(1) with syntax highlighting and Git integration: https://github.com/sharkdp/bat
 require_installed_brew "jq"                          # Lightweight and flexible command-line JSON processor: https://stedolan.github.io/jq/
