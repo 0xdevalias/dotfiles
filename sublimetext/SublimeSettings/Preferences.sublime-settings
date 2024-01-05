@@ -1,22 +1,22 @@
 {
+	"theme": "Adaptive.sublime-theme",
 	"color_scheme": "Mariana.sublime-color-scheme",
+	"font_size": 12,
+	"ignored_packages":
+	[
+		"Vintage",
+	],
 	"copy_with_empty_selection": false,
 	"default_encoding": "UTF-8",
 	"drag_text": false,
 	"enable_tab_scrolling": true,
 	"ensure_newline_at_eof_on_save": true,
-	"font_size": 12,
+	"trim_trailing_white_space_on_save": true,
 	"shift_tab_unindent": true,
 	"highlight_modified_tabs": true,
-	"ignored_packages":
-	[
-		"Vintage",
-	],
 	"scroll_past_end": true,
 	"show_full_path": true,
 	"show_encoding": true,
 	"tab_size": 2,
-	"theme": "Adaptive.sublime-theme",
 	"translate_tabs_to_spaces": true,
-	"trim_trailing_white_space_on_save": true,
 }
