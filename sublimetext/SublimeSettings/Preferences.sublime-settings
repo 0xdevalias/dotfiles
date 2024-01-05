@@ -26,5 +26,6 @@
 	"show_encoding": true,
 	"tab_size": 2,
 	"translate_tabs_to_spaces": true,
+	"open_files_in_new_window": "finder_only",
 	"focus_on_file_drop": true,
 }
