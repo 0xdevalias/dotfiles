@@ -26,4 +26,5 @@
 	"show_encoding": true,
 	"tab_size": 2,
 	"translate_tabs_to_spaces": true,
+	"focus_on_file_drop": true,
 }
