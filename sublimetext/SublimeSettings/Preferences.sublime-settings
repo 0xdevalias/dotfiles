@@ -8,6 +8,8 @@
 	[
 		"Vintage",
 	],
+	"word_separators": "./\\()\"':,.;<>~!@#$%^&*|+=[]{}`~?",
+	"sub_word_separators": "_-",
 	"copy_with_empty_selection": false,
 	"default_encoding": "UTF-8",
 	"drag_text": false,
