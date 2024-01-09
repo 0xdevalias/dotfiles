@@ -109,6 +109,9 @@
   closest-tag = !$ZSH/bin/git-find-closest-tag
   push-fork-to-upstream-branch-origin = !$ZSH/bin/git-push-fork-to-upstream-branch
 
+  # Show files with unresolved merge conflicts
+  show-conflicts = diff --name-only --diff-filter=U
+
   # Checkout / Branches
   checkout-as = checkout -b                     # Checkout the specified branch with a different name
 
