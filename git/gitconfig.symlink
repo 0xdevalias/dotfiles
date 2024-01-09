@@ -109,6 +109,9 @@
   closest-tag = !$ZSH/bin/git-find-closest-tag
   push-fork-to-upstream-branch-origin = !$ZSH/bin/git-push-fork-to-upstream-branch
 
+  show-root = rev-parse --show-toplevel
+  # cd-root = !echo cd $(git rev-parse --show-toplevel) # TODO: This won't work as git aliases run in a subshell.. we'd need to make a helper script or similar for it
+
   # Show files with unresolved merge conflicts
   show-conflicts = diff --name-only --diff-filter=U
 
