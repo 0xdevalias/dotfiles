@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+# Ref:
+#   https://github.com/yt-dlp/yt-dlp#format-selection
+#   https://github.com/yt-dlp/yt-dlp#filtering-formats
+#   https://github.com/yt-dlp/yt-dlp#format-selection-examples
+#   https://github.com/yt-dlp/yt-dlp#sorting-formats
+#   https://github.com/yt-dlp/yt-dlp#output-template
+#
+#   https://en.wikipedia.org/wiki/Advanced_Video_Coding
+#   https://en.wikipedia.org/wiki/AV1
+#     https://en.wikipedia.org/wiki/AV1#Levels
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 YOUTUBE_URL"
+  exit
+fi
+
+# Check if we have yt-dlp or youtube-dl installed
+if command -v yt-dlp &>/dev/null; then
+  YOUTUBE_DL_BIN="yt-dlp"
+elif command -v youtube-dl &>/dev/null; then
+  YOUTUBE_DL_BIN="youtube-dl"
+else
+  echo "Error: neither yt-dlp nor youtube-dl is installed. Please install either one using your system's package manager, such as brew for macOS, and try again."
+  echo ""
+  echo "eg."
+  echo "  brew install yt-dlp"
+  echo "  brew install youtube-dl"
+  echo ""
+  echo "Note that yt-dlp appears to be the more regularly maintained/updated version at time of writing."
+  exit 1
+fi
+
+# We preference formats as follows:
+#   h264/x264/AVC video + AAC audio : bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]
+(set -x; "$YOUTUBE_DL_BIN" --ignore-errors --no-overwrites --download-archive youtube-download-video.txt -f 'bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]' --write-sub --write-auto-sub --sub-langs en --embed-subs $@)
+# --playlist-start 1 --playlist-end 1 YOUTUBE_URL
+
+# See also:
+#   https://github.com/yt-dlp/yt-dlp/issues/3648#issuecomment-1118890505
+#     I think what you are looking for is -S res,codec:h264:aac or maybe -S vcodec:h264,res,acodec:aac
+#   https://github.com/yt-dlp/yt-dlp/issues/8377
+#     Specify codec combinations (h264+aac OR vp9+opus)
