@@ -47,6 +47,15 @@
       "rules": [
         { "globmatch": ["**/.ssh/config*", "**/ssh.symlink/config*"] }
       ]
-    }
+    },
+    {
+      // Katai Struct: https://doc.kaitai.io/user_guide.html#_kaitai_struct_language
+      "syntax": "YAML/YAML",
+      "rules": [
+        {
+          "globmatch": ["**/*.ksy"]
+        }
+      ]
+    },
   ]
 }
