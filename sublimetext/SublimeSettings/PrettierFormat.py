@@ -68,6 +68,10 @@ class PrettierFormatCommand(sublime_plugin.TextCommand):
         if parser:
             prettier_cmd += ['--parser', parser]
 
+        # Read additional CLI arguments from the plugin settings
+        additional_args = plugin_settings.get('additional_cli_args', [])
+        prettier_cmd += additional_args
+
         try:
             prettier_proc = subprocess.Popen(
                 prettier_cmd,

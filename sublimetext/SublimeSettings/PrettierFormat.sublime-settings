@@ -11,5 +11,10 @@
         "Packages/CSS/CSS.sublime-syntax": "css",
         "Packages/JSON/JSON.sublime-syntax": "json",
         "Packages/Markdown/Markdown.sublime-syntax": "markdown",
-    }
+    },
+    "additional_cli_args": [
+        "--single-quote",
+        "--jsx-single-quote",
+        "--trailing-comma es5"
+    ]
 }
