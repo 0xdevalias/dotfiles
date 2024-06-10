@@ -1,0 +1,78 @@
+#!/usr/bin/env zsh
+
+# Store the script name
+SCRIPT_NAME=$(basename "$0")
+
+# Function to display help text
+show_help() {
+  echo "Usage: $SCRIPT_NAME [-h|--help] <file_or_directory>"
+  echo
+  echo "Convert a .ogg file or all .ogg files in the specified directory to .mp3 using ffmpeg."
+  echo
+  echo "Options:"
+  echo "  -h, --help    Show this help message and exit"
+}
+
+# Function to convert a single .ogg file to .mp3
+convert_file() {
+  local file=$1
+  if [[ "$file" == *.ogg ]]; then
+    ffmpeg -i "$file" "${file%.ogg}.mp3"
+    echo "Conversion complete for file '$file'."
+  else
+    echo "Error: The file '$file' is not a .ogg file."
+    exit 1
+  fi
+}
+
+# Function to convert all .ogg files in a directory to .mp3
+convert_directory() {
+  local dir=$1
+  local ogg_files=("$dir"/*.ogg)
+
+  if [[ ${#ogg_files[@]} -eq 0 ]]; then
+    echo "Error: No .ogg files found in the directory '$dir'."
+    exit 1
+  fi
+
+  for f in "$dir"/*.ogg; do
+    if [[ -f "$f" ]]; then
+      convert_file "$f"
+    fi
+  done
+
+  echo "Conversion complete for all .ogg files in the directory '$dir'."
+}
+
+# Check for help option
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+  show_help
+  exit 0
+fi
+
+# Check if the argument is provided
+if [[ -z "$1" ]]; then
+  show_help
+  echo
+  echo "Error: No file or directory provided."
+  exit 1
+fi
+
+# Get the file or directory from the argument
+input=$1
+
+# Check if ffmpeg is installed
+if ! command -v ffmpeg &>/dev/null; then
+  echo "Error: ffmpeg is not installed. Please install ffmpeg to use this script."
+  exit 1
+fi
+
+# Check if the input is a directory or a file
+if [[ -d "$input" ]]; then
+  convert_directory "$input"
+elif [[ -f "$input" ]]; then
+  convert_file "$input"
+else
+  echo "Error: The input '$input' is neither a file nor a directory."
+  exit 1
+fi
