@@ -1,0 +1,74 @@
+#!/usr/bin/env zsh
+
+# Store the script name
+SCRIPT_NAME=$(basename "$0")
+
+# Function to display help text
+show_help() {
+  echo "Usage: $SCRIPT_NAME [-h|--help] <textfile>"
+  echo
+  echo "Check if all sentences from the given text file exist in the provided input."
+  echo
+  echo "Options:"
+  echo "  -h, --help    Show this help message and exit"
+  echo
+  echo "Example:"
+  echo "  cat input.txt | $SCRIPT_NAME sentences.txt"
+}
+
+# Check for help option
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+  show_help
+  exit 0
+fi
+
+# Check if the text file argument is provided
+if [[ -z "$1" ]]; then
+  show_help
+  echo
+  echo "Error: No text file provided."
+  exit 1
+fi
+
+# Read sentences from the file
+sentences=$(grep -v '^$' "$1")
+
+# Read the input from stdin
+clipboard_content=$(cat)
+
+# Flag to check if all sentences exist in the clipboard content
+all_exist=true
+
+# Check each sentence
+while IFS= read -r sentence; do
+  if [[ -n "$sentence" && "$clipboard_content" != *"$sentence"* ]]; then
+    echo "Sentence not found: $sentence"
+    all_exist=false
+  fi
+done <<< "$sentences"
+
+if $all_exist; then
+  echo "All sentences found in the provided input."
+else
+  echo "Some sentences were not found in the provided input."
+fi
+
+# Additional check for extra content
+extra_content=$clipboard_content
+
+while IFS= read -r sentence; do
+  extra_content=${extra_content//$sentence/}
+done <<< "$sentences"
+
+# # Trim any leading or trailing whitespace from extra content
+# extra_content=$(echo "$extra_content" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+# Remove multiple blank lines and trim leading/trailing whitespace
+extra_content=$(echo "$extra_content" | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+if [[ -n "$extra_content" ]]; then
+  echo "Extra content found in the provided input that is not in the sentences:"
+  echo "$extra_content"
+else
+  echo "No extra content found in the provided input."
+fi
