@@ -22,6 +22,8 @@ if [[ ! -e "$HOME/.n/n/versions/node" ]]; then
   ln -s "$HOME/.nodenv/versions" "$HOME/.n/n/versions/node"
 fi
 
+# Get the latest LTS version via n
+# See also: https://endoflife.date/nodejs
 NODE_VER=`n --lts`
 
 # Pre-install checks
