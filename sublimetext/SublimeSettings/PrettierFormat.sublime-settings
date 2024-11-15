@@ -6,7 +6,7 @@
     "parser_map":
     {
         "Packages/JavaScript/JavaScript.sublime-syntax": "babel",
-        "Packages/TypeScript/TypeScript.sublime-syntax": "typescript",
+        "Packages/JavaScript/TypeScript.sublime-syntax": "typescript",
         "Packages/HTML/HTML.sublime-syntax": "html",
         "Packages/CSS/CSS.sublime-syntax": "css",
         "Packages/JSON/JSON.sublime-syntax": "json",
