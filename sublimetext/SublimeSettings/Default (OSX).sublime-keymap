@@ -2,6 +2,17 @@
     {
         "keys":
         [
+            "alt+w"
+        ],
+        "command": "toggle_setting",
+        "args":
+        {
+            "setting": "word_wrap"
+        }
+    },
+    {
+        "keys":
+        [
             "super+k"
         ],
         "command": "chain",
