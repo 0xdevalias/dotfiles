@@ -13,6 +13,54 @@
     {
         "keys":
         [
+            "super+left"
+        ],
+        "command": "move_to",
+        "args":
+        {
+            "to": "hardbol",
+            "extend": false
+        }
+    },
+    {
+        "keys":
+        [
+            "super+shift+left"
+        ],
+        "command": "move_to",
+        "args":
+        {
+            "to": "hardbol",
+            "extend": true
+        }
+    },
+    {
+        "keys":
+        [
+            "super+right"
+        ],
+        "command": "move_to",
+        "args":
+        {
+            "to": "hardeol",
+            "extend": false
+        }
+    },
+    {
+        "keys":
+        [
+            "super+shift+right"
+        ],
+        "command": "move_to",
+        "args":
+        {
+            "to": "hardeol",
+            "extend": true
+        }
+    },
+    {
+        "keys":
+        [
             "super+k"
         ],
         "command": "chain",
