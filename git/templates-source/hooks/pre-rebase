@@ -1,0 +1,187 @@
+#!/bin/bash
+
+# Refs:
+#   https://git-scm.com/docs/githooks#_pre_rebase
+#     pre-rebase
+#       This hook is called by git-rebase[1] and can be used to prevent a branch from getting rebased. The hook may be called with one or two parameters. The first parameter is the upstream from which the series was forked. The second parameter is the branch being rebased, and is not set when rebasing the current branch.
+#
+#   https://git-scm.com/docs/git-rebase
+
+# Determine the path to this hook
+HOOK_PATH=$(realpath "$0" 2>/dev/null || readlink -f "$0" 2>/dev/null || echo "$0")
+
+UPSTREAM_BRANCH="$1"
+REBASING_BRANCH="$2"  # Optional, empty if rebasing the current branch
+
+# Resolve UPSTREAM_BRANCH to its symbolic full name, if possible
+SYMBOLIC_FULL_NAME=$(git rev-parse --symbolic-full-name "${UPSTREAM_BRANCH}" 2>/dev/null || echo "")
+
+# Resolve to a commit hash directly to check if it's a valid commit
+COMMIT_HASH=$(git rev-parse --verify --quiet "${UPSTREAM_BRANCH}^{commit}" 2>/dev/null || echo "")
+
+# Get the tracking branch of the rebasing branch or current branch
+TRACKING_BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name "${REBASING_BRANCH:-}@{u}" 2>/dev/null || echo "")
+
+# Get the current HEAD and ORIG_HEAD
+CURRENT_HEAD=$(git rev-parse HEAD)
+ORIG_HEAD=$(git rev-parse ORIG_HEAD)
+
+# Get the upstream branch commit hash
+UPSTREAM_COMMIT=$(git rev-parse "$UPSTREAM_BRANCH" 2>/dev/null || echo "")
+
+echo "=================================================="
+echo "Git Pre-Rebase Hook - DEBUG"
+echo "Source: $HOOK_PATH"
+echo "=================================================="
+echo "  Params: $@"
+echo "    1: UPSTREAM_BRANCH=${UPSTREAM_BRANCH}"
+echo "         SYMBOLIC_FULL_NAME=${SYMBOLIC_FULL_NAME}"
+echo "         COMMIT_HASH=${COMMIT_HASH}"
+echo "    2: REBASING_BRANCH=${REBASING_BRANCH}"
+echo ""
+echo "  TRACKING_BRANCH=${TRACKING_BRANCH}"
+echo "  CURRENT_HEAD=${CURRENT_HEAD}"
+echo "  ORIG_HEAD=${ORIG_HEAD}"
+echo "  UPSTREAM_COMMIT=${UPSTREAM_COMMIT}"
+echo ""
+if [[ -n "${SYMBOLIC_FULL_NAME}" ]]; then
+  echo "Resolved symbolic full name: ${SYMBOLIC_FULL_NAME}"
+
+  if [[ "${SYMBOLIC_FULL_NAME}" == refs/heads/* ]]; then
+    echo "  Local Branch: ${UPSTREAM_BRANCH}"
+  elif [[ "${SYMBOLIC_FULL_NAME}" == refs/remotes/* ]]; then
+    echo "  Remote Branch: ${UPSTREAM_BRANCH}"
+  elif [[ "${SYMBOLIC_FULL_NAME}" == refs/tags/* ]]; then
+    echo "  Tag: ${UPSTREAM_BRANCH}"
+  else
+    echo "  Unknown Reference: ${UPSTREAM_BRANCH} is a reference but doesn't match a known type."
+    echo "    git rev-parse --symbolic          : $(git rev-parse --symbolic "${UPSTREAM_BRANCH}" 2>/dev/null || echo "Not found")"
+    echo "    git rev-parse --symbolic-full-name: $(git rev-parse --symbolic-full-name "${UPSTREAM_BRANCH}" 2>/dev/null || echo "Not found")"
+  fi
+elif [[ -n "${COMMIT_HASH}" ]]; then
+  echo "  Commit: ${UPSTREAM_BRANCH} (Resolved to ${COMMIT_HASH})"
+else
+  echo "${UPSTREAM_BRANCH} is nothing that can validly map to a commit hash or reference."
+fi
+echo "=================================================="
+
+# Attempt to detect --onto usage without an explicit <upstream>
+if [[ "${UPSTREAM_BRANCH}" == refs/remotes/* ]]; then
+  echo "=================================================="
+  echo "Git Pre-Rebase Hook"
+  echo "Source: $HOOK_PATH"
+  echo "=================================================="
+  echo "Warning: The rebase appears to use '--onto' without an explicit <upstream>."
+  echo ""
+  echo "Details:"
+  echo "  - Upstream commit: $UPSTREAM_BRANCH ($UPSTREAM_COMMIT)"
+  echo "  - Original HEAD:   $ORIG_HEAD"
+  echo ""
+  echo "Suggestions:"
+  echo "  - Rebase specific commits onto a new base starting after <upstream>:"
+  echo "      git rebase --onto <new-base> <upstream>"
+  echo "  - Rebase all commits onto a new base:"
+  echo "      git rebase <new-base>"
+  echo "  - Rebase all commits onto a new base interactively to edit, squash, or drop:"
+  echo "      git rebase -i <new-base>"
+  echo "  - Rebase all commits onto a new base with the latest changes from the remote branch:"
+  echo "      git pull --rebase <remote> <branch>"
+  echo "      git pull --rebase origin main"
+  echo "=================================================="
+  exit 1
+fi
+
+# OLD BROKEN LOGIC: THIS DOESNT WORK AS WE DON'T ACTUALLY GET PASSED THE GIT CLI PARAMS AS PART OF THIS HOOK
+# # Check if the rebase command includes --onto
+# while [[ $# -gt 0 ]]; do
+#     case "$1" in
+#         --onto)
+#             shift
+#             if [[ $# -lt 2 ]]; then
+#                 echo "=================================================="
+#                 echo "Git Pre-Rebase Hook"
+#                 echo "Source: $HOOK_PATH"
+#                 echo "=================================================="
+#                 echo "Error: Missing <upstream> commit with --onto."
+#                 echo ""
+#                 echo "Suggestions:"
+#                 echo "  - Rebase specific commits onto a new base starting after <upstream>:"
+#                 echo "      git rebase --onto <new-base> <upstream>"
+#                 echo "  - Rebase all commits onto a new base:"
+#                 echo "      git rebase <new-base>"
+#                 echo "  - Rebase all commits onto a new base interactively to edit, squash, or drop:"
+#                 echo "      git rebase -i <new-base>"
+#                 echo "  - Rebase all commits onto a new base with the latest changes from the remote branch:"
+#                 echo "      git pull --rebase <remote> <branch>"
+#                 echo "      git pull --rebase origin main"
+#                 exit 1
+#             fi
+#             ;;
+#     esac
+#     shift
+# done
+
+# DEBUG NOTES FOR DETECTION HEURISTICS
+
+# ⇒ git rebase main
+# pre-rebase hook debug:
+#   Params: main
+#     1: UPSTREAM_BRANCH=main
+#     2: REBASING_BRANCH=
+#   TRACKING_BRANCH=origin/0xdevalias/add-nextauth-provider-azure-ad-b2c
+#   CURRENT_HEAD=3079b72a717a6383275785ea26e455f4de017c5a
+#   UPSTREAM_COMMIT=27cbe1c8c21f46785142fdf17cb21bac4761e2df
+
+# ⇒ git rebase origin/main
+# pre-rebase hook debug:
+#   Params: origin/main
+#     1: UPSTREAM_BRANCH=origin/main
+#     2: REBASING_BRANCH=
+#   TRACKING_BRANCH=origin/0xdevalias/add-nextauth-provider-azure-ad-b2c
+#   CURRENT_HEAD=3079b72a717a6383275785ea26e455f4de017c5a
+#   UPSTREAM_COMMIT=27cbe1c8c21f46785142fdf17cb21bac4761e2df
+
+# ⇒ git rebase --onto main
+# pre-rebase hook debug:
+#   Params: refs/remotes/origin/0xdevalias/add-nextauth-provider-azure-ad-b2c
+#     1: UPSTREAM_BRANCH=refs/remotes/origin/0xdevalias/add-nextauth-provider-azure-ad-b2c
+#     2: REBASING_BRANCH=
+#   TRACKING_BRANCH=origin/0xdevalias/add-nextauth-provider-azure-ad-b2c
+#   CURRENT_HEAD=3079b72a717a6383275785ea26e455f4de017c5a
+#   UPSTREAM_COMMIT=3079b72a717a6383275785ea26e455f4de017c5a
+
+# ⇒ git rebase --onto origin/main
+# pre-rebase hook debug:
+#   Params: refs/remotes/origin/0xdevalias/add-nextauth-provider-azure-ad-b2c
+#     1: UPSTREAM_BRANCH=refs/remotes/origin/0xdevalias/add-nextauth-provider-azure-ad-b2c
+#     2: REBASING_BRANCH=
+#   TRACKING_BRANCH=origin/0xdevalias/add-nextauth-provider-azure-ad-b2c
+#   CURRENT_HEAD=3079b72a717a6383275785ea26e455f4de017c5a
+#   UPSTREAM_COMMIT=3079b72a717a6383275785ea26e455f4de017c5a
+
+# ⇒ git rebase --onto main 27cbe1c8c21f46785142fdf17cb21bac4761e2df
+# pre-rebase hook debug:
+#   Params: 27cbe1c8c21f46785142fdf17cb21bac4761e2df
+#     1: UPSTREAM_BRANCH=27cbe1c8c21f46785142fdf17cb21bac4761e2df
+#     2: REBASING_BRANCH=
+#   TRACKING_BRANCH=origin/0xdevalias/add-nextauth-provider-azure-ad-b2c
+#   CURRENT_HEAD=3079b72a717a6383275785ea26e455f4de017c5a
+#   UPSTREAM_COMMIT=27cbe1c8c21f46785142fdf17cb21bac4761e2df
+
+# ⇒ git rebase --onto origin/main 27cbe1c8c21f46785142fdf17cb21bac4761e2df
+# pre-rebase hook debug:
+#   Params: 27cbe1c8c21f46785142fdf17cb21bac4761e2df
+#     1: UPSTREAM_BRANCH=27cbe1c8c21f46785142fdf17cb21bac4761e2df
+#     2: REBASING_BRANCH=
+#   TRACKING_BRANCH=origin/0xdevalias/add-nextauth-provider-azure-ad-b2c
+#   CURRENT_HEAD=3079b72a717a6383275785ea26e455f4de017c5a
+#   UPSTREAM_COMMIT=27cbe1c8c21f46785142fdf17cb21bac4761e2df
+
+# ⇒ git rebase --onto origin/main 27cbe1c8c21f46785142fdf17cb21bac4761e2df rebase-check
+# pre-rebase hook debug:
+#   Params: 27cbe1c8c21f46785142fdf17cb21bac4761e2df rebase-check
+#     1: UPSTREAM_BRANCH=27cbe1c8c21f46785142fdf17cb21bac4761e2df
+#     2: REBASING_BRANCH=rebase-check
+#   TRACKING_BRANCH=origin/0xdevalias/add-nextauth-provider-azure-ad-b2c
+#   CURRENT_HEAD=3079b72a717a6383275785ea26e455f4de017c5a
+#   UPSTREAM_COMMIT=27cbe1c8c21f46785142fdf17cb21bac4761e2df
