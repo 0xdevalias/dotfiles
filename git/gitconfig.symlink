@@ -431,3 +431,10 @@
 	helper = !/usr/local/bin/gh auth git-credential
 [init]
 	defaultBranch = main
+
+  # Ref: https://stackoverflow.com/a/8842663/1137085
+  # See also:
+  #  Global shared templates:
+  #    /usr/local/share/git-core/templates
+  #    /usr/local/share/git-core/templates/hookes
+	templatedir = ~/.dotfiles/git/templates
