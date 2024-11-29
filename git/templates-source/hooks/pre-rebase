@@ -27,6 +27,9 @@ TRACKING_BRANCH=$(git rev-parse --symbolic-full-name "${REBASING_BRANCH:-}@{u}" 
 CURRENT_HEAD=$(git rev-parse HEAD)
 ORIG_HEAD=$(git rev-parse ORIG_HEAD)
 
+CURRENT_HEAD_SYMBOL=$(git rev-parse --symbolic-full-name HEAD)
+ORIG_HEAD_SYMBOL=$(git rev-parse --symbolic-full-name ORIG_HEAD)
+
 # Get the upstream branch commit hash
 UPSTREAM_COMMIT=$(git rev-parse "$UPSTREAM_BRANCH" 2>/dev/null || echo "")
 
@@ -41,8 +44,8 @@ echo "         UPSTREAM_COMMIT_HASH=${UPSTREAM_COMMIT_HASH}"
 echo "    2: REBASING_BRANCH=${REBASING_BRANCH}"
 echo ""
 echo "  TRACKING_BRANCH=${TRACKING_BRANCH}"
-echo "  CURRENT_HEAD=${CURRENT_HEAD}"
-echo "  ORIG_HEAD=${ORIG_HEAD}"
+echo "  CURRENT_HEAD=${CURRENT_HEAD} (${CURRENT_HEAD_SYMBOL})"
+echo "  ORIG_HEAD=${ORIG_HEAD} (${ORIG_HEAD_SYMBOL})"
 echo "  UPSTREAM_COMMIT=${UPSTREAM_COMMIT}"
 echo ""
 if [[ -n "${UPSTREAM_SYMBOLIC_FULL_NAME}" ]]; then
