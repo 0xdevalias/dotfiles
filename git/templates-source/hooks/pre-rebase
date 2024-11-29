@@ -20,7 +20,8 @@ UPSTREAM_SYMBOLIC_FULL_NAME=$(git rev-parse --symbolic-full-name "${UPSTREAM_BRA
 UPSTREAM_COMMIT_HASH=$(git rev-parse --verify --quiet "${UPSTREAM_BRANCH}^{commit}" 2>/dev/null || echo "")
 
 # Get the tracking branch of the rebasing branch or current branch
-TRACKING_BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name "${REBASING_BRANCH:-}@{u}" 2>/dev/null || echo "")
+# TRACKING_BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name "${REBASING_BRANCH:-}@{u}" 2>/dev/null || echo "")
+TRACKING_BRANCH=$(git rev-parse --symbolic-full-name "${REBASING_BRANCH:-}@{u}" 2>/dev/null || echo "")
 
 # Get the current HEAD and ORIG_HEAD
 CURRENT_HEAD=$(git rev-parse HEAD)
