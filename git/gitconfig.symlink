@@ -436,5 +436,5 @@
   # See also:
   #  Global shared templates:
   #    /usr/local/share/git-core/templates
-  #    /usr/local/share/git-core/templates/hookes
+  #    /usr/local/share/git-core/templates/hooks
 	templatedir = ~/.dotfiles/git/templates
