@@ -58,6 +58,7 @@ require_installed_brew "tree"                        # This is a handy little ut
 require_installed_brew "fd"                          # Simple, fast and user-friendly alternative to find: https://github.com/sharkdp/fd
 require_installed_brew "bat"                         # Clone of cat(1) with syntax highlighting and Git integration: https://github.com/sharkdp/bat
 require_installed_brew "jq"                          # Lightweight and flexible command-line JSON processor: https://stedolan.github.io/jq/
+require_installed_brew "jid"                         # Json Incremental Digger. You can drill down JSON interactively by using filtering queries like jq: https://github.com/simeji/jid
 require_installed_brew "xq"                          # Command-line XML and HTML beautifier and content extractor: https://github.com/sibprogrammer/xq
 require_installed_brew "pup"                         # Parse HTML at the command-line
 require_installed_brew "cascadia"                    # Go cascadia package command-line CSS selector
