@@ -69,6 +69,7 @@ require_installed_brew "ast-grep"                    # A CLI tool for code struc
 require_installed_brew "git-delta"                   # Syntax-highlighting pager for git and diff output: https://github.com/dandavison/delta
 require_installed_brew "difftastic"                  # Diff that understands syntax: https://github.com/Wilfred/difftastic
 require_installed_brew "afnanenayet/tap/diffsitter"  # Tree-sitter based AST difftool to get meaningful semantic diffs: https://github.com/afnanenayet/diffsitter
+require_installed_brew "hyperfine"                   # A command-line benchmarking tool: https://github.com/sharkdp/hyperfine
 
 require_installed_brew_cask "karabiner-elements"  # A powerful and stable keyboard customizer for macOS
 

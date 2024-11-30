@@ -42,3 +42,7 @@ if (( $+commands[bat] )); then
     alias fzf-preview='fzf --preview "bat --color=always --style=numbers --line-range=:500 {}" "$@"'
   fi
 fi
+
+# A command-line benchmarking tool
+# https://github.com/sharkdp/hyperfine
+alias benchmark="hyperfine"
