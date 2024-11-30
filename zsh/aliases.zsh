@@ -10,4 +10,5 @@ _dotfiles-search-commits() {
   fi
 }
 alias dotfiles-search-commits='_dotfiles-search-commits'
+alias dotfiles-history='_dotfiles-search-commits'
 
