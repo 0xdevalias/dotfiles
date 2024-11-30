@@ -1,0 +1,192 @@
+#!/usr/bin/env zsh
+
+# Default values for pagination parameters
+DEFAULT_PAGE_PARAM="page"
+DEFAULT_COUNT_PARAM="count"
+DEFAULT_PAGE_SIZE=100
+DEFAULT_TOTAL_COUNT_KEY=".data.total"
+DEFAULT_ARRAY_KEY=".data.items"
+SLURP=false
+HTTP_CLIENT="curl" # Default HTTP client
+DEBUG=false # Debug mode off by default
+
+# Function to prefix keys with a dot if they don't already start with one
+function prefix_with_dot() {
+  local key="$1"
+  if [[ "$key" != .* && -n "$key" ]]; then
+    echo ".$key"
+  else
+    echo "$key"
+  fi
+}
+
+# Function to clean and construct the URL
+function clean_and_add_params() {
+  local full_url="$1"
+  local page_param="$2"
+  local count_param="$3"
+  local page_value="$4"
+  local count_value="$5"
+
+  # Separate base URL and query parameters
+  local base_url="${full_url%%\?*}"  # Extract everything before the '?'
+  local query_params="${full_url#*\?}" # Extract everything after the '?'
+
+  # If there's no '?' in the URL, query_params is the same as full_url, so reset
+  [[ "$full_url" == "$base_url" ]] && query_params=""
+
+  # Remove existing pagination params from query_params
+  query_params=$(echo "$query_params" | sed -E "s/(^|&)$page_param=[^&]*//g" | sed -E "s/(^|&)$count_param=[^&]*//g")
+
+  # Append new pagination parameters
+  query_params="${query_params}&${page_param}=${page_value}&${count_param}=${count_value}"
+
+  # Clean up query_params to remove any leading/trailing '&' or '?'
+  query_params=$(echo "$query_params" | sed -E 's/^&//; s/&$//')
+
+  # Reconstruct the full URL
+  if [[ -z "$query_params" ]]; then
+    echo "$base_url"
+  else
+    echo "$base_url?$query_params"
+  fi
+}
+
+function print_help() {
+  cat <<EOF
+Usage: paginate-fetch [OPTIONS] <URL>
+
+Options:
+  --page-param=<param>    Name of the "page" parameter (default: '${DEFAULT_PAGE_PARAM}')
+  --count-param=<param>   Name of the "count" parameter (default: '${DEFAULT_COUNT_PARAM}')
+  --total-key=<key>       Key for total count in the response JSON (supports nested keys with jq dot syntax; default: '${DEFAULT_TOTAL_COUNT_KEY}')
+  --array-key=<key>       Key for the records array in the response JSON (supports nested keys with jq dot syntax; default: '${DEFAULT_ARRAY_KEY}')
+  --slurp                 Combine all pages into a single JSON array
+  --client=<http_client>  HTTP client to use (curl or restish; default: '${HTTP_CLIENT}')
+  --debug                 Show raw server responses
+  --help, -h              Display this help message
+
+Examples:
+  paginate-fetch \\
+    --page-param='foopage' \\
+    --count-param='barcount' \\
+    --total-key='data.totalCount' \\
+    --array-key='data.records' \\
+    'https://api.example.com/api/foo'
+EOF
+}
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    --page-param=*) PAGE_PARAM="${1#*=}" ;;
+    --count-param=*) COUNT_PARAM="${1#*=}" ;;
+    --total-key=*) TOTAL_COUNT_KEY="${1#*=}" ;;
+    --array-key=*) ARRAY_KEY="${1#*=}" ;;
+    --slurp) SLURP=true ;;
+    --client=*) HTTP_CLIENT="${1#*=}" ;;
+    --debug) DEBUG=true ;;
+    --help|-h) print_help; exit 0 ;;
+    *) URL="$1" ;;
+  esac
+  shift
+done
+
+# Set defaults if not provided
+PAGE_PARAM="${PAGE_PARAM:-$DEFAULT_PAGE_PARAM}"
+COUNT_PARAM="${COUNT_PARAM:-$DEFAULT_COUNT_PARAM}"
+PAGE_SIZE="${PAGE_SIZE:-$DEFAULT_PAGE_SIZE}"
+TOTAL_COUNT_KEY=$(prefix_with_dot "${TOTAL_COUNT_KEY:-$DEFAULT_TOTAL_COUNT_KEY}")
+ARRAY_KEY=$(prefix_with_dot "${ARRAY_KEY:-$DEFAULT_ARRAY_KEY}")
+
+if [[ -z "$URL" ]]; then
+  echo "Error: URL is required." >&2
+  print_help >&2
+  exit 1
+fi
+
+# Variables for pagination
+current_page=1
+total_count=-1
+fetched_records=0
+merged_output="[]" # Start with an empty JSON array
+response_combined=()
+
+# Function to make an HTTP request using the selected client
+function fetch_page() {
+  local url="$1"
+  case "$HTTP_CLIENT" in
+    curl)
+      curl -s "$url"
+      ;;
+    restish)
+      restish get "$url" 2>/dev/null
+      ;;
+    *)
+      echo "Error: Unsupported HTTP client '$HTTP_CLIENT'." >&2
+      exit 1
+      ;;
+  esac
+}
+
+# Function to parse JSON using jq
+function parse_json() {
+  local json="$1"
+  local jq_filter="$2"
+  echo "$json" | jq -c "$jq_filter"
+}
+
+# Loop through pages
+while true; do
+  # Build URL with cleaned pagination params
+  paginated_url=$(clean_and_add_params "$URL" "$PAGE_PARAM" "$COUNT_PARAM" "$current_page" "$PAGE_SIZE")
+
+  # Fetch the current page
+  response=$(fetch_page "$paginated_url")
+  if [[ -z "$response" ]]; then
+    echo "Error: No response from server." >&2
+    break
+  fi
+
+  # Show raw response if debugging
+  if [[ "$DEBUG" == true ]]; then
+    echo "DEBUG: Raw response from ${paginated_url}:" >&2
+    echo "$response" >&2
+  fi
+
+  # Extract the total count and records array using jq filters
+  total_count=$(parse_json "$response" "$TOTAL_COUNT_KEY" 2>/dev/null)
+  records=$(parse_json "$response" "$ARRAY_KEY" 2>/dev/null)
+
+  # Check for empty array or invalid response
+  if [[ -z "$records" || "$records" == "null" ]]; then
+    echo "Pagination ended: Empty response array." >&2
+    break
+  fi
+
+  # Merge records if not slurping
+  if [[ "$SLURP" == true ]]; then
+    response_combined+=("$records")
+  else
+    merged_output=$(echo "$merged_output $records" | jq -s 'add')
+  fi
+
+  # Update fetched records count
+  fetched_records=$((fetched_records + $(echo "$records" | jq length)))
+
+  # Check stop condition based on total count
+  if [[ "$total_count" -ge 0 && "$fetched_records" -ge "$total_count" ]]; then
+    echo "Pagination ended: Reached total count ($total_count)." >&2
+    break
+  fi
+
+  # Increment the page
+  current_page=$((current_page + 1))
+done
+
+# Output results
+if [[ "$SLURP" == true ]]; then
+  echo "["$(IFS=,; echo "${response_combined[*]}")"]" | jq
+else
+  echo "$merged_output" | jq
+fi
