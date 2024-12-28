@@ -22,6 +22,7 @@
 		"Jq",
 		"JsPrettier",
 		"LSP",
+		"LSP-file-watcher-chokidar",
 		"MarkdownEditing",
 		"MarkdownTOC",
 		"Package Control",
