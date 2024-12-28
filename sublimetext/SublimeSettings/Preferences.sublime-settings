@@ -29,4 +29,41 @@
 	"index_files": true,
 	"open_files_in_new_window": "finder_only",
 	"focus_on_file_drop": true,
+
+	// MarkdownEditing: https://github.com/SublimeText-Markdown/MarkdownEditing
+	// Needs to be configured here as per:
+	//   https://github.com/SublimeText-Markdown/MarkdownEditing/issues/667
+	//   https://sublimetext-markdown.github.io/MarkdownEditing/config/#change-configuration
+
+	// MarkdownEditing (Headings):
+	"mde.detect_heading_style": false,
+	"mde.match_heading_hashes": false,
+	"mde.auto_match_heading_hashes": false,
+
+	// MarkdownEditing (Lists):
+	"mde.list_indent_auto_switch_bullet": false,
+	"mde.list_indent_bullets": ["-"],
+	"mde.auto_increment_ordered_list_number": true,
+	"mde.list_align_text": false,
+
+	// MarkdownEditing (Misc):
+	"mde.auto_fold_link.enabled": false,
+
+	// MarkdownEditing (KeyMaps):
+	"mde.keymap_disable.set_heading_level": true,
+	"mde.keymap_disable.reference_jump": true,
+	"mde.keymap_disable.reference_new_reference": true,
+	"mde.keymap_disable.reference_new_inline_link": true,
+	"mde.keymap_disable.reference_new_inline_image": false,
+	"mde.keymap_disable.reference_new_footnote": false,
+	"mde.keymap_disable.reference_organize": true,
+	"mde.keymap_disable.fold_section": true,
+	"mde.keymap_disable.show_fold_all_sections": false,
+	"mde.keymap_disable.goto_next_heading": false,
+	"mde.keymap_disable.goto_previous_heading": false,
+	"mde.keymap_disable.list_back_links": true,
+	"mde.keymap_disable.open_home_page": true,
+	"mde.keymap_disable.open_journal": true,
+	"mde.keymap_disable.open_page": true,
+	"mde.keymap_disable.make_page_reference": true,
 }
