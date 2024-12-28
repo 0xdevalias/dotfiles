@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Manual Steps: Webstorm -> Tools -> Create Command-line Launcher -> set the path
-WEBSTORMBIN="/usr/local/bin/webstorm"
+WEBSTORMBIN="`brew --prefix`/bin/webstorm"
 if [ ! -f "$WEBSTORMBIN" ]; then
-  echo "Error: Webstorm launcher not found at $WEBSTORMBIN"
+  echo "Error: JetBrains Webstorm launcher not found at $WEBSTORMBIN"
   echo "  Open Webstorm: Tools -> Create Command-line Launcher -> set the path as above -> Ok"
 else
   exec "$WEBSTORMBIN" "$PWD/$@"&

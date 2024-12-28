@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Manual Steps: Goland -> Tools -> Create Command-line Launcher -> set the path
-GOLANDBIN="/usr/local/bin/goland"
+GOLANDBIN="`brew --prefix`/bin/goland"
 if [ ! -f "$GOLANDBIN" ]; then
-  echo "Error: Goland launcher not found at $GOLANDBIN"
+  echo "Error: JetBrains Goland launcher not found at $GOLANDBIN"
   echo "  Open Goland: Tools -> Create Command-line Launcher -> set the path as above -> Ok"
 else
   exec "$GOLANDBIN" "$PWD/$@"&

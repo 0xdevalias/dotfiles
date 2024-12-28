@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Manual Steps: RubyMine -> Tools -> Create Command-line Launcher -> set the path
-RMINEBIN="/usr/local/bin/rubymine"
+RMINEBIN="`brew --prefix`/bin/rubymine"
 if [ ! -f "$RMINEBIN" ]; then
-  echo "Error: RubyMine launcher not found at $RMINEBIN"
+  echo "Error: JetBrains RubyMine launcher not found at $RMINEBIN"
   echo "  Open RubyMine: Tools -> Create Command-line Launcher -> set the path as above -> Ok"
 else
   exec "$RMINEBIN" "$PWD/$@"&
