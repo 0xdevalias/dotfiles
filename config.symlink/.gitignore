@@ -4,7 +4,9 @@ gcloud/
 
 gh/hosts.yml
 
+github-copilot/apps.json
 github-copilot/hosts.json
+github-copilot/*/chat-sessions/
 
 github-repos/
 
