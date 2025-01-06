@@ -50,6 +50,7 @@ fi
 
 echo "[system::install] Checking/installing standard system utilities.."
 require_installed_brew "coreutils"                   # GNU File, Shell, and Text utilities: https://www.gnu.org/software/coreutils
+require_installed_brew "gsed"                        # GNU implementation of the famous stream editor: https://www.gnu.org/software/sed/
 # require_installed_brew "uutils-coreutils"            # Cross-platform Rust rewrite of the GNU coreutils: https://github.com/uutils/coreutils
 require_installed_brew "grc"                         # Colorize logfiles and command output: https://github.com/garabik/grc
 require_installed_brew "zoxide"                      # zoxide is a smarter cd command, inspired by z and autojump: https://github.com/ajeetdsouza/zoxide
