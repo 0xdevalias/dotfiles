@@ -1,0 +1,7 @@
+# Ref: https://specifications.freedesktop.org/basedir-spec/latest/
+#   $XDG_STATE_HOME defines the base directory relative to which user-specific state files should be stored.
+#   If $XDG_STATE_HOME is either not set or empty, a default equal to $HOME/.local/state should be used.
+
+gh/state.yml
+
+gh-copilot/state.yml
