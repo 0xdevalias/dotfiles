@@ -1,0 +1,22 @@
+# Ref: https://specifications.freedesktop.org/basedir-spec/latest/
+
+# share (XDG_DATA_HOME)
+
+share/azure-functions-core-tools/.telemetry/
+
+share/delta/lesshst
+
+share/gem/specs/
+
+share/gh/extensions/
+
+share/karabiner/log/
+share/karabiner/pid/
+
+share/recently-used.xbel
+
+# state (XDG_STATE_HOME)
+
+state/gh/state.yml
+
+state/gh-copilot/state.yml
