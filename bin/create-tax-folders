@@ -1,0 +1,435 @@
+#!/usr/bin/env zsh
+
+# A script to create standard Tax folders (Crypto, Up Bank, etc.) for an
+# Australian financial year, plus create a Finder alias to the Crypto folder.
+
+##############################################################################
+#                              CONFIGURATION                                 #
+##############################################################################
+
+# The base path where the new FY folder is created:
+TAX_BASE_DIR="${HOME}/Dropbox/! Docs !/!Personal!/Digital Archive/Tax"
+
+# The path where the Finder alias should be created:
+CRYPTO_ALIAS_DIR="${HOME}/Dropbox/! Docs !/!Personal!/Digital Archive/Crypto Trading"
+
+# The name of the subfolder for Crypto:
+CRYPTO_SUBFOLDER_PREFIX="Crypto Tax"
+
+# The name of the subfolder for Up Bank:
+UPBANK_SUBFOLDER_PREFIX="Up Bank"
+
+##############################################################################
+#                            HELPER FUNCTIONS                                #
+##############################################################################
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Create tax folders for a given Australian financial year and a Finder alias
+to the Crypto folder.
+
+Options:
+  -y, --financial-year <FIN_YEAR>  Specify the financial year (e.g. 2024-25FY).
+  -h, --help                       Show this help message and exit.
+
+If --financial-year is omitted, you will be prompted for the year, with a default
+based on the next Australian financial year.
+
+EOF
+}
+
+# Determine the default financial year based on today's date
+#
+# The Australian Financial Year is from July 1st to June 30th:
+#   - If today's month is >= 7 (July), "current" FY is CurrentYear-NextYear
+#     so "next" FY is NextYear-(NextYear+1).
+#   - If today's month is < 7, "current" FY is (LastYear-CurrentYear),
+#     so "next" FY is CurrentYear-(CurrentYear+1).
+get_default_financial_year() {
+  local currentYear currentMonth fyStart fyEnd
+  currentYear=$(date +%Y)
+  currentMonth=$(date +%m)
+
+  # Convert month to an integer safely (to handle leading zero).
+  local m=$((10#${currentMonth}))
+
+  if (( m >= 7 )); then
+    # We are in or after July => Current FY is (currentYear)-(currentYear+1),
+    # so "next" FY is (currentYear+1)-(currentYear+2).
+    fyStart=${currentYear}
+    fyEnd=$(( currentYear + 1 ))
+  else
+    # We are before July => Current FY is (currentYear-1)-(currentYear),
+    # so "next" FY is (currentYear)-(currentYear+1).
+    fyStart=$(( currentYear - 1 ))
+    fyEnd=${currentYear}
+  fi
+
+  # Format e.g. 2024-25FY
+  local shortEnd=$(( fyEnd % 100 ))     # e.g. 2025 -> 25
+  printf "%d-%02dFY" "${fyStart}" "${shortEnd}"
+}
+
+# Usage:
+#   parse_financial_year <INPUT> [<STYLE>]
+#
+# <INPUT>  = a user string that might look like:
+#              "2025-26", "25-26FY", "2025-2026", "2025-2026FY", "25-26 FY", etc.
+# <STYLE>  = "short" or "long" (default: "short")
+#
+# Returns:
+#   * a string in one of two formats:
+#       - short: "YYYY-YYFY"        e.g. "2025-26FY"
+#       - long:  "YYYY-YYYY FY"     e.g. "2025-2026 FY"
+#   * "" (empty string) if the input cannot be parsed
+#
+# Examples:
+#   parse_financial_year "25-26"            => "2025-26FY"       (short, default)
+#   parse_financial_year "25-26" "short"    => "2025-26FY"
+#   parse_financial_year "25-26" "long"     => "2025-2026 FY"
+#
+#   parse_financial_year "2025-2026FY"      => "2025-26FY"       (short)
+#   parse_financial_year "2025-2026" "long" => "2025-2026 FY"
+parse_financial_year() {
+  local input="$1"
+  local style="${2:-short}"   # default to "short" if not specified
+
+  # 1. Remove all spaces
+  input="${input// /}"
+
+  # 2. Strip trailing "FY" if present
+  input="${input%FY}"
+
+  # 3. Must contain at least one hyphen
+  if [[ "$input" != *-* ]]; then
+    echo ""
+    return
+  fi
+
+  # Split into first (yearStart) and second (yearEnd) parts
+  local yearStart="${input%%-*}"
+  local yearEnd="${input#*-}"
+
+  # --- Convert yearStart to 4-digit year (yearStart4) ---
+  # If user typed 2 digits (e.g. "25"), assume 20XX => 2025
+  # If user typed 4 digits (e.g. "2025"), keep it.
+  # Otherwise, fail => return ""
+  local yearStart4
+  if [[ $yearStart =~ ^[0-9]{2}$ ]]; then
+    yearStart4="20${yearStart}"
+  elif [[ $yearStart =~ ^[0-9]{4}$ ]]; then
+    yearStart4="$yearStart"
+  else
+    echo ""
+    return
+  fi
+
+  # --- Convert yearEnd to 4-digit year (yearEnd4) ---
+  # Same logic: if 2 digits => 20XX, if 4 digits => keep it, else fail.
+  local yearEnd4
+  if [[ $yearEnd =~ ^[0-9]{2}$ ]]; then
+    yearEnd4="20${yearEnd}"
+  elif [[ $yearEnd =~ ^[0-9]{4}$ ]]; then
+    yearEnd4="$yearEnd"
+  else
+    echo ""
+    return
+  fi
+
+  # Compute the 2-digit versions for short style
+  local yearStart2
+  local yearEnd2
+  yearStart2=$(printf "%02d" $((yearStart4 % 100)))
+  yearEnd2=$(printf "%02d" $((yearEnd4 % 100)))
+
+  # 4. Based on style, return the final string
+  case "$style" in
+    short)
+      # "YYYY-YYFY" => e.g. "2025-26FY"
+      echo "${yearStart4}-${yearEnd2}FY"
+      ;;
+    long)
+      # "YYYY-YYYY FY" => e.g. "2025-2026 FY"
+      echo "${yearStart4}-${yearEnd4} FY"
+      ;;
+    *)
+      echo "Error: invalid style '$style' (must be 'short' or 'long')" >&2
+      echo ""
+      return 1
+      ;;
+  esac
+}
+
+# Usage:
+#   normalise_fy_suffix <INPUT> <STYLE>
+#
+#   <INPUT>  = a string that may or may not end with "FY" or " FY"
+#   <STYLE>  = "nospace" (for "FY") or "space" (for " FY")
+#
+# Description:
+#   This function ensures <INPUT> ends with "FY" in the specified style.
+#   - If style="nospace", the final result ends with "FY" (no space).
+#   - If style="space",   the final result ends with " FY" (one space).
+#
+# Examples:
+#   normalise_fy_suffix "2025-26"         "nospace"  =>  "2025-26FY"
+#   normalise_fy_suffix "2025-26FY"       "space"    =>  "2025-26 FY"
+#   normalise_fy_suffix "2025-26 FY"      "nospace"  =>  "2025-26FY"
+#   normalise_fy_suffix "2025-26"         "space"    =>  "2025-26 FY"
+#   normalise_fy_suffix "2025-26FY"       "nospace"  =>  "2025-26FY"  (unchanged)
+#   normalise_fy_suffix "2025-26FY"       "space"    =>  "2025-26 FY"
+#   normalise_fy_suffix "2025-26 FY"      "space"    =>  "2025-26 FY" (unchanged)
+normalise_fy_suffix() {
+  local input="$1"
+  local style="${2:-nospace}"  # Default style is "nospace" if not specified
+
+  # Determine the desired final suffix
+  local finalSuffix
+  case "$style" in
+    space)    finalSuffix=" FY" ;;
+    nospace)  finalSuffix="FY"  ;;
+    *)
+      echo "ERROR: Invalid style '$style'. Valid options are 'space' or 'nospace'." >&2
+      return 1
+      ;;
+  esac
+
+  # Determine what the "other" suffix is so we can detect/transform it if needed
+  local altSuffix
+  if [[ "$finalSuffix" == " FY" ]]; then
+    altSuffix="FY"
+  else
+    altSuffix=" FY"
+  fi
+
+  case "$input" in
+    (*"${finalSuffix}")
+      # Already ends with the desired suffix -> do nothing
+      echo "$input"
+      ;;
+    (*"${altSuffix}")
+      # Ends with the other suffix -> remove it, then append the finalSuffix
+      echo "${input/%${altSuffix}/${finalSuffix}}"
+      ;;
+    (*)
+      # No suffix at all -> append finalSuffix
+      echo "${input}${finalSuffix}"
+      ;;
+  esac
+}
+
+# Create a Finder alias using AppleScript (and handle authorization errors)
+# Args:
+#   $1 -> Target folder (the one we want an alias to)
+#   $2 -> Alias file (the final .alias location)
+create_finder_alias() {
+  local targetFile="${1:A}" # Resolve absolute path
+  local aliasFile="${2:A}"  # Resolve absolute path
+
+  # Identify the directory in which the alias file should reside
+  local aliasDir="${aliasFile:A:h}"    # Resolve absolute path and parent directory
+  local aliasFileName="${aliasFile:t}" # Extract the filename
+
+  # Check if the target exists (either a file or a directory)
+  if [[ ! -e "${targetFile}" ]]; then
+    echo "ERROR: Target does not exist: ${targetFile}" >&2
+    exit 1
+  fi
+
+  # Check if the alias directory exists
+  if [[ ! -d "${aliasDir}" ]]; then
+    echo "ERROR: Alias directory does not exist: ${aliasDir}" >&2
+    exit 1
+  fi
+
+  # Check if the alias file already exists
+  if [[ -e "${aliasFile}" ]]; then
+    echo "SKIP: Alias file already exists: ${aliasFile}" >&2
+    return 0
+  fi
+
+  # Attempt to create the Finder alias
+  osascript <<EOF 2>/tmp/osascript_error.log
+set targetFile to POSIX file "${targetFile}"
+set aliasDir to POSIX file "${aliasDir}"
+set aliasFileName to "${aliasFileName}"
+
+tell application "Finder"
+  make new alias to targetFile at aliasDir with properties {name:aliasFileName}
+end tell
+EOF
+
+  # Check the exit status of the osascript command
+  if [[ $? -ne 0 ]]; then
+    # Read the error message from the log
+    local errorMessage
+    errorMessage=$(< /tmp/osascript_error.log)
+
+    # Check if it matches the "Not authorised to send Apple events" error
+    if [[ "$errorMessage" == *"Not authorised to send Apple events to Finder"* ]]; then
+      echo "ERROR: Not authorized to send Apple events to Finder."
+      echo "  To fix this issue:"
+      echo "    1. Open 'System Settings' (or 'System Preferences' on older macOS versions)."
+      echo "    2. Navigate to 'Privacy & Security' > 'Automation'."
+      echo "    3. Look for your terminal application (e.g., Terminal, iTerm2)."
+      echo "    4. Grant permission to control 'Finder'."
+      echo "    5. Re-run the script."
+      echo ""
+      echo "  Alternatively, or if Finder does not appear in the list, reset permissions with:"
+      echo "    tccutil reset AppleEvents <your terminal app's bundle identifier>"
+      echo ""
+      echo "    eg."
+      echo "      tccutil reset AppleEvents com.apple.Terminal"
+      echo "      tccutil reset AppleEvents com.googlecode.iterm2"
+      echo ""
+      echo "Then try again."
+      exit 1
+    else
+      # Print the generic error message
+      echo "ERROR: Failed to create Finder alias."
+      echo "Details: $errorMessage"
+      exit 1
+    fi
+  fi
+
+  echo "Finder alias created successfully: ${aliasFile}"
+}
+
+##############################################################################
+#                                MAIN LOGIC                                  #
+##############################################################################
+
+# Check if the TAX_BASE_DIR exists, throw an error if not
+if [[ ! -d "${TAX_BASE_DIR}" ]]; then
+  echo "ERROR: TAX_BASE_DIR directory does not exist: ${TAX_BASE_DIR}" >&2
+  exit 1
+fi
+
+# Check if the CRYPTO_ALIAS_DIR exists, throw an error if not
+if [[ ! -d "${CRYPTO_ALIAS_DIR}" ]]; then
+  echo "ERROR: CRYPTO_ALIAS_DIR directory does not exist: ${CRYPTO_ALIAS_DIR}" >&2
+  exit 1
+fi
+
+# Parse arguments
+FIN_YEAR=""  # will store user-supplied or prompted year
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -y|--financial-year)
+      # The user passed an argument like: --financial-year 2025-2026
+      local userFY="$2"
+      shift 2
+
+      # Attempt to parse/normalize
+      local parsedFY
+      parsedFY="$(parse_financial_year "${userFY}")"
+
+      if [[ -n "$parsedFY" ]]; then
+        FIN_YEAR="$parsedFY"
+      else
+        echo "Error: Invalid format for financial year: ${userFY}"
+        echo "Example of valid input: '2025-2026', '25-26', '2025-26FY'"
+        exit 1
+      fi
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1"
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+# If no FIN_YEAR provided, prompt user
+if [[ -z "${FIN_YEAR}" ]]; then
+  local defaultFY
+  defaultFY="$(get_default_financial_year)"  # e.g. "2025-26FY"
+
+  local userFY
+  while :; do
+    echo -n "Enter the financial year (e.g. ${defaultFY}) [${defaultFY}]: "
+    read userFY
+
+    # If user just presses Enter, use the default
+    if [[ -z "${userFY}" ]]; then
+      FIN_YEAR="${defaultFY}"
+      break
+    fi
+
+    # Attempt to parse/normalize the user input
+    local parsedFY
+    parsedFY="$(parse_financial_year "${userFY}")"
+
+    if [[ -n "${parsedFY}" ]]; then
+      FIN_YEAR="${parsedFY}"
+      break
+    else
+      echo "Invalid or unrecognized format. Examples:"
+      echo "  2025-2026  => 2025-26FY"
+      echo "  2025-26    => 2025-26FY"
+      echo "  25-26      => 2025-26FY"
+      echo "  2025-26FY  => 2025-26FY"
+      echo "Please try again."
+    fi
+  done
+fi
+
+# Now that FIN_YEAR is set, also produce short and long variants
+FIN_YEAR_SHORT="$(parse_financial_year "${FIN_YEAR}" "short")"
+FIN_YEAR_LONG="$(parse_financial_year "${FIN_YEAR}" "long")"
+
+echo ""
+echo "Using FIN_YEAR:        ${FIN_YEAR}"
+echo "Using FIN_YEAR_SHORT:  ${FIN_YEAR_SHORT}"
+echo "Using FIN_YEAR_LONG:   ${FIN_YEAR_LONG}"
+echo ""
+
+# Create the main folder for the chosen FY, which in long format ends with " FY"
+MAIN_FY_DIR="${TAX_BASE_DIR}/${FIN_YEAR_LONG}"
+if [[ -d "${MAIN_FY_DIR}" ]]; then
+  echo "[skip] Creating main folder (already exists): ${MAIN_FY_DIR}"
+else
+  mkdir -p "${MAIN_FY_DIR}" && \
+    echo "Created main folder: ${MAIN_FY_DIR}"
+fi
+
+# Create subfolders (if they don't exist)
+CRYPTO_SUBFOLDER_NAME="${CRYPTO_SUBFOLDER_PREFIX} ${FIN_YEAR_SHORT}"
+UPBANK_SUBFOLDER_NAME="${UPBANK_SUBFOLDER_PREFIX} ${FIN_YEAR_SHORT}"
+
+for subfolder in "${CRYPTO_SUBFOLDER_NAME}" "${UPBANK_SUBFOLDER_NAME}"; do
+  local subfolderPath="${MAIN_FY_DIR}/${subfolder}"
+
+  if [[ -d "${subfolderPath}" ]]; then
+    echo "[skip] Creating subfolder (already exists): ${subfolderPath}"
+  else
+    mkdir -p "${subfolderPath}" && echo "Created subfolder: ${subfolderPath}"
+  fi
+done
+
+# Create Finder alias to the Crypto folder within the Crypto Trading directory
+CRYPTO_FOLDER_PATH="${MAIN_FY_DIR}/${CRYPTO_SUBFOLDER_NAME}"
+
+# Name the alias something like "_Tax - Crypto Tax 2025-26FY"
+CRYPTO_ALIAS_NAME="_Tax - ${CRYPTO_SUBFOLDER_NAME}"
+CRYPTO_ALIAS_PATH="${CRYPTO_ALIAS_DIR}/${CRYPTO_ALIAS_NAME}"
+
+# Check if alias already exists
+if [[ -e "${CRYPTO_ALIAS_PATH}" ]]; then
+  echo "[skip] Creating Finder alias (already exists): ${CRYPTO_ALIAS_PATH}"
+else
+  echo "Creating Finder alias:"
+  echo "  Destination: ${CRYPTO_ALIAS_PATH}"
+  echo "  Points to:   ${CRYPTO_FOLDER_PATH}"
+
+  create_finder_alias "${CRYPTO_FOLDER_PATH}" "${CRYPTO_ALIAS_PATH}"
+fi
+
+echo ""
+echo "All done!"
