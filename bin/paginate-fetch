@@ -161,8 +161,8 @@ while true; do
   records=$(parse_json "$response" "$ARRAY_KEY" 2>/dev/null)
 
   # Check for empty array or invalid response
-  if [[ -z "$records" || "$records" == "null" ]]; then
-    echo "Pagination ended: Empty response array." >&2
+  if [[ -z "$records" || "$records" == "null" || "$records" == "[]" ]]; then
+    echo "Pagination ended: Empty response array or no records found." >&2
     break
   fi
 
