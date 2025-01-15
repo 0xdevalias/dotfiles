@@ -9,6 +9,7 @@ DEFAULT_ARRAY_KEY=".data.items"
 SLURP=false
 HTTP_CLIENT="curl" # Default HTTP client
 DEBUG=false # Debug mode off by default
+EXTRA_CLIENT_ARGS=() # Array to hold additional arguments
 
 # Function to prefix keys with a dot if they don't already start with one
 function prefix_with_dot() {
@@ -54,7 +55,7 @@ function clean_and_add_params() {
 
 function print_help() {
   cat <<EOF
-Usage: paginate-fetch [OPTIONS] <URL>
+Usage: paginate-fetch [OPTIONS] <URL> [-- <EXTRA_CLIENT_ARGS>]
 
 Options:
   --page-param=<param>    Name of the "page" parameter (default: '${DEFAULT_PAGE_PARAM}')
@@ -72,7 +73,7 @@ Examples:
     --count-param='barcount' \\
     --total-key='data.totalCount' \\
     --array-key='data.records' \\
-    'https://api.example.com/api/foo'
+    'https://api.example.com/api/foo' -- -H "Authorization: Bearer <token>"
 EOF
 }
 
@@ -87,6 +88,7 @@ while [[ "$#" -gt 0 ]]; do
     --client=*) HTTP_CLIENT="${1#*=}" ;;
     --debug) DEBUG=true ;;
     --help|-h) print_help; exit 0 ;;
+    --) shift; EXTRA_CLIENT_ARGS=($@); break ;;
     *) URL="$1" ;;
   esac
   shift
@@ -117,10 +119,10 @@ function fetch_page() {
   local url="$1"
   case "$HTTP_CLIENT" in
     curl)
-      curl -s "$url"
+      curl -s "$url" "${EXTRA_CLIENT_ARGS[@]}"
       ;;
     restish)
-      restish get "$url" 2>/dev/null
+      restish get "$url" "${EXTRA_CLIENT_ARGS[@]}" 2>/dev/null
       ;;
     *)
       echo "Error: Unsupported HTTP client '$HTTP_CLIENT'." >&2
