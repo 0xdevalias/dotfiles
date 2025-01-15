@@ -101,6 +101,12 @@ function Div(div)
   return div
 end
 
+-- @see https://pandoc.org/lua-filters.html#type-span
+-- @see https://pandoc.org/lua-filters.html#pandoc.Span
+function Span(span)
+  return span.content
+end
+
 -- @see https://pandoc.org/lua-filters.html#type-link
 -- @see https://pandoc.org/lua-filters.html#pandoc.Link
 function Link(link)
@@ -149,6 +155,7 @@ end
 return {
     {Meta = Meta},
     {Div = Div},
+    {Span = Span},
     {Link = Link},
     {Emph = Emph},
 }
