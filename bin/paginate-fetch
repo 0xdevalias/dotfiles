@@ -6,6 +6,7 @@ DEFAULT_COUNT_PARAM="count"
 DEFAULT_PAGE_SIZE=100
 DEFAULT_TOTAL_COUNT_KEY=".data.total"
 DEFAULT_ARRAY_KEY=".data.items"
+DEFAULT_START_PAGE=1
 SLURP=false
 HTTP_CLIENT="curl" # Default HTTP client
 DEBUG=false # Debug mode off by default
@@ -62,6 +63,7 @@ Options:
   --count-param=<param>   Name of the "count" parameter (default: '${DEFAULT_COUNT_PARAM}')
   --total-key=<key>       Key for total count in the response JSON (supports nested keys with jq dot syntax; default: '${DEFAULT_TOTAL_COUNT_KEY}')
   --array-key=<key>       Key for the records array in the response JSON (supports nested keys with jq dot syntax; default: '${DEFAULT_ARRAY_KEY}')
+  --start-page=<number>   Starting page for pagination (default: '${DEFAULT_START_PAGE}')
   --slurp                 Combine all pages into a single JSON array
   --client=<http_client>  HTTP client to use (curl or restish; default: '${HTTP_CLIENT}')
   --debug                 Show raw server responses
@@ -84,6 +86,7 @@ while [[ "$#" -gt 0 ]]; do
     --count-param=*) COUNT_PARAM="${1#*=}" ;;
     --total-key=*) TOTAL_COUNT_KEY="${1#*=}" ;;
     --array-key=*) ARRAY_KEY="${1#*=}" ;;
+    --start-page=*) START_PAGE="${1#*=}" ;;
     --slurp) SLURP=true ;;
     --client=*) HTTP_CLIENT="${1#*=}" ;;
     --debug) DEBUG=true ;;
@@ -98,6 +101,7 @@ done
 PAGE_PARAM="${PAGE_PARAM:-$DEFAULT_PAGE_PARAM}"
 COUNT_PARAM="${COUNT_PARAM:-$DEFAULT_COUNT_PARAM}"
 PAGE_SIZE="${PAGE_SIZE:-$DEFAULT_PAGE_SIZE}"
+START_PAGE="${START_PAGE:-$DEFAULT_START_PAGE}"
 TOTAL_COUNT_KEY=$(prefix_with_dot "${TOTAL_COUNT_KEY:-$DEFAULT_TOTAL_COUNT_KEY}")
 ARRAY_KEY=$(prefix_with_dot "${ARRAY_KEY:-$DEFAULT_ARRAY_KEY}")
 
@@ -108,7 +112,7 @@ if [[ -z "$URL" ]]; then
 fi
 
 # Variables for pagination
-current_page=1
+current_page="$START_PAGE"
 total_count=-1
 fetched_records=0
 merged_output="[]" # Start with an empty JSON array
