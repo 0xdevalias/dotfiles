@@ -64,6 +64,7 @@ Options:
   --total-key=<key>       Key for total count in the response JSON (supports nested keys with jq dot syntax; default: '${DEFAULT_TOTAL_COUNT_KEY}')
   --array-key=<key>       Key for the records array in the response JSON (supports nested keys with jq dot syntax; default: '${DEFAULT_ARRAY_KEY}')
   --start-page=<number>   Starting page for pagination (default: '${DEFAULT_START_PAGE}')
+  --page-size=<number>    Number of items per page (default: '${DEFAULT_PAGE_SIZE}')
   --slurp                 Combine all pages into a single JSON array
   --client=<http_client>  HTTP client to use (curl or restish; default: '${HTTP_CLIENT}')
   --debug                 Show raw server responses
@@ -87,6 +88,7 @@ while [[ "$#" -gt 0 ]]; do
     --total-key=*) TOTAL_COUNT_KEY="${1#*=}" ;;
     --array-key=*) ARRAY_KEY="${1#*=}" ;;
     --start-page=*) START_PAGE="${1#*=}" ;;
+    --page-size=*) PAGE_SIZE="${1#*=}" ;;
     --slurp) SLURP=true ;;
     --client=*) HTTP_CLIENT="${1#*=}" ;;
     --debug) DEBUG=true ;;
