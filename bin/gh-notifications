@@ -1,0 +1,163 @@
+#!/usr/bin/env zsh
+
+# Ref:
+#   https://gist.github.com/0xdevalias/04ec31b12edaae727cd87d379499c14c#reading-github-notifications-from-gh-cli
+#     Reading GitHub Notifications from `gh` CLI
+#
+# This could be potentially improved further if these issues get resolved positively:
+#   https://github.com/cli/cli/issues/10261
+#     Allow `--jq` and `--template` to be used together in `gh api`
+#   https://github.com/cli/cli/issues/10262
+#     Add custom formatting functions to `--jq` similar to those added to `--template`
+#   https://github.com/cli/cli/issues/10263
+#     Allow passing additional arguments through to `--jq` script, just like we can with `jq --arg`
+
+function gh_notifications() {
+  # Default values
+  local mode="ungrouped"
+  local scope="participating"
+
+  local help_text="""
+  Usage: gh-notifications [options]
+
+  Options:
+    -h, --help             Show this help message and exit
+    -m, --mode [grouped|ungrouped]  Set the display mode (default: $mode)
+    -s, --scope [participating|all] Set the notification scope (default: $scope)
+
+  Examples:
+    gh-notifications --mode grouped --scope all
+    gh-notifications --mode ungrouped
+  """
+
+  # Parse arguments
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      -h|--help)
+        echo "$help_text"
+        return 0
+        ;;
+      -m|--mode)
+        if [[ "$2" =~ ^(grouped|ungrouped)$ ]]; then
+          mode="$2"
+          shift
+        else
+          echo "Error: Invalid mode. Choose 'grouped' or 'ungrouped'."
+          echo "$help_text"
+          return 1
+        fi
+        ;;
+      -s|--scope)
+        if [[ "$2" =~ ^(participating|all)$ ]]; then
+          scope="$2"
+          shift
+        else
+          echo "Error: Invalid scope. Choose 'participating' or 'all'."
+          echo "$help_text"
+          return 1
+        fi
+        ;;
+      *)
+        echo "Unknown option: $1"
+        echo "$help_text"
+        return 1
+        ;;
+    esac
+    shift
+  done
+
+  # Execute the GitHub API command
+  gh api notifications \
+    --method GET \
+    -F participating=$([[ "$scope" == "participating" ]] && echo true || echo false) \
+    --jq "
+      def timeago:
+        . | fromdateiso8601 | now - . | . / 60 | floor |
+        if . < 60 then
+          (. | tostring + \" minutes ago\")
+        elif . < 1440 then
+          (. / 60 | floor | tostring + \" hours ago\")
+        elif . < 43200 then
+          (. / 1440 | floor | tostring + \" days ago\")
+        elif . < 525600 then
+          (. / 43200 | floor | tostring + \" months ago\")
+        else
+          (. / 525600 | floor | tostring + \" years ago\")
+        end;
+
+      def ljust(width): . + \" \" * (width - (. | length));
+
+      def api_to_web_url:
+        if test(\"^https://api.github.com/repos/[^/]+/[^/]+/(issues|pulls)/[0-9]+$\") then
+          sub(\"^https://api.github.com/repos/\"; \"https://github.com/\")
+        elif test(\"^https://api.github.com/repos/[^/]+/[^/]+/issues/comments/[0-9]+$\") then
+          capture(\"^https://api.github.com/repos/(?<repo>[^/]+/[^/]+)/issues/comments/(?<comment>[0-9]+)$\") |
+          \"https://github.com/\(.repo)/issues#issuecomment-\(.comment)\"
+        elif test(\"^https://api.github.com/repos/\") then
+          sub(\"^https://api.github.com/repos/\"; \"https://github.com/\")
+        else
+          .
+        end;
+
+      def get_status:
+        if .subject.type == \"Issue\" then
+          if .state == \"closed\" then \"🔴 Closed\" else \"🟢 Open\" end
+        elif .subject.type == \"PullRequest\" then
+          if .state == \"merged\" then \"🟣 Merged\"
+          elif .state == \"closed\" then \"🔴 Closed\"
+          elif .draft then \"⚪ Draft\"
+          else \"🟢 Open\" end
+        else
+          \"     -\"
+        end;
+
+      def format_item:
+        [
+          (.repository.full_name | ljust(25)),
+          (.subject.title | .[:50] | ljust(50)),
+          (.subject.type | ljust(12)),
+          (get_status | ljust(12)),
+          (.reason | ljust(8)),
+          (.updated_at | timeago | ljust(15)),
+          (.subject.url | api_to_web_url)
+        ] | join(\"  \");
+
+      def format_grouped_item:
+        [
+          \"    \",  # Indent for grouping
+          (.subject.title | .[:50] | ljust(50)),
+          (.subject.type | ljust(12)),
+          (get_status | ljust(12)),
+          (.reason | ljust(8)),
+          (.updated_at | timeago | ljust(15)),
+          (.subject.url | api_to_web_url)
+        ] | join(\"  \");
+
+      def format_repo_header:
+        .repository.html_url |
+        sub(\"^https://github.com/\"; \"\") |
+        \"\n\u001b[1m\u001b[36m=== \(.) ===\u001b[0m\";
+
+      if \"${mode}\" == \"grouped\" then
+        group_by(.repository.full_name) |
+        map({
+          group: .,
+          max_time: ([.[].updated_at | fromdateiso8601] | max)
+        }) |
+        sort_by(-.max_time) |
+        .[].group |
+        (.[0] | format_repo_header) as \$header |
+        (\$header, (.[] | format_grouped_item))
+      else
+        .[] | format_item
+      end" \
+    --paginate
+}
+
+# Check if script is executed directly
+# This ensures the script behaves differently depending on how it's called.
+# 1. If the script is sourced, this block will not execute, allowing you to reuse the `gh_notifications` function elsewhere.
+# 2. If the script is executed directly, this block will run, passing all arguments to the function.
+if [[ "${(%):-%N}" == "$0" ]]; then
+  gh_notifications "$@"
+fi
