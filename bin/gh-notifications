@@ -87,6 +87,12 @@ function gh_notifications() {
 
       def ljust(width): . + \" \" * (width - (. | length));
 
+      def ljust_with_emoji(width):
+        . as \$str |
+        (\$str | gsub(\".\"; \" \") | length) as \$base_length |
+        (\$str | gsub(\"[^🔴🟢🟣⚪]\"; \"\") | length * 1) as \$emoji_extra_width |
+        . + \" \" * (width - \$base_length - \$emoji_extra_width);
+
       def api_to_web_url:
         if test(\"^https://api.github.com/repos/[^/]+/[^/]+/(issues|pulls)/[0-9]+$\") then
           sub(\"^https://api.github.com/repos/\"; \"https://github.com/\")
@@ -108,16 +114,16 @@ function gh_notifications() {
           elif .draft then \"⚪ Draft\"
           else \"🟢 Open\" end
         else
-          \"     -\"
+          \"-\"
         end;
 
       def format_item:
         [
-          (.repository.full_name | ljust(25)),
+          (.repository.full_name | .[:25] | ljust(25)),
           (.subject.title | .[:50] | ljust(50)),
           (.subject.type | ljust(12)),
-          (get_status | ljust(12)),
-          (.reason | ljust(8)),
+          (get_status | ljust_with_emoji(12)),
+          (.reason | ljust(10)),
           (.updated_at | timeago | ljust(15)),
           (.subject.url | api_to_web_url)
         ] | join(\"  \");
@@ -127,8 +133,8 @@ function gh_notifications() {
           \"    \",  # Indent for grouping
           (.subject.title | .[:50] | ljust(50)),
           (.subject.type | ljust(12)),
-          (get_status | ljust(12)),
-          (.reason | ljust(8)),
+          (get_status | ljust_with_emoji(12)),
+          (.reason | ljust(10)),
           (.updated_at | timeago | ljust(15)),
           (.subject.url | api_to_web_url)
         ] | join(\"  \");
