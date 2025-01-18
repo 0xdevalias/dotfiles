@@ -36,15 +36,15 @@ function gh_notifications() {
   Usage: gh-notifications [options]
 
   Options:
-    -h, --help                          Show this help message and exit
-    -m, --mode [grouped|ungrouped|tsv]  Set the display mode (default: $DEFAULT_MODE)
-    --participating                     Show only notifications where the user is directly participating (default: $DEFAULT_PARTICIPATING)
-    --include-read                      Show notifications marked as read (default: $DEFAULT_INCLUDE_READ)
-    --since <ISO8601 timestamp>         Show results updated after the given time
-    --before <ISO8601 timestamp>        Show results updated before the given time
-    --page <number>                     The page number of results to fetch (default: $DEFAULT_PAGE)
-    --per-page <number>                 Number of results per page, max 50 (default: $DEFAULT_PER_PAGE)
-    --paginate                          Fetch all pages of results (overrides --page and --per-page)
+    -h, --help                               Show this help message and exit
+    -m, --mode [grouped|ungrouped|tsv|json]  Set the display mode (default: $DEFAULT_MODE)
+    --participating                          Show only notifications where the user is directly participating (default: $DEFAULT_PARTICIPATING)
+    --include-read                           Show notifications marked as read (default: $DEFAULT_INCLUDE_READ)
+    --since <ISO8601 timestamp>              Show results updated after the given time
+    --before <ISO8601 timestamp>             Show results updated before the given time
+    --page <number>                          The page number of results to fetch (default: $DEFAULT_PAGE)
+    --per-page <number>                      Number of results per page, max 50 (default: $DEFAULT_PER_PAGE)
+    --paginate                               Fetch all pages of results (overrides --page and --per-page)
 
   Examples:
     gh-notifications --mode grouped --include-read --since "2025-01-01T00:00:00Z"
@@ -61,11 +61,11 @@ function gh_notifications() {
         return 0
         ;;
       -m|--mode)
-        if [[ "$2" =~ ^(grouped|ungrouped|tsv)$ ]]; then
+        if [[ "$2" =~ ^(grouped|ungrouped|tsv|json)$ ]]; then
           mode="$2"
           shift
         else
-          echo "Error: Invalid mode. Choose 'grouped', 'ungrouped', or 'tsv'."
+          echo "Error: Invalid mode. Choose 'grouped', 'ungrouped', 'tsv', or 'json'."
           echo "$help_text"
           return 1
         fi
@@ -232,8 +232,10 @@ function gh_notifications() {
         .[].group |
         (.[0] | format_grouped_repo_header) as \$header |
         (\$header, (.[] | format_grouped_item))
-      else
+      elif \"${mode}\" == \"tsv\" then
         .[] | format_tsv_item
+      else
+        .
       end"
 }
 
