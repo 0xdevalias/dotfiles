@@ -140,7 +140,7 @@ function gh_notifications() {
           (.subject.url | api_to_web_url)
         ] | join(\"  \");
 
-      def format_repo_header:
+      def format_grouped_repo_header:
         .repository.html_url |
         sub(\"^https://github.com/\"; \"\") |
         \"\n\u001b[1m\u001b[36m=== \(.) ===\u001b[0m\";
@@ -166,7 +166,7 @@ function gh_notifications() {
         }) |
         sort_by(-.max_time) |
         .[].group |
-        (.[0] | format_repo_header) as \$header |
+        (.[0] | format_grouped_repo_header) as \$header |
         (\$header, (.[] | format_grouped_item))
       else
         .[] | format_tsv_item
