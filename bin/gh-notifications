@@ -21,13 +21,14 @@ function gh_notifications() {
   Usage: gh-notifications [options]
 
   Options:
-    -h, --help             Show this help message and exit
-    -m, --mode [grouped|ungrouped]  Set the display mode (default: $mode)
-    -s, --scope [participating|all] Set the notification scope (default: $scope)
+    -h, --help                          Show this help message and exit
+    -m, --mode [grouped|ungrouped|tsv]  Set the display mode (default: $mode)
+    -s, --scope [participating|all]     Set the notification scope (default: $scope)
 
   Examples:
     gh-notifications --mode grouped --scope all
     gh-notifications --mode ungrouped
+    gh-notifications --mode tsv | column -t -s $'\t'
   """
 
   # Parse arguments
@@ -38,11 +39,11 @@ function gh_notifications() {
         return 0
         ;;
       -m|--mode)
-        if [[ "$2" =~ ^(grouped|ungrouped)$ ]]; then
+        if [[ "$2" =~ ^(grouped|ungrouped|tsv)$ ]]; then
           mode="$2"
           shift
         else
-          echo "Error: Invalid mode. Choose 'grouped' or 'ungrouped'."
+          echo "Error: Invalid mode. Choose 'grouped', 'ungrouped', or 'tsv'."
           echo "$help_text"
           return 1
         fi
@@ -144,7 +145,20 @@ function gh_notifications() {
         sub(\"^https://github.com/\"; \"\") |
         \"\n\u001b[1m\u001b[36m=== \(.) ===\u001b[0m\";
 
-      if \"${mode}\" == \"grouped\" then
+      def format_tsv_item:
+        [
+          (.repository.full_name),
+          (.subject.title),
+          (.subject.type),
+          (get_status),
+          (.reason),
+          (.updated_at | timeago),
+          (.subject.url | api_to_web_url)
+        ] | @tsv;
+
+      if \"${mode}\" == \"ungrouped\" then
+        .[] | format_item
+      elif \"${mode}\" == \"grouped\" then
         group_by(.repository.full_name) |
         map({
           group: .,
@@ -155,7 +169,7 @@ function gh_notifications() {
         (.[0] | format_repo_header) as \$header |
         (\$header, (.[] | format_grouped_item))
       else
-        .[] | format_item
+        .[] | format_tsv_item
       end" \
     --paginate
 }
