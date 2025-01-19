@@ -3,6 +3,8 @@
 # Import our common helper scripts
 source "${ZSH}/lib/_helpers"
 
+SCRIPT_NAME=$(basename "$0")
+
 # TODO: explore using getopts
 #   https://sookocheff.com/post/bash/parsing-bash-script-arguments-with-shopts/
 #   https://stackoverflow.com/questions/16483119/an-example-of-how-to-use-getopts-in-bash
@@ -13,15 +15,19 @@ print_help() {
 Helper script for installing ruby versions into rbenv.
 
 Usage:
-  $thisscript FLAVOR VERSION                Install the given VERSION of ruby FLAVOR using 'ruby-install'
-  $thisscript versions                      Update then list available versions to install
-    (Aliases: ${list_update_commands})
+  ${SCRIPT_NAME} [OPTIONS] [COMMAND]
 
-  $thisscript -h                            This help
+Commands:
+  FLAVOR VERSION                Install the given VERSION of ruby FLAVOR using 'ruby-install'
+  versions                      Update then list available versions to install
+                                (Aliases: ${list_update_commands})
+
+Options:
+  -h, --help                    Show this help message
 
 Example:
-  $thisscript versions
-  $thisscript install ruby --no-reinstall
+  ${SCRIPT_NAME} versions
+  ${SCRIPT_NAME} install ruby --no-reinstall
 HELPTEXT
 
   echo "${helptext}"
@@ -35,15 +41,13 @@ Did you want to just use 'ruby-install' directly?
   ruby-install --help
 
 See Also:
-  $thisscript -h
+  ${SCRIPT_NAME} -h
 UNKNOWNCOMMAND
 
   echo "${unknown_command_text}"
 }
 
 main() {
-  local thisscript=$(basename "$0")
-
   local help_commands="help:--help:-h"
   local list_update_commands="versions:list:update:--update:--latest:-L"
   local ruby_flavors="ruby:jruby:rbx:truffleruby:mruby"

@@ -12,15 +12,15 @@ COUNT_MODE=false
 function show_usage {
   echo "List all local branches that have been merged into the given branch."
   echo ""
-  echo "Usage: $SCRIPT_NAME [OPTIONS] BASE_BRANCH"
+  echo "Usage: ${SCRIPT_NAME} [OPTIONS] BASE_BRANCH"
   echo ""
   echo "Options:"
   echo "  --count                      Only output the number of matching branches"
   echo "  -h, --help                   Show this help message and exit"
   echo ""
   echo "Eg."
-  echo "  $SCRIPT_NAME main"
-  echo "  $SCRIPT_NAME --count main"
+  echo "  ${SCRIPT_NAME} main"
+  echo "  ${SCRIPT_NAME} --count main"
   echo ""
 }
 
@@ -60,7 +60,7 @@ done
 if [[ -z "$BASE_BRANCH" ]]; then
   echo "Error: Base branch must be defined"
   echo ""
-  echo "For usage, see: $SCRIPT_NAME --help"
+  echo "For usage, see: ${SCRIPT_NAME} --help"
   exit 1
 fi
 
@@ -68,7 +68,7 @@ fi
 if [[ ! -z "$EXTRA_PARAMS" ]]; then
   echo "Error: Unknown parameters: $EXTRA_PARAMS"
   echo ""
-  echo "For usage, see: $SCRIPT_NAME --help"
+  echo "For usage, see: ${SCRIPT_NAME} --help"
   exit 1
 fi
 

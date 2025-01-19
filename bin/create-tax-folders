@@ -3,6 +3,8 @@
 # A script to create standard Tax folders (Crypto, Up Bank, etc.) for an
 # Australian financial year, plus create a Finder alias to the Crypto folder.
 
+SCRIPT_NAME=$(basename "$0")
+
 ##############################################################################
 #                              CONFIGURATION                                 #
 ##############################################################################
@@ -25,7 +27,7 @@ UPBANK_SUBFOLDER_PREFIX="Up Bank"
 
 usage() {
   cat <<EOF
-Usage: $(basename "$0") [OPTIONS]
+Usage: ${SCRIPT_NAME} [OPTIONS]
 
 Create tax folders for a given Australian financial year and a Finder alias
 to the Crypto folder.

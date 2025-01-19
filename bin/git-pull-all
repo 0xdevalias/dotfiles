@@ -12,7 +12,7 @@ function git-pull-all() {
   local usage=(
     "Execute 'git pull' for all of the specified git repo paths."
     ""
-    "Usage: $SCRIPT_NAME [OPTIONS] [<git_repo...>]"
+    "Usage: ${SCRIPT_NAME} [OPTIONS] [<git_repo...>]"
     ""
     "Options:"
     "  -h,--help             Show this help message and exit"
@@ -20,7 +20,7 @@ function git-pull-all() {
     "  --dry-run             Simulates the command's execution without performing any actions"
     ""
     "Eg."
-    "  $SCRIPT_NAME --dry-run *"
+    "  ${SCRIPT_NAME} --dry-run *"
   )
 
   local flag_help \

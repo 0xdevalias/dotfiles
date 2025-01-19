@@ -5,7 +5,7 @@ SCRIPT_NAME=$(basename "$0")
 
 # Function to display help text
 show_help() {
-  echo "Usage: $SCRIPT_NAME [-h|--help] <textfile>"
+  echo "Usage: ${SCRIPT_NAME} [-h|--help] <textfile>"
   echo
   echo "Check if all sentences from the given text file exist in the provided input."
   echo
@@ -13,7 +13,7 @@ show_help() {
   echo "  -h, --help    Show this help message and exit"
   echo
   echo "Example:"
-  echo "  cat input.txt | $SCRIPT_NAME sentences.txt"
+  echo "  cat input.txt | ${SCRIPT_NAME} sentences.txt"
 }
 
 # Check for help option

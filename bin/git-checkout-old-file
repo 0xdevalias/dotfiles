@@ -2,10 +2,10 @@
 #
 # @description Retrieve the last modified version before the current commit of a file in Git and save it with '-old' before the extension.
 
-script_name=$(basename "$0")
+SCRIPT_NAME=$(basename "$0")
 
 show_usage() {
-    echo "Usage: $script_name <filename>"
+    echo "Usage: ${SCRIPT_NAME} <filename>"
     echo "  <filename>: The name of the file to retrieve its pre-last-modified version from Git."
     echo "  -h, --help: Display this help message."
 }

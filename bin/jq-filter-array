@@ -9,7 +9,7 @@ EXCLUDE_FILTER="--arg excludeTerm \"\""
 function show_usage {
   echo "Filter a (potentially nested) array to include/exclude entries based on provided terms."
   echo ""
-  echo "Usage: $SCRIPT_NAME [OPTIONS] [EXTRA_ARGS]"
+  echo "Usage: ${SCRIPT_NAME} [OPTIONS] [EXTRA_ARGS]"
   echo ""
   echo "Options:"
   echo "  --include TERM               Include entries that match the provided TERM"
@@ -20,9 +20,9 @@ function show_usage {
   echo "  -h, --help                   Show this help message and exit"
   echo ""
   echo "Eg."
-  echo "  $SCRIPT_NAME --include \"foo\""
-  echo "  $SCRIPT_NAME --exclude \"bar\""
-  echo "  $SCRIPT_NAME --include \"foo\" --exclude \"bar\""
+  echo "  ${SCRIPT_NAME} --include \"foo\""
+  echo "  ${SCRIPT_NAME} --exclude \"bar\""
+  echo "  ${SCRIPT_NAME} --include \"foo\" --exclude \"bar\""
   echo ""
 }
 
