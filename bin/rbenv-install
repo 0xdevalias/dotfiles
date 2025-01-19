@@ -59,6 +59,8 @@ main() {
     exit 0
   elif [[ ":$list_update_commands:" = *:$1:* ]]; then
     # This will download the latest versions, then display them
+    #   ruby-install -U, --update
+    #     Downloads the latest ruby versions and checksums from the ruby-versions repository (https://github.com/postmodern/ruby-versions#readme)
     exec ruby-install --latest
   elif [[ ":$ruby_flavors:" = *:$1:* ]] && [[ -n "$2" ]]; then
     local ruby_flavor="$1"
@@ -88,6 +90,7 @@ main() {
 
     # TODO: explore usage of '--no-reinstall' option
     # TODO: explore usage of '--package-manager brew' option
+    # https://github.com/postmodern/ruby-install#integration
     local rbenv_install_cmd="ruby-install ${rbenv_install_extraflags} --install-dir '${rbenv_install_dir}' '${ruby_flavor}' '${ruby_version}'"
 
     if [[ -d "${rbenv_install_dir}" ]]; then
