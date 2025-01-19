@@ -72,11 +72,12 @@ main() {
     echo "  version : ${ruby_version}"
     echo
 
+    local resolved_rbenv_root="${RBENV_ROOT:-$HOME/.rbenv}"
     local rbenv_install_dir
     if [[ "${ruby_flavor}" == "ruby" ]] ; then
-      rbenv_install_dir="$HOME/.rbenv/versions/${ruby_version}"
+      rbenv_install_dir="${resolved_rbenv_root}/versions/${ruby_version}"
     else
-      rbenv_install_dir="$HOME/.rbenv/versions/${ruby_flavor}-${ruby_version}"
+      rbenv_install_dir="${resolved_rbenv_root}/versions/${ruby_flavor}-${ruby_version}"
     fi
 
     local rbenv_install_extraflags
