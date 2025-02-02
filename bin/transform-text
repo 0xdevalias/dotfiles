@@ -1,0 +1,196 @@
+#!/usr/bin/env zsh
+
+# Text transformation script that can run standalone or as an Alfred script filter
+# Provides various text transformations like indentation and Markdown formatting
+
+# Script configuration
+SCRIPT_NAME=$(basename "$0")
+DEFAULT_OUTPUT_MODE="standalone"
+
+# Define available transformations
+read -r -d '' TRANSFORMS << 'TRANSFORMS'
+[
+  { "type": "indent2", "title": "Indent: 2 spaces", "description": "Indent with 2 spaces" },
+  { "type": "indent4", "title": "Indent: 4 spaces", "description": "Indent with 4 spaces" },
+  { "type": "dedent2", "title": "Dedent: 2 spaces", "description": "Remove 2 space indentation" },
+  { "type": "blockquote", "title": "Markdown Blockquote", "description": "Add Markdown blockquote" },
+  { "type": "list", "title": "Markdown List", "description": "Add Markdown list items" }
+]
+TRANSFORMS
+
+print_transforms_list() {
+  local indent="${1:-2}"  # Default to 2 spaces of indentation
+  local spaces=$(printf "%${indent}s" "")
+  local padding="            "  # 12 spaces
+  echo "$TRANSFORMS" | jq -r --arg spaces "$spaces" --arg padding "$padding" '
+    .[] | $spaces + .type + ($padding[0:(12 - (.type | length))]) + "- " + .description
+  '
+}
+
+get_transform_types() {
+  echo "$TRANSFORMS" | jq -r '[.[].type] | join(", ")'
+}
+
+usage() {
+  cat << EOF
+Usage: $SCRIPT_NAME [OPTIONS] [TEXT]
+
+Text transformation utility that can run standalone or as an Alfred script filter.
+
+Options:
+  -o, --output MODE       Output mode: standalone or alfred (default: $DEFAULT_OUTPUT_MODE)
+  -t, --transform TYPE    Apply specific transformation (standalone mode only; available types: $(get_transform_types))
+  -l, --list-transforms   List available transformations
+  -h, --help              Show this help message
+
+Available transformations:
+$(print_transforms_list)
+
+Examples:
+  echo "hello\\nworld" | $SCRIPT_NAME -t indent2
+  $SCRIPT_NAME -t indent2 "hello\\nworld"
+  $SCRIPT_NAME -o alfred "hello\\nworld"
+EOF
+}
+
+# Process command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -o|--output)
+      case "$2" in
+        standalone|alfred)
+          OUTPUT_MODE="$2"
+          ;;
+        *)
+          echo "Error: Invalid output mode '$2'. Must be 'standalone' or 'alfred'" >&2
+          exit 1
+          ;;
+      esac
+      shift 2
+      ;;
+    -t|--transform)
+      TRANSFORM="$2"
+      shift 2
+      ;;
+    -l|--list-transforms)
+      echo "Available transformations:"
+      print_transforms_list
+      exit 0
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      TEXT="$1"
+      shift
+      ;;
+  esac
+done
+
+# Apply defaults for unset parameters
+OUTPUT_MODE="${OUTPUT_MODE:-$DEFAULT_OUTPUT_MODE}"
+
+# Validate requirements
+if [[ $OUTPUT_MODE == "standalone" && -z "$TRANSFORM" ]]; then
+  echo "Error: --transform TYPE is required in standalone mode" >&2
+  echo "Run '$SCRIPT_NAME --list-transforms' to see available transformations" >&2
+  exit 1
+fi
+
+if [[ "$OUTPUT_MODE" == "alfred" && -n "$TRANSFORM" ]]; then
+  echo "Error: --transform cannot be used in alfred mode" >&2
+  exit 1
+fi
+
+# Read from stdin if no text argument provided
+if [[ -z "$TEXT" ]] && [[ -t 0 ]]; then
+  usage
+  exit 1
+elif [[ -z "$TEXT" ]]; then
+  TEXT=$(cat)
+fi
+
+# Process text through jq
+jq -n --raw-output --join-output \
+      --arg query "$TEXT" \
+      --arg mode "$OUTPUT_MODE" \
+      --arg transform "$TRANSFORM" \
+      --argjson transforms "$TRANSFORMS" '
+ # Repeat a string s, n times.
+ def repeat_str(s; n):
+   if n <= 0 then
+     ""
+   else
+     s + repeat_str(s; n - 1)
+   end;
+
+ # Prepend a prefix to each line by repeating it count times.
+ def prefix_lines(prefix; count):
+   split("\n") | map((repeat_str(prefix; count)) + .) | join("\n");
+
+ def dedent(prefix):
+   split("\n") | map(sub("^" + prefix; "")) | join("\n");
+
+ # Escape newline characters (for subtitle display only).
+ def escape_newlines:
+   gsub("\n"; "\\n");
+
+ # Apply transformation based on type
+ def apply_transform(type):
+   if type == "indent2" then
+     prefix_lines(" "; 2)
+   elif type == "indent4" then
+     prefix_lines(" "; 4)
+   elif type == "dedent2" then
+     dedent("  ")
+   elif type == "blockquote" then
+     prefix_lines("> "; 1)
+   elif type == "list" then
+     prefix_lines("- "; 1)
+   else
+     error("Unknown transform type: " + type)
+   end;
+
+ # Process based on mode
+ if $mode == "standalone" then
+   ($query | apply_transform($transform))
+ elif $mode == "alfred" then
+   {
+     items: (
+       ($transforms | map(
+         .type as $type |
+         ($query | apply_transform($type)) as $transformed |
+         {
+           title,
+           subtitle: ("Result: " + ($transformed | escape_newlines)),
+           valid: true,
+           arg: $transformed,
+           variables: {
+             TEXT: $transformed,
+             transform_type: $type
+           },
+           text: {
+             copy: $transformed,
+             largetype: $transformed
+           }
+         }
+       ))
+       + [{
+           title: "Output as-is",
+           subtitle: ("Result: " + ($query | escape_newlines) + " (Hold ⌘, ⌥, or ⌃ to select)"),
+           valid: false,
+           arg: $query,
+           mods: {
+             cmd: { valid: true, arg: $query, variables: { TEXT: $query } },
+             alt: { valid: true, arg: $query, variables: { TEXT: $query } },
+             ctrl: { valid: true, arg: $query, variables: { TEXT: $query } }
+           },
+           text: { copy: $query, largetype: $query }
+         }]
+     )
+   }
+ else
+   error("Unknown output mode: " + $mode)
+ end
+'
