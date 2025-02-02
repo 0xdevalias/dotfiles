@@ -2,6 +2,46 @@
 
 # Text transformation script that can run standalone or as an Alfred script filter
 # Provides various text transformations like indentation and Markdown formatting
+#
+# If you want to make use of this script as part of an Alfred workflow, you can do something like the following:
+#   https://www.mermaidchart.com/play#pako:eNqFUsFOwkAQ_ZVJDwIxxXsTTYiBhGgCUTQm1sPSLmXDsltnt0BDOHn1A_wBf8wvsduW2pYl3mZn3nvzZmb3TiBD6niO67q-CKRYsMjzBQAnqUy0B5SvfJEXF1xugyVBDfcPBqGSeYQkXsJYxIk2GQBmwjuabiWGr75TRgXCg85C4proju-81eBPgm0oKsIHgWZSZLQqA0UKZsiiiGKmMMoVYEZ3bZnhTlMUhJfYTOaYqdGbBqgIfdEYZYoyoEoVshuCpk-mNMAILuCZoPJA0az98GUG19DZvycU08OfExUgi_WIcZ07eMyfULzt7k89TBJd7VPm8S3h_HQ8k4V_Z6w0OIvnkmA4JUpTQ5dxClpCVYBLyGvniDZOC1ucaywGfIHUEMr7jQUUqfbQtsuB6940FlkBj9_JAMrjVLXWL2pjytCqXX_ngLNbt6Dh5_MLurdyvSYi7NXpjYXbmd_QncTG7tWAayvZzvswHYVGyeuk5vYN8-wg4Pahy9YxZwHTPAUuZaxgToJVdt4e9DNN22mcwy_Lo3t7
+#
+# Or refer to this Mermaid chart flow for inspiration:
+#
+# ```mermaid
+# ---
+# config:
+#   layout: elk
+# ---
+# flowchart LR
+#   subgraph Input
+#     inputKeyword["Keyword Input: 'format'"]
+#     inputUniversalAction["Universal Action Trigger: 'Format Text'"]
+#     inputExternalTrigger["External Trigger: 'format'"]
+#   end
+#
+#   subgraph Process
+#     varText["Arg & Vars: set TEXT = '{query}'"]
+#     scriptFilter["Script Filter: 'Format Text'"]
+#   end
+#
+#   subgraph Output
+#     outputCallExternalTrigger["Call External Trigger: 'format'"]
+#     outputClipboardPaste["Copy to Clipboard + Paste"]
+#     outputClipboard["Copy to Clipboard"]
+#     outputActionInAlfred["Action In Alfred"]
+#   end
+#
+#   inputExternalTrigger --> scriptFilter
+#   inputKeyword --> varText
+#   inputUniversalAction --> varText
+#   varText --> scriptFilter
+#   scriptFilter --> outputCallExternalTrigger
+#   scriptFilter -- ⌘ (Command) --> outputClipboardPaste
+#   scriptFilter -- ⌥ (Option/Alt) --> outputClipboard
+#   scriptFilter -- ⌃ (Control) --> outputActionInAlfred
+#   outputCallExternalTrigger -. (implicitly loops back to) .-> inputExternalTrigger
+# ```
 
 # Script configuration
 SCRIPT_NAME=$(basename "$0")
