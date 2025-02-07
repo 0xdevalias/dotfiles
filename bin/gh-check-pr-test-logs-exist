@@ -1,0 +1,145 @@
+#!/usr/bin/env zsh
+
+SCRIPT_NAME=$(basename "$0")
+
+DEPENDABOT_SEARCH_PATTERN='Bump %s author:app/dependabot'
+
+usage() {
+  echo "Usage: $SCRIPT_NAME --repo <repo> (--search <query> | --dependency <name>) --workflow <name> [--help]"
+  echo ""
+  if [[ "$1" == "short" ]]; then
+    echo "Run '$SCRIPT_NAME --help' for more details."
+  else
+    echo "Check if GitHub Action logs still exist for PRs matching a search term."
+    echo ""
+    echo "Options:"
+    echo "  -r, --repo <repo>          GitHub repository to check (required)"
+    echo "  -w, --workflow <name>      Workflow name to filter runs (required)"
+    echo "  -h, --help                 Show this help message and exit"
+    echo ""
+    echo "  Search Options (mutually exclusive):"
+    echo "    -s, --search <query>     Custom PR search query"
+    echo "    -d, --dependency <name>  Shorthand for setting --search to '$(printf "$DEPENDABOT_SEARCH_PATTERN" "<name>")' (Alias: --dependabot)"
+    echo ""
+    echo "Examples:"
+    echo "  # Longhand search using --search (explicitly setting full query)"
+    echo "  $SCRIPT_NAME --repo owner/repo --search '$(printf "$DEPENDABOT_SEARCH_PATTERN" "dependency-name")' --workflow 'CI Tests'"
+    echo ""
+    echo "  # Shorthand using --dependency (automatically applies dependabot pattern)"
+    echo "  $SCRIPT_NAME --repo owner/repo --dependency 'dependency-name' --workflow 'CI Tests'"
+  fi
+}
+
+error() {
+  usage "short"
+  echo "\n❌ Error: $1"
+  exit 1
+}
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -r|--repo)
+      REPO="$2"
+      shift 2
+      ;;
+    -s|--search)
+      SEARCH_QUERY="$2"
+      shift 2
+      ;;
+    -d|--dependency|--dependabot)
+      DEPENDENCY_NAME="$2"
+      shift 2
+      ;;
+    -w|--workflow)
+      WORKFLOW_NAME="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      error "Unknown option: $1"
+      ;;
+  esac
+done
+
+# Validate required parameters
+[[ -z "$REPO" ]] && error "--repo <repo> is required."
+[[ -z "$WORKFLOW_NAME" ]] && error "--workflow <name> is required."
+[[ -n "$SEARCH_QUERY" && -n "$DEPENDENCY_NAME" ]] && error "--search and --dependency are mutually exclusive. Use only one."
+
+# Construct search query if --dependency is used
+if [[ -n "$DEPENDENCY_NAME" ]]; then
+  SEARCH_QUERY=$(printf "$DEPENDABOT_SEARCH_PATTERN" "$DEPENDENCY_NAME")
+  echo "🔍 Using auto-generated Dependabot search query: '$SEARCH_QUERY'"
+  echo ""
+fi
+
+echo "🔍 Fetching PRs in $REPO (Search: '$SEARCH_QUERY')..."
+echo ""
+matching_prs_json=$(gh search prs "$SEARCH_QUERY" --repo "$REPO" --sort=created --order=asc --json number,title)
+if [[ -z "$matching_prs_json" || "$matching_prs_json" == "[]" ]]; then
+  echo "❌ No matching PRs found."
+  exit 0
+fi
+
+echo "📋 Matching PRs:"
+echo "$matching_prs_json" | jq -r '.[] | "  PR #\(.number): \(.title)"'
+echo ""
+
+# Extract PR numbers
+pr_numbers=($(echo "$matching_prs_json" | jq -r '.[].number'))
+
+# Helper function to get PR title
+get_pr_title() {
+  echo "$matching_prs_json" | jq -r --arg pr "$1" '.[] | select(.number == ($pr | tonumber))? | .title // "Unknown Title"'
+}
+
+echo "🚀 Fetching workflow checks for each PR (workflow: '$WORKFLOW_NAME')..."
+typeset -A pr_checks # Declare associative array for zsh
+
+for pr in "${pr_numbers[@]}"; do
+  pr_title=$(get_pr_title "$pr")
+
+  # Get checks and filter for our workflow, extracting run IDs from the links
+  checks_json=$(gh pr checks "$pr" --repo "$REPO" --json name,description,workflow,state,bucket,startedAt,completedAt,event,link | \
+    jq --arg workflow "$WORKFLOW_NAME" '
+      map(
+        select(.workflow == $workflow)
+        | . + {
+            run_id: (.link | capture("runs/(?<id>\\d+)").id),
+            job_id: (.link | capture("job/(?<id>\\d+)").id)
+          }
+      )[]
+    '
+  )
+
+  if [[ -n "$checks_json" && "$checks_json" != "[]" ]]; then
+    echo "  📝 PR #$pr - $pr_title"
+    echo "$checks_json" | jq -r '"    \(.state) Run: \(.run_id), Job: \(.job_id), Completed: \(.completedAt), \(.link)"'
+
+    run_id=$(echo "$checks_json" | jq -r '.run_id')
+    link=$(echo "$checks_json" | jq -r '.link')
+    state=$(echo "$checks_json" | jq -r '.state')
+    if [[ -n "$run_id" && "$run_id" != "null" && -n "$link" && "$link" != "null" && -n "$state" && "$state" != "null" ]]; then
+      if gh run view "$run_id" --repo "$REPO" --log-failed &>/dev/null; then
+        echo "    ✅ Logs exist: ${link}"
+        if [[ "$state" == "FAILURE" ]]; then
+          echo "    📋 View failed logs: gh run view $run_id --repo $REPO --log-failed"
+        else
+          echo "    📋 View logs: gh run view $run_id --repo $REPO --log"
+        fi
+      else
+        echo "    ❌ Logs expired/unavailable - 🔗 ${link}"
+      fi
+    else
+      echo "    ⚠️  Warning: Missing required data (run_id, link, or state) for PR #$pr. Skipping log check."
+    fi
+
+    echo ""
+  else
+    echo "  ⚠️  PR #$pr - $pr_title - No matching workflow checks found."
+  fi
+done
