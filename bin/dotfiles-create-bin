@@ -1,6 +1,8 @@
 #!/usr/bin/env zsh
 
-script_name=$(basename "$0")
+script_name=$(basename "$0")  # Using basename for script name
+watch_mode=false              # Default: Do not wait for file save
+save_dir="$ZSH/bin"           # Bin script save directory
 
 usage() {
   echo "Usage: $script_name [options]"
@@ -10,14 +12,27 @@ usage() {
   echo "and prompts the user to save the script."
   echo
   echo "Options:"
+  echo "  -w, --watch  Wait for the file to be saved and prompt before making it executable"
   echo "  -h, --help   Show this help message"
   exit 0
 }
 
-# Handle --help option
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-  usage
-fi
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -w|--watch)
+      watch_mode=true
+      shift
+      ;;
+    -h|--help)
+      usage
+      ;;
+    *)
+      echo "error: Unknown option '$1'" >&2
+      usage
+      ;;
+  esac
+done
 
 # Ensure Sublime Text CLI is available
 if ! (( $+commands[subl] )); then
@@ -25,14 +40,60 @@ if ! (( $+commands[subl] )); then
   exit 1
 fi
 
+# Function to get a list of files in a directory, sorted by last modified time (newest first)
+get_sorted_files() {
+  local dir="$1"
+  # Run 'ls -t' to get files sorted by last modified time
+  # - The '(@f)' modifier ensures output is split into an array (one filename per entry)
+  echo "${(@f)$(ls -t "$dir" 2>/dev/null)}"
+}
+
 echo "Generating a new ${ZSH}/bin script using Sublime Text ZSH template snippet"
 echo "You could also do this manually within Sublime Text by triggering the zsh_script_template snippet"
 
+# Capture initial file list if watching
+if $watch_mode; then
+  initial_files=($(get_sorted_files "$save_dir"))
+fi
+
+# Launch Sublime Text
 subl --new-window --command 'chain {"commands":[
     {"command": "insert_snippet", "args": {"name": "Packages/User/zsh_script_template.sublime-snippet"}},
     {"command": "set_file_type", "args": {"syntax": "Packages/ShellScript/Bash.sublime-syntax"}},
     {"command": "prompt_save_as"}
   ]}'
 
-echo "Remember to make the script executable:"
-echo "  chmod +x <new_script_path>"
+if $watch_mode; then
+  echo ""
+  echo "Waiting for file to be saved in $save_dir..."
+
+  # Monitor directory for a newly created file
+  while true; do
+    sleep 1
+    latest_files=($(get_sorted_files "$save_dir"))
+
+    # Find the first file that was not in the initial list
+    for file in "${latest_files[@]}"; do
+      if [[ ! " ${initial_files[*]} " =~ " $file " ]]; then
+        new_script="$save_dir/$file"
+        echo ""
+        echo "Detected saved script: $new_script"
+        break 2
+      fi
+    done
+  done
+
+  # Ask user before making the script executable
+  echo ""
+  echo -n "Make the script executable? [y/N] "
+  if read -q; then
+    chmod +x "$new_script"
+    echo -e "\n\nScript is now executable!"
+  else
+    echo -e "\n\nSkipping chmod +x. You can do this manually with:"
+    echo "  chmod +x \"$new_script\""
+  fi
+else
+  echo "Remember to make the script executable:"
+  echo "  chmod +x <new_script_path>"
+fi
