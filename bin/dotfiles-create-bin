@@ -99,10 +99,10 @@ if $watch_mode; then
 
   # Ask user before making the script executable
   echo ""
-  echo -n "Make the script executable? [y/N] "
+  echo -n "Make $new_script executable? [y/N] "
   if read -q; then
     chmod +x "$new_script"
-    echo -e "\n\nScript is now executable!"
+    echo -e "\n\n$new_script is now executable!"
   else
     echo -e "\n\nSkipping chmod +x. You can do this manually with:"
     echo "  chmod +x \"$new_script\""
