@@ -83,6 +83,20 @@ if $watch_mode; then
     done
   done
 
+  # Ask if the script should be renamed if it ends in .sh
+  if [[ "$new_script" == *.sh ]]; then
+    echo ""
+    echo -n "The script ends in .sh. Do you want to rename it to remove the extension? [y/N] "
+    if read -q; then
+      new_name="${new_script%.sh}"
+      mv "$new_script" "$new_name"
+      new_script="$new_name"
+      echo -e "\n\nScript renamed to: $new_script"
+    else
+      echo -e "\n\nKeeping the .sh extension."
+    fi
+  fi
+
   # Ask user before making the script executable
   echo ""
   echo -n "Make the script executable? [y/N] "
