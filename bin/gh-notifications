@@ -11,6 +11,8 @@
 #     Add custom formatting functions to `--jq` similar to those added to `--template`
 #   https://github.com/cli/cli/issues/10263
 #     Allow passing additional arguments through to `--jq` script, just like we can with `jq --arg`
+#   https://github.com/cli/cli/issues/10459
+#     Allow `gh api` `--paginate --slurp` to be used with `--jq`
 
 function gh_notifications() {
   # Default values
@@ -36,21 +38,24 @@ function gh_notifications() {
   Usage: gh-notifications [options]
 
   Options:
-    -h, --help                               Show this help message and exit
-    -m, --mode [grouped|ungrouped|tsv|json]  Set the display mode (default: $DEFAULT_MODE)
-    --participating                          Show only notifications where the user is directly participating (default: $DEFAULT_PARTICIPATING)
-    --include-read                           Show notifications marked as read (default: $DEFAULT_INCLUDE_READ)
-    --since <ISO8601 timestamp>              Show results updated after the given time
-    --before <ISO8601 timestamp>             Show results updated before the given time
-    --page <number>                          The page number of results to fetch (default: $DEFAULT_PAGE)
-    --per-page <number>                      Number of results per page, max 50 (default: $DEFAULT_PER_PAGE)
-    --paginate                               Fetch all pages of results (overrides --page and --per-page)
+    -h, --help                                 Show this help message and exit
+    -m, --mode [grouped|ungrouped|tsv|json|release-count]
+                                               Set the display mode (default: $DEFAULT_MODE)
+                                               (release-count: show count of release notifications per repo, sorted descending)
+    --participating                            Show only notifications where the user is directly participating (default: $DEFAULT_PARTICIPATING)
+    --include-read                             Show notifications marked as read (default: $DEFAULT_INCLUDE_READ)
+    --since <ISO8601 timestamp>                Show results updated after the given time
+    --before <ISO8601 timestamp>               Show results updated before the given time
+    --page <number>                            The page number of results to fetch (default: $DEFAULT_PAGE)
+    --per-page <number>                        Number of results per page, max 50 (default: $DEFAULT_PER_PAGE)
+    --paginate                                 Fetch all pages of results (overrides --page and --per-page)
 
   Examples:
     gh-notifications --mode grouped --include-read --since "2025-01-01T00:00:00Z"
     gh-notifications --mode ungrouped --page 2 --per-page 20
     gh-notifications --mode ungrouped --paginate
     gh-notifications --mode tsv | column -t -s $'\t'
+    gh-notifications --mode release-count
   """
 
   # Parse arguments
@@ -61,11 +66,11 @@ function gh_notifications() {
         return 0
         ;;
       -m|--mode)
-        if [[ "$2" =~ ^(grouped|ungrouped|tsv|json)$ ]]; then
+        if [[ "$2" =~ ^(grouped|ungrouped|tsv|json|release-count)$ ]]; then
           mode="$2"
           shift
         else
-          echo "Error: Invalid mode. Choose 'grouped', 'ungrouped', 'tsv', or 'json'."
+          echo "Error: Invalid mode. Choose 'grouped', 'ungrouped', 'tsv', 'json', or 'release-count'."
           echo "$help_text"
           return 1
         fi
@@ -119,124 +124,149 @@ function gh_notifications() {
     shift
   done
 
+  # If release-count mode is selected without pagination, warn and enable pagination.
+  if [[ "$mode" == "release-count" && "$paginate" != true ]]; then
+    echo "Warning: release-count mode requires aggregating all pages. Enabling --paginate automatically." >&2
+    paginate=true
+  fi
+
   local paginate_flag=""
   if [[ "$paginate" == true ]]; then
     paginate_flag="--paginate"
   fi
 
-  # Execute the GitHub API command
-  # Ref: https://docs.github.com/en/rest/activity/notifications#list-notifications-for-the-authenticated-user
-  gh api notifications \
-    --method GET \
-    -F participating=$participating \
-    -F all=$include_read \
-    -F since="$since" \
-    -F before="$before" \
-    -F page="$page" \
-    -F per_page="$per_page" \
-    $paginate_flag \
-    --jq "
-      def timeago:
-        . | fromdateiso8601 | now - . | . / 60 | floor |
-        if . < 60 then
-          (. | tostring + \" minutes ago\")
-        elif . < 1440 then
-          (. / 60 | floor | tostring + \" hours ago\")
-        elif . < 43200 then
-          (. / 1440 | floor | tostring + \" days ago\")
-        elif . < 525600 then
-          (. / 43200 | floor | tostring + \" months ago\")
-        else
-          (. / 525600 | floor | tostring + \" years ago\")
-        end;
+  # Nested helper function to run the common gh api call.
+  # This function can accept additional flags (like --jq) and uses the local variables from gh_notifications.
+  function gh_notifications_api() {
+    # Execute the GitHub API command
+    # Ref: https://docs.github.com/en/rest/activity/notifications#list-notifications-for-the-authenticated-user
+    gh api notifications \
+      --method GET \
+      -F participating=$participating \
+      -F all=$include_read \
+      -F since="$since" \
+      -F before="$before" \
+      -F page="$page" \
+      -F per_page="$per_page" \
+      $paginate_flag "$@"
+  }
 
-      def ljust(width): . + \" \" * (width - (. | length));
+  if [[ "$mode" == "release-count" ]]; then
+    # For release-count mode, pipe the raw output to an external jq with -s to slurp all pages.
+    # Note: This is a hacky workaround for https://github.com/cli/cli/issues/10459
+    gh_notifications_api | jq --slurp --raw-output '
+      flatten |
+      [ .[] | select(.subject.type == "Release") ] |
+      group_by(.repository.full_name) |
+      map({ repo: .[0].repository.full_name, count: length }) |
+      sort_by(.count) | reverse |
+      map("\(.repo)\t\(.count)\thttps://github.com/notifications?query=is%3Arelease+repo%3A\(.repo)") |
+      .[]' | column -t -s $'\t'
+  else
+    gh_notifications_api \
+      --jq "
+        def timeago:
+          . | fromdateiso8601 | now - . | . / 60 | floor |
+          if . < 60 then
+            (. | tostring + \" minutes ago\")
+          elif . < 1440 then
+            (. / 60 | floor | tostring + \" hours ago\")
+          elif . < 43200 then
+            (. / 1440 | floor | tostring + \" days ago\")
+          elif . < 525600 then
+            (. / 43200 | floor | tostring + \" months ago\")
+          else
+            (. / 525600 | floor | tostring + \" years ago\")
+          end;
 
-      def ljust_with_emoji(width):
-        . as \$str |
-        (\$str | gsub(\".\"; \" \") | length) as \$base_length |
-        (\$str | gsub(\"[^🔴🟢🟣⚪]\"; \"\") | length * 1) as \$emoji_extra_width |
-        . + \" \" * (width - \$base_length - \$emoji_extra_width);
+        def ljust(width): . + \" \" * (width - (. | length));
 
-      def api_to_web_url:
-        if test(\"^https://api.github.com/repos/[^/]+/[^/]+/(issues|pulls)/[0-9]+$\") then
-          sub(\"^https://api.github.com/repos/\"; \"https://github.com/\")
-        elif test(\"^https://api.github.com/repos/[^/]+/[^/]+/issues/comments/[0-9]+$\") then
-          capture(\"^https://api.github.com/repos/(?<repo>[^/]+/[^/]+)/issues/comments/(?<comment>[0-9]+)$\") |
-          \"https://github.com/\(.repo)/issues#issuecomment-\(.comment)\"
-        elif test(\"^https://api.github.com/repos/\") then
-          sub(\"^https://api.github.com/repos/\"; \"https://github.com/\")
+        def ljust_with_emoji(width):
+          . as \$str |
+          (\$str | gsub(\".\"; \" \") | length) as \$base_length |
+          (\$str | gsub(\"[^🔴🟢🟣⚪]\"; \"\") | length * 1) as \$emoji_extra_width |
+          . + \" \" * (width - \$base_length - \$emoji_extra_width);
+
+        def api_to_web_url:
+          if test(\"^https://api.github.com/repos/[^/]+/[^/]+/(issues|pulls)/[0-9]+$\") then
+            sub(\"^https://api.github.com/repos/\"; \"https://github.com/\")
+          elif test(\"^https://api.github.com/repos/[^/]+/[^/]+/issues/comments/[0-9]+$\") then
+            capture(\"^https://api.github.com/repos/(?<repo>[^/]+/[^/]+)/issues/comments/(?<comment>[0-9]+)$\") |
+            \"https://github.com/\(.repo)/issues#issuecomment-\(.comment)\"
+          elif test(\"^https://api.github.com/repos/\") then
+            sub(\"^https://api.github.com/repos/\"; \"https://github.com/\")
+          else
+            .
+          end;
+
+        def get_status:
+          if .subject.type == \"Issue\" then
+            if .state == \"closed\" then \"🔴 Closed\" else \"🟢 Open\" end
+          elif .subject.type == \"PullRequest\" then
+            if .state == \"merged\" then \"🟣 Merged\"
+            elif .state == \"closed\" then \"🔴 Closed\"
+            elif .draft then \"⚪ Draft\"
+            else \"🟢 Open\" end
+          else
+            \"-\"
+          end;
+
+        def format_item:
+          [
+            (.repository.full_name | .[:25] | ljust(25)),
+            (.subject.title | .[:50] | ljust(50)),
+            (.subject.type | ljust(12)),
+            (get_status | ljust_with_emoji(12)),
+            (.reason | ljust(10)),
+            (.updated_at | timeago | ljust(15)),
+            (.subject.url | api_to_web_url)
+          ] | join(\"  \");
+
+        def format_grouped_item:
+          [
+            \"    \",  # Indent for grouping
+            (.subject.title | .[:50] | ljust(50)),
+            (.subject.type | ljust(12)),
+            (get_status | ljust_with_emoji(12)),
+            (.reason | ljust(10)),
+            (.updated_at | timeago | ljust(15)),
+            (.subject.url | api_to_web_url)
+          ] | join(\"  \");
+
+        def format_grouped_repo_header:
+          .repository.html_url |
+          sub(\"^https://github.com/\"; \"\") |
+          \"\n\u001b[1m\u001b[36m=== \(.) ===\u001b[0m\";
+
+        def format_tsv_item:
+          [
+            (.repository.full_name),
+            (.subject.title),
+            (.subject.type),
+            (get_status),
+            (.reason),
+            (.updated_at | timeago),
+            (.subject.url | api_to_web_url)
+          ] | @tsv;
+
+        if \"${mode}\" == \"ungrouped\" then
+          .[] | format_item
+        elif \"${mode}\" == \"grouped\" then
+          group_by(.repository.full_name) |
+          map({
+            group: .,
+            max_time: ([.[].updated_at | fromdateiso8601] | max)
+          }) |
+          sort_by(-.max_time) |
+          .[].group |
+          (.[0] | format_grouped_repo_header) as \$header |
+          (\$header, (.[] | format_grouped_item))
+        elif \"${mode}\" == \"tsv\" then
+          .[] | format_tsv_item
         else
           .
-        end;
-
-      def get_status:
-        if .subject.type == \"Issue\" then
-          if .state == \"closed\" then \"🔴 Closed\" else \"🟢 Open\" end
-        elif .subject.type == \"PullRequest\" then
-          if .state == \"merged\" then \"🟣 Merged\"
-          elif .state == \"closed\" then \"🔴 Closed\"
-          elif .draft then \"⚪ Draft\"
-          else \"🟢 Open\" end
-        else
-          \"-\"
-        end;
-
-      def format_item:
-        [
-          (.repository.full_name | .[:25] | ljust(25)),
-          (.subject.title | .[:50] | ljust(50)),
-          (.subject.type | ljust(12)),
-          (get_status | ljust_with_emoji(12)),
-          (.reason | ljust(10)),
-          (.updated_at | timeago | ljust(15)),
-          (.subject.url | api_to_web_url)
-        ] | join(\"  \");
-
-      def format_grouped_item:
-        [
-          \"    \",  # Indent for grouping
-          (.subject.title | .[:50] | ljust(50)),
-          (.subject.type | ljust(12)),
-          (get_status | ljust_with_emoji(12)),
-          (.reason | ljust(10)),
-          (.updated_at | timeago | ljust(15)),
-          (.subject.url | api_to_web_url)
-        ] | join(\"  \");
-
-      def format_grouped_repo_header:
-        .repository.html_url |
-        sub(\"^https://github.com/\"; \"\") |
-        \"\n\u001b[1m\u001b[36m=== \(.) ===\u001b[0m\";
-
-      def format_tsv_item:
-        [
-          (.repository.full_name),
-          (.subject.title),
-          (.subject.type),
-          (get_status),
-          (.reason),
-          (.updated_at | timeago),
-          (.subject.url | api_to_web_url)
-        ] | @tsv;
-
-      if \"${mode}\" == \"ungrouped\" then
-        .[] | format_item
-      elif \"${mode}\" == \"grouped\" then
-        group_by(.repository.full_name) |
-        map({
-          group: .,
-          max_time: ([.[].updated_at | fromdateiso8601] | max)
-        }) |
-        sort_by(-.max_time) |
-        .[].group |
-        (.[0] | format_grouped_repo_header) as \$header |
-        (\$header, (.[] | format_grouped_item))
-      elif \"${mode}\" == \"tsv\" then
-        .[] | format_tsv_item
-      else
-        .
-      end"
+        end"
+  fi
 }
 
 # Check if script is executed directly
