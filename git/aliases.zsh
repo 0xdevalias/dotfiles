@@ -1,5 +1,6 @@
 alias gitkraken='open -na GitKraken --args -p "$(git rev-parse --show-toplevel)"'
 alias kraken='gitkraken'
+alias gitgui='echo "Did you mean: gitui (Blazing fast terminal-ui for git written in rust, https://github.com/extrawurst/gitui)"'
 
 # The rest of my fun git aliases
 #alias gl='git pull --prune'
