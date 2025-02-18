@@ -1,4 +1,5 @@
-alias kraken='open -na GitKraken --args -p "$(git rev-parse --show-toplevel)"'
+alias gitkraken='open -na GitKraken --args -p "$(git rev-parse --show-toplevel)"'
+alias kraken='gitkraken'
 
 # The rest of my fun git aliases
 #alias gl='git pull --prune'
