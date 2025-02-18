@@ -72,7 +72,7 @@ aliases:
         }; init_repo_node $@
     init-repo-node-private: 'init-repo-node $1 private'
     init-repo-node-public: 'init-repo-node $1 public'
-    init-npm: '!npm init'
+    init-npm: '!npm init && echo "You may like to run npm-package-sort after this too."'
     outdated: |
         !gh_extensions_outdated() {
           if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ $# -ne 0 ]; then
