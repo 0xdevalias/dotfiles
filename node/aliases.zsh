@@ -27,6 +27,37 @@ alias yarn-show-scripts="echo \"alias for 'list-package-scripts'\" && list-packa
 alias list-yarn-scripts="echo \"alias for 'list-package-scripts'\" && list-package-scripts"
 alias show-yarn-scripts="echo \"alias for 'list-package-scripts'\" && list-package-scripts"
 
+_npm-package-sort() {
+  jq '
+    # Create our ordered object with the fields we want at the start
+    {
+      name: (.name // "TODO"),
+      version: (.version // "0.0.1"),
+      description: (.description // ""),
+      author: (.author // "Glenn '\''devalias'\'' Grant <glenn@devalias.net>"),
+      license: (.license // "MIT"),
+      homepage: (.homepage // "https://github.com/0xdevalias/\(.name)#readme"),
+      repository: (.repository // {type: "git", url: "git+https://github.com/0xdevalias/\(.name).git"}),
+      bugs: (.bugs // {url: "https://github.com/0xdevalias/\(.name)/issues"}),
+      type,
+      exports,
+      main: (.main // ""),
+      scripts: (.scripts // {}),
+      dependencies: (.dependencies // {}),
+      devDependencies: (.devDependencies // {})
+    } as $ordered |
+
+    # Get everything else by removing ordered fields
+    . | delpaths($ordered | keys | map([.])) as $rest |
+
+    # Combine them in order
+    $ordered + $rest | with_entries(select(.value != null))
+  ' package.json > package-sorted.json && mv package-sorted.json package.json
+}
+
+alias npm-package-sort='_npm-package-sort'
+alias npm-sort-package="echo \"alias for 'npm-package-sort'\" && npm-package-sort"
+
 ###########
 # Electron
 ###########
