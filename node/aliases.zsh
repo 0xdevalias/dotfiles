@@ -42,6 +42,7 @@ _npm-package-sort() {
       type,
       exports,
       main: (.main // ""),
+      bin,
       scripts: (.scripts // {}),
       dependencies: (.dependencies // {}),
       devDependencies: (.devDependencies // {})
