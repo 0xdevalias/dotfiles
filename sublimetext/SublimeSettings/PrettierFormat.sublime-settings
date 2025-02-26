@@ -15,6 +15,6 @@
     "additional_cli_args": [
         "--single-quote",
         "--jsx-single-quote",
-        "--trailing-comma es5"
+        "--trailing-comma", "es5"
     ]
 }
