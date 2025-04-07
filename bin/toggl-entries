@@ -1,0 +1,291 @@
+#!/bin/zsh
+
+# TODO: Consider adding UID: https://www.alfredapp.com/help/workflows/inputs/script-filter/json/#match:~:text=Result%20Ordering%20and%20the%20UID
+
+SCRIPT_NAME=$(basename "$0")
+
+# Set default values early so they can be referenced in usage and later
+DEFAULT_START_DATE=$(date -v-366d +%Y-%m-%d)
+DEFAULT_END_DATE=$(date +%Y-%m-%d)
+DEFAULT_GROUPING="projects"
+DEFAULT_SUB_GROUPING="time_entries"
+DEFAULT_OUTPUT_MODE="json"
+
+VALID_OUTPUT_MODES=("json" "alfred")
+VALID_GROUPINGS=("projects" "users" "clients" "tags")
+VALID_SUB_GROUPINGS=("time_entries" "users" "clients" "projects" "tasks")
+
+# Helper function for logging to stderr
+log() {
+  echo "$@" >&2
+}
+
+# Show usage information
+usage() {
+  cat <<EOF
+Usage: ${SCRIPT_NAME} [options]
+
+Analyze Toggl time entries and generate a summary report.
+
+Options:
+  --start-date DATE       Start date in YYYY-MM-DD format (default: ${DEFAULT_START_DATE})
+  --end-date DATE         End date in YYYY-MM-DD format (default: ${DEFAULT_END_DATE})
+  --grouping VALUE        Grouping value. Valid options: ${VALID_GROUPINGS[*]} (default: ${DEFAULT_GROUPING})
+  --sub-grouping VALUE    Sub-grouping value. Valid options: ${VALID_SUB_GROUPINGS[*]} (default: ${DEFAULT_SUB_GROUPING})
+  --output-mode MODE      Output mode. Valid options: ${VALID_OUTPUT_MODES[*]} (default: ${DEFAULT_OUTPUT_MODE})
+  -h, --help              Show this help message and exit
+
+Environment Variables:
+  TOGGL_API_TOKEN         Your Toggl API token (required)
+  TOGGL_WORKSPACE_ID      Your Toggl workspace ID (required)
+
+Example:
+  TOGGL_API_TOKEN="your_token" TOGGL_WORKSPACE_ID="123456" \\
+    ${SCRIPT_NAME} --start-date 2024-03-01 --end-date 2024-04-01 --output-mode alfred
+
+Notes:
+  - The script fetches time entries from Toggl for the given period.
+  - The period cannot exceed 366 days.
+EOF
+  exit 0
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --start-date)
+      if [[ -n "$2" ]]; then
+        START_DATE="$2"
+        shift
+      else
+        log "Missing argument for --start-date"
+        usage
+      fi
+      ;;
+    --end-date)
+      if [[ -n "$2" ]]; then
+        END_DATE="$2"
+        shift
+      else
+        log "Missing argument for --end-date"
+        usage
+      fi
+      ;;
+    --grouping)
+      if [[ -n "$2" ]]; then
+        GROUPING="$2"
+        shift
+      else
+        log "Missing argument for --grouping"
+        usage
+      fi
+      ;;
+    --sub-grouping)
+      if [[ -n "$2" ]]; then
+        SUB_GROUPING="$2"
+        shift
+      else
+        log "Missing argument for --sub-grouping"
+        usage
+      fi
+      ;;
+    --output-mode)
+      if [[ -n "$2" ]]; then
+        OUTPUT_MODE="$2"
+        shift
+      else
+        log "Missing argument for --output-mode"
+        usage
+      fi
+      ;;
+    -h|--help)
+      usage
+      ;;
+    *)
+      log "Unknown option: $1"
+      usage
+      ;;
+  esac
+  shift
+done
+
+# Set defaults for variables if not provided from command line
+START_DATE=${START_DATE:-$DEFAULT_START_DATE}
+END_DATE=${END_DATE:-$DEFAULT_END_DATE}
+GROUPING=${GROUPING:-$DEFAULT_GROUPING}
+SUB_GROUPING=${SUB_GROUPING:-$DEFAULT_SUB_GROUPING}
+OUTPUT_MODE=${OUTPUT_MODE:-$DEFAULT_OUTPUT_MODE}
+
+# Validate grouping
+if [[ ! " ${VALID_GROUPINGS[*]} " =~ " ${GROUPING} " ]]; then
+  log "Error: Invalid grouping value: ${GROUPING}. Allowed values are: ${VALID_GROUPINGS[*]}"
+  exit 1
+fi
+
+# Validate sub-grouping
+if [[ ! " ${VALID_SUB_GROUPINGS[*]} " =~ " ${SUB_GROUPING} " ]]; then
+  log "Error: Invalid sub_grouping value: ${SUB_GROUPING}. Allowed values are: ${VALID_SUB_GROUPINGS[*]}"
+  exit 1
+fi
+
+# Validate output mode
+if [[ ! " ${VALID_OUTPUT_MODES[*]} " =~ " ${OUTPUT_MODE} " ]]; then
+  log "Error: Invalid output mode: ${OUTPUT_MODE}. Valid options are: ${VALID_OUTPUT_MODES[*]}"
+  exit 1
+fi
+
+# Basic date format validation
+if ! [[ $START_DATE =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+  log "Error: Start date must be in YYYY-MM-DD format."
+  exit 1
+fi
+
+if ! [[ $END_DATE =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+  log "Error: End date must be in YYYY-MM-DD format."
+  exit 1
+fi
+
+# Validate that the period does not exceed 366 days
+start_ts=$(date -j -f "%Y-%m-%d" "$START_DATE" "+%s")
+end_ts=$(date -j -f "%Y-%m-%d" "$END_DATE" "+%s")
+days_between=$(( (end_ts - start_ts) / (60 * 60 * 24) ))
+if (( days_between > 366 )); then
+  log "Error: The period between start and end date cannot exceed 366 days."
+  exit 1
+fi
+
+# Check required environment variables
+if [[ -z "${TOGGL_API_TOKEN}" ]] || [[ -z "${TOGGL_WORKSPACE_ID}" ]]; then
+  log "Error: TOGGL_API_TOKEN and TOGGL_WORKSPACE_ID must be set"
+  log "Run with --help for usage information"
+  exit 1
+fi
+
+# Configuration
+BASE_URL="https://api.track.toggl.com"
+
+# Helper function for Toggl API calls
+toggl_api_call() {
+  local endpoint=$1
+  local method=${2:-GET}
+  local data=$3
+
+  if [[ -n "$data" ]]; then
+    curl --silent -X "$method" "${BASE_URL}${endpoint}" \
+      -H "Content-Type: application/json" \
+      -u "${TOGGL_API_TOKEN}:api_token" \
+      -d "$data"
+  else
+    curl --silent -X "$method" "${BASE_URL}${endpoint}" \
+      -H "Content-Type: application/json" \
+      -u "${TOGGL_API_TOKEN}:api_token"
+  fi
+}
+
+# Helper function to get time entries summary
+get_time_entries_summary() {
+  local start_date="${START_DATE}"
+  local end_date="${END_DATE}"
+
+  local data=$(cat <<EOF
+{
+  "collapse": true,
+  "grouping": "${GROUPING}",
+  "sub_grouping": "${SUB_GROUPING}",
+  "start_date": "${start_date}",
+  "end_date": "${end_date}",
+  "audit": {
+    "show_empty_groups": false,
+    "show_tracked_groups": true,
+    "group_filter": {}
+  },
+  "include_time_entry_ids": true
+}
+EOF
+  )
+
+  toggl_api_call "/reports/api/v3/workspace/${TOGGL_WORKSPACE_ID}/summary/time_entries" "POST" "$data"
+}
+
+# Helper function to get project details
+get_project_details() {
+  # Fetch all projects for the workspace
+  toggl_api_call "/api/v9/workspaces/${TOGGL_WORKSPACE_ID}/projects"
+}
+
+# Get time entries data
+log "Fetching time entries from Toggl API..."
+TIME_ENTRIES_JSON=$(get_time_entries_summary)
+
+# Fetch project details
+log "Fetching project details from Toggl API..."
+PROJECT_DETAILS=$(get_project_details)
+
+# Process time entries and capture the JSON summary result
+log "Processing time entries..."
+RESULT=$(echo "$TIME_ENTRIES_JSON" | jq --argjson project_details "$PROJECT_DETAILS" '
+  # Function to lookup the project name with a passed-in project map
+  def project_name(id; project_map):
+    if id == "unassigned" then "Unassigned"
+    elif id == null then "No Project"
+    else (project_map[(id | tostring)].name // "Unknown")
+    end;
+
+  # Function to convert seconds to a human-readable duration
+  def seconds_to_duration:
+    . as $seconds |
+    [
+      ($seconds / 86400 | floor | if . > 0 then "\(.)d" else empty end),
+      (($seconds % 86400) / 3600 | floor | if . > 0 then "\(.)h" else empty end),
+      (($seconds % 3600) / 60 | floor | if . > 0 then "\(.)m" else empty end),
+      ($seconds % 60 | "\(.)s")
+    ] | join(" ");
+
+  # Build a project map from project details
+  ($project_details | map({key: (.id | tostring), value: .}) | from_entries) as $project_map |
+
+  .groups |
+  map(
+    if .id == null then . + {"id": "unassigned"} else . end
+  ) |
+  map(.id as $pid | .sub_groups[] | {
+    project_id: $pid,
+    project_name: project_name($pid | tostring; $project_map),
+    title: .title,
+    seconds: .seconds
+  }) |
+  sort_by([.project_id, .title]) |
+  group_by([.project_id, .title]) |
+  map({
+    project_id: .[0].project_id,
+    project_name: .[0].project_name,
+    title: .[0].title,
+    duration_seconds: (map(.seconds) | add),
+    duration_formatted: (map(.seconds) | add | seconds_to_duration)
+  }) |
+  sort_by(-.duration_seconds)
+')
+
+# Output based on the chosen output mode
+if [[ "$OUTPUT_MODE" == "alfred" ]]; then
+  # Transform the result into Alfred script filter JSON format with new title formatting
+  echo "$RESULT" | jq '{
+    cache: {
+      seconds: 900,
+      loosereload: true
+    },
+    items: map({
+      title: ("[" + .project_name + "] " + .title),
+      subtitle: ("Duration: " + .duration_formatted + " (" + (.duration_seconds|tostring) + " seconds)"),
+      arg: (. | tojson),
+      text: {
+        copy: .title,
+        largetype: .title
+      },
+      quicklookurl: ("https://track.toggl.com/projects/" + (.project_id|tostring) + "/list")
+    })
+  }'
+else
+  # Default output is raw JSON summary
+  echo "$RESULT"
+fi

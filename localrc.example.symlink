@@ -12,3 +12,9 @@ export OPENAI_API_KEY=
 #   https://github.com/jekyll/github-metadata/blob/main/docs/authentication.md
 JEKYLL_GITHUB_TOKEN=
 # OCTOKIT_ACCESS_TOKEN=
+
+# Used for ~/.dotfiles/bin/toggl-entries and similar Toggl Track API things
+#   https://engineering.toggl.com/docs/
+#   https://engineering.toggl.com/docs/authentication/
+export TOGGL_API_TOKEN=
+export TOGGL_WORKSPACE_ID=
