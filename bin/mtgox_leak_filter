@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+
+script_name="$(basename "$0")"
+
+show_help() {
+  echo "Usage: $script_name UUID_TYPE UUID [LEAK_DATA_DIR] [OUTPUT_DIR]"
+  echo ""
+  echo "Arguments:"
+  echo "  UUID_TYPE      The type of UUID: 'user' or 'wallet'"
+  echo "  UUID           The UUID to search for (e.g., 12345678-1234-5678-1234-567812345678)"
+  echo "  LEAK_DATA_DIR  (Optional) Directory containing leak data to search. Defaults to './extracted'."
+  echo "  OUTPUT_DIR     (Optional) Directory to save filtered files. Defaults to current directory."
+  echo ""
+  echo "Examples:"
+  echo "  $script_name user 12345678-1234-5678-1234-567812345678"
+  echo "  $script_name wallet 12345678-1234-5678-1234-567812345678 my_leak_data my_filtered_output"
+  echo ""
+  echo "Notes:"
+  echo "  - To find your MtGox user UUID:"
+  echo "      1. Search your email inbox for:"
+  echo "         \"[Mt.Gox] Account creation confirmation\""
+  echo ""
+  echo "         Example Gmail search:"
+  echo "           https://mail.google.com/mail/u/0/#search/%22%5BMt.Gox%5D+Account+creation+confirmation%22"
+  echo ""
+  echo "      2. In that email, look for the signup validation link:"
+  echo "           https://mtgox.com/signup/validate?ID=REDACTED&Code=REDACTED"
+  echo ""
+  echo "      3. Your user UUID is the value in the 'ID' parameter."
+  echo ""
+  echo "  - Wallet UUID:"
+  echo "      After filtering by user UUID, you can typically find your wallet UUID"
+  echo "      inside the filtered mtgox_balances results."
+  exit 1
+}
+
+
+error_exit() {
+  echo "Error: $1"
+  echo "Run '$script_name --help' for usage."
+  exit 1
+}
+
+# --- Parse Arguments ---
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+  show_help
+fi
+
+if [[ $# -lt 2 || $# -gt 4 ]]; then
+  error_exit "Invalid number of arguments."
+fi
+
+UUID_TYPE="$1"
+UUID="$2"
+LEAK_DATA_DIR="${3:-extracted}"    # Default to 'extracted'
+OUTPUT_DIR="${4:-.}"               # Default to current directory
+
+if [[ "$UUID_TYPE" != "user" && "$UUID_TYPE" != "wallet" ]]; then
+  error_exit "UUID_TYPE must be 'user' or 'wallet'."
+fi
+
+# Check prerequisites
+if ! command -v rg >/dev/null 2>&1; then
+  error_exit "ripgrep (rg) is not installed. Please install it first."
+fi
+
+# Check leak data directory exists
+if [[ ! -d "$LEAK_DATA_DIR" ]]; then
+  error_exit "Leak data directory does not exist: $LEAK_DATA_DIR"
+fi
+
+# Ensure output directory exists
+mkdir -p "$OUTPUT_DIR"
+
+# --- Main Script ---
+rg -l "$UUID" "$LEAK_DATA_DIR" | while read -r input_file; do
+  base_name="$(basename "$input_file")"
+
+  # Build output filename inside OUTPUT_DIR
+  if [[ "$base_name" == *.csv ]]; then
+    output_file="${OUTPUT_DIR}/${UUID_TYPE}_${UUID}_${base_name%.csv}.csv"
+  else
+    output_file="${OUTPUT_DIR}/${UUID_TYPE}_${UUID}_${base_name}.csv"
+  fi
+
+  # Skip if output file already exists
+  if [[ -f "$output_file" ]]; then
+    echo "Skipping (already exists): $output_file"
+    continue
+  fi
+
+  echo "Creating: $output_file"
+
+  {
+    # Output header
+    if [[ "$input_file" == *mtgox_balances ]]; then
+      head -n 4 "$input_file"
+    else
+      head -n 1 "$input_file"
+    fi
+
+    # Output matching lines
+    rg -N "$UUID" "$input_file"
+  } > "$output_file"
+done

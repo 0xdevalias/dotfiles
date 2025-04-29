@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+
+script_name="$(basename "$0")"
+
+show_help() {
+  echo "Usage: $script_name [DOWNLOAD_DIR]"
+  echo ""
+  echo "Arguments:"
+  echo "  DOWNLOAD_DIR  (Optional) Directory to use for download and extraction. Defaults to current directory."
+  echo ""
+  echo "This script can:"
+  echo "  - Automatically download MtGox2014Leak.zip from archive.org"
+  echo "  - Or use a manually downloaded MtGox2014Leak.zip if it already exists."
+  echo ""
+  echo "Manual download instructions:"
+  echo "  1. Visit the full archive page for context and files:"
+  echo "       https://archive.org/details/MtGox2014Leak"
+  echo ""
+  echo "  2. Or download MtGox2014Leak.zip directly from:"
+  echo "       https://archive.org/download/MtGox2014Leak/MtGox2014Leak.zip"
+  echo ""
+  echo "  3. Place the MtGox2014Leak.zip file into your chosen directory."
+  echo ""
+  echo "  4. Run this script to extract the relevant files."
+  echo ""
+  echo "Examples:"
+  echo "  $script_name"
+  echo "  $script_name my_leak_dir"
+  exit 1
+}
+
+error_exit() {
+  echo "Error: $1"
+  echo "Run '$script_name --help' for usage."
+  exit 1
+}
+
+# --- Parse Arguments ---
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+  show_help
+fi
+
+# Set paths
+BASE_DIR="${1:-.}"
+EXTRACTED_DIR="$BASE_DIR/extracted"
+
+ZIP_URL="https://archive.org/download/MtGox2014Leak/MtGox2014Leak.zip"
+ZIP_FILE="$BASE_DIR/MtGox2014Leak.zip"
+
+# --- Prerequisite Checks ---
+for cmd in unzip; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    error_exit "Required command '$cmd' is not installed."
+  fi
+done
+
+# Only require curl if download is needed
+need_download=false
+if [[ ! -f "$ZIP_FILE" ]]; then
+  need_download=true
+  if ! command -v curl >/dev/null 2>&1; then
+    error_exit "curl is required to download the ZIP, or you must manually download it first."
+  fi
+fi
+
+# --- Always Prompt Before Action ---
+echo "About to download and extract the MtGox2014Leak.zip (~750MB)."
+echo ""
+echo "Target directory for download and extraction: $BASE_DIR"
+echo ""
+echo "If you prefer to manually download it first, visit:"
+echo "  https://archive.org/details/MtGox2014Leak"
+echo ""
+read -rp "Press Enter to continue, or Ctrl+C to abort..."
+
+# --- Set Up Directories ---
+mkdir -p "$BASE_DIR"
+mkdir -p "$EXTRACTED_DIR"
+
+# --- Download Leak Archive (if needed) ---
+if [[ "$need_download" == true ]]; then
+  echo "Downloading MtGox2014Leak.zip to: $ZIP_FILE"
+  curl -L -o "$ZIP_FILE" "$ZIP_URL" || error_exit "Failed to download $ZIP_URL"
+else
+  echo "Found existing file: $ZIP_FILE"
+  echo "  Skipping download."
+fi
+
+# --- Extract Specific Inner ZIPs ---
+echo ""
+echo "Extracting selected ZIP files to: $EXTRACTED_DIR"
+unzip -j "$ZIP_FILE" \
+  'backoffice/Exports/btc_xfer_report.zip' \
+  'backoffice/Exports/mtgox_balances.zip' \
+  'trades.zip' \
+  -d "$EXTRACTED_DIR" || error_exit "Failed to extract selected files."
+
+# --- Extract Contents of Each Sub-ZIP ---
+echo ""
+echo "Extracting contents of sub-archives into structured folders..."
+unzip -j "$EXTRACTED_DIR/btc_xfer_report.zip" -d "$EXTRACTED_DIR" || error_exit "Failed to extract btc_xfer_report.zip"
+unzip -j "$EXTRACTED_DIR/mtgox_balances.zip" -d "$EXTRACTED_DIR" || error_exit "Failed to extract mtgox_balances.zip"
+unzip -j "$EXTRACTED_DIR/trades.zip" -d "$EXTRACTED_DIR/trades" || error_exit "Failed to extract trades.zip"
+
+# --- Cleanup Intermediary ZIPs ---
+echo ""
+echo "Cleaning up intermediary ZIP files..."
+rm -f "$EXTRACTED_DIR/btc_xfer_report.zip"
+rm -f "$EXTRACTED_DIR/mtgox_balances.zip"
+rm -f "$EXTRACTED_DIR/trades.zip"
+
+echo ""
+echo "✅ Done."
+echo ""
+echo "Download directory: $BASE_DIR"
+echo "Extracted data is available under: $EXTRACTED_DIR"
+echo ""
+echo "Next you might like to run:"
+echo "  mtgox_leak_filter --help"
+echo ""
+echo "  eg. mtgox_leak_filter user TODO-YOUR-UUID $EXTRACTED_DIR ./filtered_data"
+echo "  eg. mtgox_leak_filter wallet TODO-YOUR-WALLET-UUID $EXTRACTED_DIR ./filtered_data"
