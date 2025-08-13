@@ -1,0 +1,232 @@
+#!/usr/bin/env zsh
+
+# exif-fix — safe helpers for validating and fixing misplaced EXIF/IFD0 metadata
+#
+# Requires: exiftool
+#
+# Created and iterated on via ChatGPT (gpt-5): https://chatgpt.com/c/689ae93d-41ac-832b-8cc6-595cc3c04f78
+
+set -euo pipefail
+setopt PIPE_FAIL
+
+SCRIPT_NAME=${0:t}
+
+DEFAULT_OFFSET=$(date +%z | sed -E 's/([+-][0-9]{2})([0-9]{2})/\1:\2/')
+
+print_help() {
+  cat <<EOF
+$SCRIPT_NAME — safe helpers for validating and fixing misplaced EXIF/IFD0 metadata
+
+Usage:
+  $SCRIPT_NAME inspect FILE...
+  $SCRIPT_NAME validate FILE...
+  $SCRIPT_NAME fix [--offset +HH:MM|-HH:MM] [--no-backup] FILE...
+  $SCRIPT_NAME -h | --help
+
+Subcommands:
+  inspect    Show metadata and key photo tags without making changes.
+  validate   Check files for metadata issues and display warnings.
+  fix        Copy missing EXIF tags from IFD0, fill in missing date/offset fields, and apply common compatibility tags.
+
+Options (fix):
+  --offset +HH:MM | -HH:MM  Use a specific timezone offset for OffsetTime* tags. (Default: ${DEFAULT_OFFSET})
+  --no-backup               Overwrite files without creating _original backups (adds -overwrite_original).
+                            Default is SAFE (keep backups).
+
+Notes:
+  - No automatic recursion. You must pass explicit files or globs.
+  - By default, changes create a backup alongside each file (e.g., IMG_0001.dng_original)
+
+Examples:
+  # Show metadata and key photo tags
+  $SCRIPT_NAME inspect example.dng
+
+  # Validate without changing anything
+  $SCRIPT_NAME validate example.dng
+
+  # Preview + fix with current local offset
+  $SCRIPT_NAME fix example.dng
+
+  # Fix with explicit offset
+  $SCRIPT_NAME fix --offset +10:00 *.dng
+EOF
+}
+
+cmd_inspect() {
+  if (( $# == 0 )); then
+    print -u2 -- "Error: no files provided."
+    exit 2
+  fi
+
+  # exiftool flag reference:
+  #   -G1                      → Show tag group names at the top level
+  #   -a                       → Allow duplicate tags to be displayed (don’t suppress repeats)
+  #   -s                       → Use short tag names instead of long descriptive names
+  #
+  #   -time:all                → Display all date/time tags from all groups
+  #   -ExposureTime            → Display shutter speed
+  #   -FNumber                 → Display aperture value (f-stop)
+  #   -ISO                     → Display ISO sensitivity
+  #   -FocalLength             → Display focal length
+  exiftool \
+    -echo "===== ORIGINAL =====" \
+      -G1 -a -s \
+    -execute -echo '' -echo '' -echo '===== SELECTED TAGS =====' \
+      -G1 -a -s -time:all -ExposureTime -FNumber -ISO -FocalLength \
+    -common_args "$@"
+}
+
+cmd_validate() {
+  if (( $# == 0 )); then
+    print -u2 -- "Error: no files provided."
+    exit 2
+  fi
+
+  # exiftool flag reference:
+  #   -G1                      → Show tag group names at the top level
+  #   -a                       → Allow duplicate tags to be displayed (don’t suppress repeats)
+  #   -s                       → Use short tag names instead of long descriptive names
+  #
+  #   -warning                 → Display warnings about metadata (e.g., format issues, non-standard values)
+  #   -validate                → Validate file structure and metadata for compliance; reports any errors or inconsistencies
+  exiftool -G1 -a -s -warning -validate "$@"
+}
+
+cmd_fix() {
+  local overwrite_flag=()      # default SAFE (keep backups)
+  local offset="$DEFAULT_OFFSET"
+  local args=()
+
+  # Parse options
+  while (( $# > 0 )); do
+    case "$1" in
+      --offset)
+        shift
+        if (( $# == 0 )); then
+          print -u2 -- "Error: --offset requires a value."
+          exit 2
+        fi
+
+        if [[ ! "$1" =~ ^[+-][0-9]{2}:[0-9]{2}$ ]]; then
+          print -u2 -- "Error: --offset must be in +HH:MM or -HH:MM format (e.g., +10:00)."
+          exit 2
+        fi
+
+        offset="$1"
+        ;;
+      --no-backup)
+        overwrite_flag=(-overwrite_original)
+        ;;
+      --)
+        shift
+        break
+        ;;
+      -*)
+        print -u2 -- "Unknown option for fix: $1"
+        exit 2
+        ;;
+      *)
+        args+=("$1")
+        ;;
+    esac
+    shift || true
+  done
+
+  # Append any remaining args after --
+  if (( $# > 0 )); then
+    args+=("$@")
+  fi
+
+  if (( ${#args} == 0 )); then
+    print -u2 -- "Error: no files provided to fix."
+    exit 2
+  fi
+
+  # exiftool flag reference:
+  #   -G1                      → Show tag group names at the top level
+  #   -a                       → Allow duplicate tags to be displayed (don’t suppress repeats)
+  #   -s                       → Use short tag names instead of long descriptive names
+  #
+  #   -v2                      → Verbose mode, level 2 (extra processing details)
+  #   -wm c                    → Write mode “create only” (add tag if missing, don’t overwrite)
+  #
+  #   -time:all                → Display all date/time tags from all groups
+  #   -ExposureTime            → Display shutter speed
+  #   -FNumber                 → Display aperture value (f-stop)
+  #   -ISO                     → Display ISO sensitivity
+  #   -FocalLength             → Display focal length
+  #
+  #   -execute                 → End the current set of arguments and start a new exiftool operation in the same process (used to chain multiple steps without restarting exiftool)
+  #   -if 'expr'               → Only execute command if expression evaluates to true
+  #   -Group:Tag=VALUE         → Set a tag to a fixed value (e.g., -ExifIFD:OffsetTime=${offset})
+  #   -Group:Tag* = VALUE      → Set the same value for all tags in the group that match the prefix (e.g., -ExifIFD:OffsetTime*=${offset} sets OffsetTime, OffsetTimeOriginal, and OffsetTimeDigitized)
+  #   -Group1:Tag1<Group2:Tag2 → Copy a tag’s value from another tag/group (e.g., -ExifIFD:CreateDate<EXIF:DateTimeOriginal)
+  #   -common_args             → Arguments applied to all -execute segments in the run
+  exiftool \
+    -echo "===== FULL METADATA: ORIGINAL =====" \
+      -G1 -a -s \
+    -execute -echo '' -echo '' -echo '===== SELECTED TAGS: BEFORE CHANGES =====' \
+      -G1 -a -s \
+      -time:all -ExposureTime -FNumber -ISO -FocalLength \
+    \
+    -execute -echo '' -echo ''  -echo '===== COPY MISSING EXIF TAGS FROM IFD0 =====' \
+      -v2 "${overwrite_flag[@]}" \
+      -if 'not $ExifIFD:DateTimeOriginal and $IFD0:DateTimeOriginal' "-ExifIFD:DateTimeOriginal<IFD0:DateTimeOriginal" \
+      -if 'not $ExifIFD:ExposureTime     and $IFD0:ExposureTime'     "-ExifIFD:ExposureTime<IFD0:ExposureTime" \
+      -if 'not $ExifIFD:FNumber          and $IFD0:FNumber'          "-ExifIFD:FNumber<IFD0:FNumber" \
+      -if 'not $ExifIFD:ISO              and $IFD0:ISO'              "-ExifIFD:ISO<IFD0:ISO" \
+      -if 'not $ExifIFD:FocalLength      and $IFD0:FocalLength'      "-ExifIFD:FocalLength<IFD0:FocalLength" \
+    \
+    -execute -echo '' -echo '' -echo '===== ADD IPHONE-STYLE TAGS FOR COMPATIBILITY =====' \
+      -wm c -v2 "${overwrite_flag[@]}" \
+      "-ExifIFD:CreateDate<EXIF:DateTimeOriginal" \
+      "-ExifIFD:OffsetTime=${offset}" \
+      "-ExifIFD:OffsetTimeOriginal=${offset}" \
+      "-ExifIFD:OffsetTimeDigitized=${offset}" \
+      "-XMP-xmp:CreateDate<EXIF:DateTimeOriginal" \
+      "-XMP-xmp:ModifyDate<EXIF:DateTimeOriginal" \
+      "-XMP-photoshop:DateCreated<EXIF:DateTimeOriginal" \
+      "-IFD0:ModifyDate<EXIF:DateTimeOriginal" \
+    \
+    -execute -echo '' -echo '' -echo '===== SELECTED TAGS: AFTER CHANGES =====' \
+      -G1 -a -s \
+      -time:all -ExposureTime -FNumber -ISO -FocalLength \
+    -common_args "${args[@]}"
+}
+
+main() {
+  if (( $# == 0 )); then
+    print_help
+    exit 1
+  fi
+
+  local sub="$1"
+  shift || true
+
+  case "$sub" in
+    -h|--help)
+      print_help
+      ;;
+    inspect|validate|fix)
+      if ! command -v exiftool >/dev/null 2>&1; then
+        print -u2 -- "Error: exiftool (https://exiftool.org/) not found in PATH."
+        print -u2 -- "Install on macOS with Homebrew:"
+        print -u2 -- "  brew install exiftool"
+        exit 127
+      fi
+
+      case "$sub" in
+        inspect)  cmd_inspect "$@" ;;
+        validate) cmd_validate "$@" ;;
+        fix)      cmd_fix "$@" ;;
+      esac
+      ;;
+    *)
+      print -u2 -- "Unknown subcommand: ${sub}"
+      print -u2 -- "See: ${SCRIPT_NAME} --help"
+      exit 2
+      ;;
+  esac
+}
+
+main "$@"
