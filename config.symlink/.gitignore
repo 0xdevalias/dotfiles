@@ -10,11 +10,16 @@ gh/hosts.yml
 
 github-copilot/apps.json
 github-copilot/hosts.json
+github-copilot/versions.json
 github-copilot/*/chat-sessions/
+github-copilot/*/chat-edit-sessions/
+github-copilot/*/chat-agent-sessions/
 
 github-repos/
 
 gtk-2.0/
+
+httpie/version_info.json
 
 iterm2/
 
@@ -35,3 +40,5 @@ rclone/rclone.conf
 simple-update-notifier/
 
 tape/Definitions/
+
+uv/uv-receipt.json
