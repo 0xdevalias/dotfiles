@@ -1,0 +1,24 @@
+{
+    "servers": {
+        // add your MCP servers configuration here. 
+        // support both local(stdio) and remote(SSE/Streamable HTTP) servers.
+        // reference: https://docs.github.com/en/copilot/customizing-copilot/extending-copilot-chat-with-mcp?tool=jetbrains
+        // example:
+        // "my-mcp-server": {
+        //     "type": "stdio",
+        //     "command": "my-command",
+        //     "args": [],
+        //     "env": {
+        //         "TOKEN": "my_token"
+        //     }
+        // },
+        // "github": {
+        //     "url": "https://api.githubcopilot.com/mcp/",
+        //     "requestInit": {
+        //         "headers": {
+        //             "Authorization": "Bearer my_token"
+        //         }
+        //     }
+        // }
+    }
+}
