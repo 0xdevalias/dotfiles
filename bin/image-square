@@ -1,11 +1,84 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 
-# TODO: explore doing this with #!/usr/bin/env magick-script
-#
-# refs:
-#   https://imagemagick.org/script/magick-script.php
+# Refs:
+#   https://imagemagick.org/script/command-line-tools.php
 #   https://imagemagick.org/script/command-line-processing.php
-#   https://imagemagick.org/Usage/bugs/IMv7_Scripting.txt
-#   https://github.com/ImageMagick/ImageMagick/tree/master/api_examples
+#   https://imagemagick.org/script/magick-script.php
+#
+# Vibe Coded With:
+#   https://chatgpt.com/c/68a03f22-7294-832d-ac81-27c25087af63
+#   https://claude.ai/chat/732cb41c-e411-4fee-a043-e6c684ad1c15
 
--resize 900x900 -background Black -gravity center -extent 900x900 out.png
+SCRIPT_NAME="${0:t}"
+
+# Defaults (can be overridden via flags)
+blur=10             # blur radius for background
+size=""             # optional final resize dimension (if empty, uses natural square size)
+output=""           # auto-generated from input if left empty
+
+# Parse Args
+input_files=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      echo "Creates a square image by centering the original on a blurred background."
+      echo ""
+      echo "Usage: $SCRIPT_NAME <input> [--output <file>] [--blur <radius>] [--size <px>]"
+      echo "  <input>        required path to input image"
+      echo "  --output, -o   output filename (default '<input>_<size>x<size>.<ext>')"
+      echo "  --blur,  -b    blur radius for background (default: ${blur})"
+      echo "  --size,  -s    optional final resize dimension (default: natural square size)"
+
+      exit 0
+      ;;
+    -o|--output)
+      output="$2"; shift 2 ;;
+    -b|--blur)
+      blur="$2"; shift 2 ;;
+    -s|--size)
+      size="$2"; shift 2 ;;
+    --*)   echo "Unknown option: $1" >&2; exit 1 ;;
+    *)     input_files+=("$1"); shift ;;
+  esac
+done
+
+infile="${input_files[1]}"
+if [[ -z "$infile" || ! -f "$infile" ]]; then
+  echo "Error: you must provide a valid input file" >&2
+  exit 1
+fi
+
+# Detect the square size needed (larger dimension of input image)
+square_size=$(magick identify -format '%[fx:max(w,h)]' "$infile")
+
+# Build output filename if none was provided
+if [[ -z "$output" ]]; then
+  filename="${infile:t}"
+  base="${filename:r}"
+  ext="${filename:e}"
+  [[ "$ext" == "$filename" || -z "$ext" ]] && ext="png"
+  # Use final size if specified, otherwise use natural square size
+  final_size="${size:-$square_size}"
+  output="${base}_${final_size}x${final_size}.${ext}"
+fi
+
+if [[ -e "$output" ]]; then
+  echo "Error: output file '$output' already exists (refusing to overwrite)" >&2
+  exit 1
+fi
+
+# Check if ImageMagick is installed
+if ! command -v magick >/dev/null 2>&1; then
+  echo "Error: ImageMagick is not installed." >&2
+  echo "To install with Homebrew:" >&2
+  echo "  brew install imagemagick" >&2
+  exit 1
+fi
+
+# Convert Image - Make square by extending only the shorter dimension
+magick "$infile" \
+  \( +clone -blur 0x$blur -resize "${square_size}x${square_size}^" -gravity center -extent "${square_size}x${square_size}" \) \
+  +swap \
+  -gravity center -composite \
+  $(if [[ -n "$size" ]]; then echo "-resize ${size}x${size}"; fi) \
+  "$output"
