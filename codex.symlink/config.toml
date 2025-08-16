@@ -1,0 +1,12 @@
+# Ref: https://github.com/openai/codex/blob/main/codex-rs/config.md
+# model_provider = "openai"
+# model = "gpt-5"
+# model_reasoning_effort = "high"
+approval_policy = "on-request"
+
+# https://github.com/openai/codex#model-context-protocol-mcp
+# IMPORTANT: the top-level key is `mcp_servers` rather than `mcpServers`.
+# [mcp_servers.server-name]
+# command = "npx"
+# args = ["-y", "mcp-server"]
+# env = { "API_KEY" = "value" }
