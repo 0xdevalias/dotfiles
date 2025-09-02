@@ -1,0 +1,166 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+SCRIPT_NAME="${0##*/}"
+show_help=0
+req_file=""
+pkgs=()
+
+usage_hint() {
+  echo "" >&2
+  echo "Usage: $SCRIPT_NAME --help" >&2
+}
+
+# Parse options and positionals in one pass so -h/--help work anywhere
+while (( $# )); do
+  case "$1" in
+    -h|--help)
+      show_help=1
+      shift ;;
+    -r|--requirements)
+      # Optional FILE; default to requirements.txt if omitted
+      if (( $# >= 2 )) && [[ "${2:-}" != -* ]]; then
+        req_file="$2"
+        shift 2
+      else
+        req_file="requirements.txt"
+        shift
+      fi ;;
+    --)
+      shift
+      break ;;
+    -*)
+      echo "Error: unknown option $1" >&2
+      usage_hint
+      exit 2 ;;
+    *)
+      pkgs+=("$1")
+      shift ;;
+  esac
+done
+
+# Any remaining args after "--" are positional package names
+if (( $# > 0 )); then
+  pkgs+=("$@")
+fi
+
+if (( show_help )); then
+  cat <<EOF
+Usage:
+  $SCRIPT_NAME PKG [PKG...]
+  $SCRIPT_NAME -r [FILE] | --requirements [FILE]
+  $SCRIPT_NAME -h | --help
+
+Options:
+  -r [FILE], --requirements [FILE]
+                 Read package names from a requirements.txt-like file
+                 Defaults to requirements.txt if omitted
+  -h, --help     Show this help text
+
+Examples:
+  $SCRIPT_NAME numpy
+  $SCRIPT_NAME -r requirements.txt
+EOF
+  exit 0
+fi
+
+# --- prereq checks ---
+if ! command -v jq >/dev/null 2>&1; then
+  echo "Error: jq not found" >&2
+  echo "  Install with Homebrew: brew install jq" >&2
+  usage_hint
+  exit 127
+fi
+
+if ! command -v python >/dev/null 2>&1; then
+  echo "Error: python not found" >&2
+  echo "  Install with Homebrew: brew install python" >&2
+  usage_hint
+  exit 127
+fi
+
+parse_requirements() {
+  local file="$1"
+  awk '
+    BEGIN{IGNORECASE=1}
+    /^[[:space:]]*#/ {next}
+    /^[[:space:]]*$/ {next}
+    /^-e[[:space:]]/ {next}
+    /^--/ {next}
+    {
+      gsub(/#.*/,"")
+      gsub(/^[[:space:]]+|[[:space:]]+$/,"")
+      if ($0=="") next
+      if ($0 ~ /^git\+|^https?:/) next
+      pkg=$1
+      gsub(/\[[^]]*\]/,"",pkg)
+      sub(/([<>=!~].*)$/,"",pkg)
+      if (pkg!="") print pkg
+    }
+  ' "$file"
+}
+
+summarize_pkgs() {
+  setopt TYPESET_SILENT # Ensure local doesn't print the value of variables that are already defined
+
+  local pkgs=("$@")
+  local count=${#pkgs[@]}
+
+  for ((i=1; i<=count; i++)); do
+    local pkg="${pkgs[i]}"
+    local out_json installed latest recent
+
+    if ! out_json=$(python -m pip index versions --json "$pkg" 2>&1); then
+      echo "$pkg — Error: failed to query PyPI" >&2
+      echo "" >&2
+      echo "Error details:" >&2
+      # Strip leading blank lines, then indent/prefix everything
+      printf "%s\n" "$out_json" \
+        | sed '/./,$!d' \
+        | sed 's/^/  > /' >&2
+      return 1
+    fi
+
+    installed=$(jq -r '.installed_version // ""' <<<"$out_json")
+    latest=$(jq -r '.latest // ""' <<<"$out_json")
+    recent=$(jq -r '
+      if (.versions | length) > 1
+      then " (recent: " + (.versions[:5] | join(", "))
+           + (if (.versions | length) > 5
+              then " … +" + ((.versions | length) - 5 | tostring)
+              else "" end)
+           + ")"
+      else "" end
+    ' <<<"$out_json")
+
+    echo "${pkg}:"
+    printf "  %-10s %s\n" "Installed:" "${installed:-—}"
+    printf "  %-10s %s%s\n" "Latest:"    "$latest" "$recent"
+
+    if [[ -n "$installed" && -n "$latest" && "$installed" != "$latest" ]]; then
+      printf "  %-10s %s → %s\n" "Update:" "$installed" "$latest"
+    fi
+
+    (( i < count )) && echo   # blank line only between items
+  done
+}
+
+# Add packages from requirements file if provided
+if [[ -n "$req_file" ]]; then
+  if [[ ! -f "$req_file" ]]; then
+    echo "Error: file not found: $req_file" >&2
+    usage_hint
+    exit 2
+  fi
+  # zsh: capture lines into an array (no bash mapfile)
+  req_pkgs=("${(@f)$(parse_requirements "$req_file")}")
+  (( ${#req_pkgs[@]} )) && pkgs+=("${req_pkgs[@]}")
+fi
+
+if (( ${#pkgs[@]} == 0 )); then
+  echo "Error: no packages provided. Use PKG args or -r/--requirements FILE" >&2
+  usage_hint
+  exit 2
+fi
+
+summarize_pkgs "${pkgs[@]}"
