@@ -1,0 +1,94 @@
+#!/usr/bin/env zsh
+#
+# diff-strings — show a unified diff between two strings with word highlights
+
+SCRIPT_NAME="${0:t}"
+
+usage() {
+  cat <<EOF
+Usage: $SCRIPT_NAME [options] "OLD_STRING" "NEW_STRING"
+
+Show a unified diff of two strings, with word-level highlights
+(similar to GitHub’s inline diff view).
+
+Options:
+  -h, --help     Show this help message and exit
+
+Examples:
+  $SCRIPT_NAME "old string" "new string"
+  $SCRIPT_NAME "foo bar" "foo baz"
+EOF
+}
+
+check_dependencies() {
+  # Map binary name -> Homebrew formula
+  local -A DEPS
+  DEPS=(
+    # Command | Homebrew Package Name
+    git         git
+    # add more required tools here if needed
+  )
+
+  local missing=()
+
+  # Iterate key/value pairs: ${(kv)DEPS} expands to key value key value ...
+  local cmd pkg
+  for cmd pkg in ${(kv)DEPS}; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+      missing+=("$cmd:$pkg")
+    fi
+  done
+
+  if (( ${#missing[@]} > 0 )); then
+    echo "Error: missing required command(s):" >&2
+    local item
+    for item in $missing; do
+      echo "  ${item%%:*}  (install via: brew install ${item##*:})" >&2
+    done
+    exit 127
+  fi
+}
+
+diff_strings() {
+  local old="$1"
+  local new="$2"
+
+  # Both sed and delta available → fancy mode
+  if command -v sed >/dev/null 2>&1 && command -v delta >/dev/null 2>&1; then
+    git -c color.ui=never diff --no-index \
+      --src-prefix="OLD: " \
+      --dst-prefix="NEW: " \
+      <(printf '%s\n' "$old") \
+      <(printf '%s\n' "$new") \
+    | sed -E \
+        -e 's#OLD:[[:space:]]+/?dev/fd/[0-9]+#OLD#g' \
+        -e 's#NEW:[[:space:]]+/?dev/fd/[0-9]+#NEW#g' \
+    | delta
+  else
+    # Simple fallback: raw git diff, still with colored output
+    git diff --no-index --color=always \
+      --src-prefix="OLD: " \
+      --dst-prefix="NEW: " \
+      <(printf '%s\n' "$old") \
+      <(printf '%s\n' "$new")
+  fi
+}
+
+main() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    usage
+    exit 0
+  fi
+
+  if [[ $# -lt 2 ]]; then
+    echo "Error: missing arguments" >&2
+    usage
+    exit 1
+  fi
+
+  check_dependencies
+
+  diff_strings "$1" "$2"
+}
+
+main "$@"
