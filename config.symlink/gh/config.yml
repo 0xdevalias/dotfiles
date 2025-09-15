@@ -151,8 +151,11 @@ aliases:
           echo ""
           echo "Search and interactively edit a gist by keyword, or pick from all gists if no term is given."
           echo ""
-          echo "Arguments:"
-          echo "  [search-term]   Optional keyword to filter gists by name/description."
+          echo "Keys:"
+          echo "  Enter     Edit selected gist"
+          echo "  Ctrl-O    Open in browser"
+          echo "  Ctrl-Y    Copy gist URL"
+          echo "  Ctrl-P    Toggle preview"
           echo ""
           echo "See Also:"
           echo "  https://github.com/cli/cli/issues/11738"
@@ -160,16 +163,55 @@ aliases:
           return 0
         fi
 
-        local search="$1"
+        local search="${1:-}"
 
-        local gist_id=$(
+        # Build the gist list once, as a function
+        _gist_source() {
+          # Header row (tab-separated so `column` aligns it nicely)
+          printf '%b' "ID\tDescription\tFiles\tVisibility\tUpdated\n"
+
           if [ -n "$search" ]; then
-            gh gist list --filter "$search" --limit 100
+            gh gist list --limit 100 --filter "$search"
           else
             gh gist list --limit 100
-          fi |
-          fzf --reverse |
-          awk '{print $1}'
+          fi
+        }
+
+        # Footer (clickable if fzf >= 0.65.0)
+        export FZF_ORIG_FOOTER=$'Enter: Edit    Ctrl-O: Open    Ctrl-Y: Copy URL    Ctrl-P: Preview'
+
+        # Build list and launch fzf
+        local gist_id=$(
+          _gist_source |
+          column -ts $'\t' |
+          FZF_DEFAULT_COMMAND= \
+          fzf \
+            --prompt 'Gists> ' \
+            --ghost 'Type to filter retrieved gists' \
+            --info=inline-right \
+            --input-border \
+            --header-lines=1 \
+            --footer "$FZF_ORIG_FOOTER" \
+            --footer-border=line \
+            --reverse \
+            --delimiter='[[:space:]]{2,}' \
+            --nth '1..' \
+            --with-nth '1..' \
+            --accept-nth 1 \
+            --bind 'enter:accept' \
+            --preview 'gh gist view {1}' \
+            --preview-window 'right,50%,border-left,wrap,hidden' \
+            --bind 'ctrl-p:toggle-preview' \
+            --bind 'ctrl-o:execute-silent:gh gist view {1} --web' \
+            --bind 'ctrl-y:execute-silent(
+              URL=https://gist.github.com/{1};
+              printf %s "$URL" | pbcopy
+            )+transform-footer(echo Copied to clipboard)+bg-transform-footer(
+              sleep 1; printf %s "$FZF_ORIG_FOOTER"
+            )' \
+            --bind 'click-footer:transform:
+              [[ $FZF_CLICK_FOOTER_WORD =~ Ctrl|Enter ]] && echo "trigger(${FZF_CLICK_FOOTER_WORD%:*})"
+            '
         )
 
         if [ -n "$gist_id" ]; then
@@ -178,6 +220,6 @@ aliases:
           echo "No gist selected."
           return 1
         fi
-      }; gist_edit $@
+      }; gist_edit "$@"
     edit-gist: gist-edit
 version: "1"
