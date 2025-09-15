@@ -1,0 +1,188 @@
+#!/usr/bin/env zsh
+
+# TODO:
+#   Make --extract-native the default, and rename the old --extract to --extract-legacy or similar
+
+set -euo pipefail
+
+SCRIPT_NAME="$(basename "$0")"
+
+print_help() {
+  cat <<EOF
+Usage: $SCRIPT_NAME [options] <file|->
+
+Options:
+  -e, --extract        Extract the TOC from the generated document (our logic)
+  -E, --extract-native Extract the TOC using bitdowntoc's --toc-only flag
+  -h, --help           Show this help message and exit
+
+Description:
+  Reads Markdown from a file or stdin, generates a GitHub-style Table of Contents
+  using bitdowntoc, normalizes the TOC comment URL, and trims extra spacing.
+
+ Modes:
+   Normal              Generate full processed document (with TOC inserted)
+   Extract (-e)        Generate + clean document, then slice out the TOC block
+   Native (-E)         Use bitdowntoc's --toc-only to emit TOC directly
+
+Requirements:
+  - bitdowntoc (CLI): brew install derlin/bitdowntoc/bitdowntoc
+  - gsed (GNU sed): brew install gnu-sed
+
+Examples:
+  # Full document with TOC inserted
+  $SCRIPT_NAME README.md
+
+  # Extract the freshly generated TOC block (our sed logic)
+  $SCRIPT_NAME --extract README.md
+
+  # Extract just the TOC using bitdowntoc's native --toc-only
+  $SCRIPT_NAME --extract-native README.md
+
+  # Use stdin (with pbpaste on macOS, for example)
+  pbpaste | $SCRIPT_NAME -
+EOF
+}
+
+usage_hint() {
+  echo "" >&2
+  echo "Usage: $SCRIPT_NAME --help" >&2
+}
+
+# Dependency checks
+if ! command -v bitdowntoc >/dev/null 2>&1; then
+  echo "Error: bitdowntoc is not installed." >&2
+  echo "  Install: brew install derlin/bitdowntoc/bitdowntoc" >&2
+  exit 1
+fi
+if ! command -v gsed >/dev/null 2>&1; then
+  echo "Error: gsed (GNU sed) is not installed." >&2
+  echo "  Install: brew install gnu-sed" >&2
+  exit 1
+fi
+
+# Defaults
+extract_mode=0
+extract_native=0
+
+# Parse args
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      print_help
+      exit 0
+      ;;
+    -e|--extract)
+      extract_mode=1
+      shift
+      ;;
+    -E|--extract-native)
+      extract_native=1;
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -) # lone dash → treat as positional (STDIN)
+      break
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      usage_hint
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+# Validate that only one extract mode is chosen; -e and -E cannot be combined
+if [[ $extract_mode -eq 1 && $extract_native -eq 1 ]]; then
+  echo "Error: --extract (-e) and --extract-native (-E) cannot be used together." >&2
+  usage_hint
+  exit 1
+fi
+
+# Input arg
+if [[ $# -lt 1 ]]; then
+  echo "Error: No input file specified." >&2
+  usage_hint
+  exit 1
+fi
+input="$1"
+
+# Validate input is a valid file unless input is "-" (STDIN)
+if [[ "$input" != "-" ]] && [[ ! -f "$input" ]]; then
+  echo "Error: File not found: $input" >&2
+  usage_hint
+  exit 1
+fi
+
+# Stream input from file or stdin
+read_input() {
+  if [[ "$input" == "-" ]]; then
+    cat
+  else
+    cat "$input"
+  fi
+}
+
+# Wrapper around bitdowntoc invocation
+run_bitdowntoc() {
+  local mode="$1"
+
+  case "$mode" in
+    toc-only)
+      read_input | bitdowntoc --profile=GITHUB --indent-spaces=2 --indent-chars=- --toc-only -
+      ;;
+    full)
+      read_input | bitdowntoc --profile=GITHUB --indent-spaces=2 --indent-chars=- -
+      ;;
+    *)
+      echo "Error: invalid run_bitdowntoc mode: $mode" >&2
+      exit 1
+      ;;
+  esac
+}
+
+# Cleanup filters for full-doc output
+clean_output() {
+  gsed -zE '
+    # Replace the old URL with the new one
+    s|(<!-- TOC start[^>]*)https://github.com/derlin/bitdowntoc([^>]*>)|\1https://bitdowntoc.derlin.ch/\2|g;
+
+    # Remove extra blank line after <!-- TOC start ... -->
+    s|(<!-- TOC start[^>]*>)\n\n|\1\n|g;
+
+    # Remove extra blank line before <!-- TOC end ... -->
+    s|\n\n(<!-- TOC end[^>]*>)|\n\1|g
+  ' | tr -d '\000'  # gsed -z may emit a trailing NUL; strip NULs to restore normal line semantics
+}
+
+# Core generation pipeline
+generate_toc_stream() {
+  read_input \
+  | bitdowntoc --profile=GITHUB --indent-spaces=2 --indent-chars=- - \
+  | gsed -zE '
+      # Replace the old URL with the new one
+      s|(<!-- TOC start[^>]*)https://github.com/derlin/bitdowntoc([^>]*>)|\1https://bitdowntoc.derlin.ch/\2|g;
+
+      # Remove extra blank line after <!-- TOC start ... -->
+      s|(<!-- TOC start[^>]*>)\n\n|\1\n|g;
+
+      # Remove extra blank line before <!-- TOC end ... -->
+      s|\n\n(<!-- TOC end[^>]*>)|\n\1|g
+  ' \
+  | tr -d '\000' # gsed -z may emit a trailing NUL; strip NULs to restore normal line semantics
+}
+
+# Main control flow
+if [[ $extract_native -eq 1 ]]; then
+  run_bitdowntoc "toc-only" | clean_output
+elif [[ $extract_mode -eq 1 ]]; then
+  run_bitdowntoc "full" | clean_output | sed -n '/<!-- TOC start/,/<!-- TOC end/p'
+else
+  run_bitdowntoc "full" | clean_output
+fi
