@@ -1,7 +1,7 @@
 # https://git-scm.com/docs/git-config
 [core]
   excludesfile = ~/.gitignore_global
-  editor = subl -n -w
+  editor = subl --new-window --wait
   pager = delta                    # https://github.com/dandavison/delta#get-started
 
 [interactive]
