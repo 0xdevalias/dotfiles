@@ -1,4 +1,6 @@
-export EDITOR='subl --new-window --wait'
+if (( $+commands[subl] )); then
+  export EDITOR='subl --new-window --wait'
+fi
 
 # zoxide is a smarter cd command, inspired by z and autojump.
 # https://github.com/ajeetdsouza/zoxide
