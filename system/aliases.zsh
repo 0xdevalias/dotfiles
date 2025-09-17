@@ -63,23 +63,12 @@ binutils-exec() {
 }
 
 # Internal setup: define aliases for selected binutils tools
+# Each alias delegates to binutils-exec, so all logic stays DRY
 _binutils-setup-aliases() {
-  local binutils_prefix tool
-  binutils_prefix="$(brew --prefix binutils 2>/dev/null)/bin"
-
-  if [[ -d "$binutils_prefix" ]]; then
-    for tool in "$@"; do
-      if [[ -x "$binutils_prefix/$tool" ]]; then
-        alias $tool="$binutils_prefix/$tool"
-      else
-        alias $tool="echo \"⚠️ $tool not found in binutils install.\" >&2"
-      fi
-    done
-  else
-    for tool in "$@"; do
-      alias $tool="echo \"❌ binutils not installed. Install with: brew install binutils\" >&2"
-    done
-  fi
+  local tool
+  for tool in "$@"; do
+    alias $tool="binutils-exec $tool"
+  done
 }
 
 # Configure default binutils aliases (extend this list as needed)
