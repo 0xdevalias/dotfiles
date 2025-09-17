@@ -1,3 +1,67 @@
+# List all binaries provided by the Homebrew binutils keg
+binutils-list() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: binutils-list"
+    echo "List all binaries provided by the Homebrew binutils keg."
+    return 0
+  fi
+
+  local binutils_prefix="$(brew --prefix binutils 2>/dev/null)/bin"
+  if [[ -d "$binutils_prefix" ]]; then
+    ls -1 "$binutils_prefix"
+  else
+    echo "❌ binutils not installed. Install with: brew install binutils"
+    return 1
+  fi
+}
+
+# Check if one or more tools exist in the Homebrew binutils keg
+binutils-has() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: binutils-has <tool> [tool...]"
+    echo "Check if one or more tools exist in the Homebrew binutils keg."
+    return 0
+  fi
+
+  local binutils_prefix="$(brew --prefix binutils 2>/dev/null)/bin"
+  local tool
+  if [[ ! -d "$binutils_prefix" ]]; then
+    echo "❌ binutils not installed. Install with: brew install binutils"
+    return 2
+  fi
+  for tool in "$@"; do
+    if [[ -x "$binutils_prefix/$tool" ]]; then
+      echo "✅ $tool is available at: $binutils_prefix/$tool"
+    else
+      echo "⚠️ $tool not found in binutils install."
+    fi
+  done
+}
+
+# Execute a tool from the Homebrew binutils keg
+# Handles cases where the tool is missing or binutils is not installed
+binutils-exec() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: binutils-exec <tool> [args...]"
+    echo "Execute a tool from the Homebrew binutils keg."
+    echo "Examples:"
+    echo "  binutils-exec gstrings file"
+    return 0
+  fi
+
+  local tool=$1; shift
+  local binutils_prefix="$(brew --prefix binutils 2>/dev/null)/bin"
+  if [[ -x "$binutils_prefix/$tool" ]]; then
+    "$binutils_prefix/$tool" "$@"
+  elif [[ -d "$binutils_prefix" ]]; then
+    echo "⚠️ $tool not found in binutils install." >&2
+    return 1
+  else
+    echo "❌ binutils not installed. Install with: brew install binutils" >&2
+    return 2
+  fi
+}
+
 # Internal setup: define aliases for selected binutils tools
 _binutils-setup-aliases() {
   local binutils_prefix tool
