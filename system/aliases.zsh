@@ -1,3 +1,26 @@
+# Internal setup: define aliases for selected binutils tools
+_binutils-setup-aliases() {
+  local binutils_prefix tool
+  binutils_prefix="$(brew --prefix binutils 2>/dev/null)/bin"
+
+  if [[ -d "$binutils_prefix" ]]; then
+    for tool in "$@"; do
+      if [[ -x "$binutils_prefix/$tool" ]]; then
+        alias $tool="$binutils_prefix/$tool"
+      else
+        alias $tool="echo \"⚠️ $tool not found in binutils install.\" >&2"
+      fi
+    done
+  else
+    for tool in "$@"; do
+      alias $tool="echo \"❌ binutils not installed. Install with: brew install binutils\" >&2"
+    done
+  fi
+}
+
+# Configure default binutils aliases (extend this list as needed)
+_binutils-setup-aliases gstrings
+
 # grc overides for ls
 #   Made possible through contributions from generous benefactors like
 #   `brew install coreutils`
