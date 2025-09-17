@@ -74,6 +74,67 @@ _binutils-setup-aliases() {
 # Configure default binutils aliases (extend this list as needed)
 _binutils-setup-aliases gstrings
 
+# Install a custom command-not-found handler that adds binutils-specific hints.
+#
+# Behavior:
+# - Preserves any existing handler (e.g. Homebrew’s command-not-found).
+# - Runs the previous handler first, so its messages aren’t lost.
+# - Then checks whether the missing command is part of the `binutils` formula:
+#   - If installed but not linked, suggests running via `binutils-exec`.
+#   - If not installed, suggests installing with `brew install binutils`.
+#
+# This ensures users get actionable guidance for `binutils` tools without
+# interfering with the normal fallback hints for other commands.
+_binutils-register-command-not-found-handler() {
+  # Save any existing handler (so we can chain)
+  if (( $+functions[command_not_found_handler] )); then
+    functions[_prev_command_not_found_handler]=$functions[command_not_found_handler]
+  fi
+
+  _binutils_command_not_found_handler() {
+    local cmd=$1
+    local binutils_prefix="$(brew --prefix binutils 2>/dev/null)/bin"
+
+    # Style vars (dim / reset)
+    local dim=$'\e[2m'    # dim=$(tput dim 2>/dev/null)
+    local reset=$'\e[0m'  # reset=$(tput sgr0 2>/dev/null)
+
+    # Run the previous handler first if one exists (e.g., Homebrew’s command-not-found)
+    local prev_output=""
+    if (( $+functions[_prev_command_not_found_handler] )); then
+      # _prev_command_not_found_handler "$cmd"
+      prev_output=$(HOMEBREW_COMMAND_NOT_FOUND_CI=1 _prev_command_not_found_handler "$cmd" 2>&1)
+      [[ -n "$prev_output" ]] && print -r -- "$prev_output" >&2
+    else
+      echo "zsh: command not found: $cmd"
+    fi
+
+    # Then, if binutils is installed and provides the tool, print a dimmed usage hint
+    if [[ -d "$binutils_prefix" && -x "$binutils_prefix/$cmd" ]]; then
+      echo
+      echo "${dim}ℹ️ '$cmd' is provided by the 'binutils' formula (installed via Homebrew), but is not linked by default."
+      echo "   Run with: binutils-exec $*${reset}"
+    else
+      # Only show our "install binutils" hint if the previous handler did not already suggest it
+      if [[ "$prev_output" != *"brew install binutils"* ]]; then
+        echo
+        echo "${dim}ℹ️ '$cmd' is available in the 'binutils' formula."
+        echo "   Install with: brew install binutils${reset}"
+      fi
+    fi
+
+    return 127
+  }
+
+  # Point the shell’s hook at our real function
+  command_not_found_handler() {
+    _binutils_command_not_found_handler "$@"
+  }
+}
+
+# Enable the custom binutils command-not-found handler.
+_binutils-register-command-not-found-handler
+
 # grc overides for ls
 #   Made possible through contributions from generous benefactors like
 #   `brew install coreutils`
