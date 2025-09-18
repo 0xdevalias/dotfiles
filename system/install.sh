@@ -63,8 +63,8 @@ require_installed_brew "bat"                         # Clone of cat(1) with synt
 require_installed_brew "jq"                          # Lightweight and flexible command-line JSON processor: https://stedolan.github.io/jq/
 require_installed_brew "jid"                         # Json Incremental Digger. You can drill down JSON interactively by using filtering queries like jq: https://github.com/simeji/jid
 require_installed_brew "xq"                          # Command-line XML and HTML beautifier and content extractor: https://github.com/sibprogrammer/xq
-require_installed_brew "pup"                         # Parse HTML at the command-line
-require_installed_brew "cascadia"                    # Go cascadia package command-line CSS selector
+require_installed_brew "pup"                         # Parsing HTML at the command line: https://github.com/ericchiang/pup
+require_installed_brew "cascadia"                    # Go cascadia package command line CSS selector: https://github.com/suntong/cascadia
 require_installed_brew "fx"                          # Terminal JSON viewer: https://fx.wtf
 require_installed_brew "dasel"                       # JSON, YAML, TOML, XML, and CSV query and modification tool: https://github.com/TomWright/dasel
 require_installed_brew "gron"                        # Make JSON greppable: https://github.com/tomnomnom/gron
