@@ -70,6 +70,7 @@ require_installed_brew "fx"                          # Terminal JSON viewer: htt
 require_installed_brew "dasel"                       # JSON, YAML, TOML, XML, and CSV query and modification tool: https://github.com/TomWright/dasel
 require_installed_brew "gron"                        # Make JSON greppable: https://github.com/tomnomnom/gron
 require_installed_brew "csvlens"                     # Command line csv viewer: https://github.com/YS-L/csvlens
+require_installed_brew "qsv"                         # Blazing-fast Data-Wrangling toolkit: https://github.com/dathere/qsv
 require_installed_brew "ast-grep"                    # A CLI tool for code structural search, lint and rewriting. Written in Rust: https://github.com/ast-grep/ast-grep
 require_installed_brew "git-delta"                   # Syntax-highlighting pager for git and diff output: https://github.com/dandavison/delta
 require_installed_brew "difftastic"                  # Diff that understands syntax: https://github.com/Wilfred/difftastic
