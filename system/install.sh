@@ -62,6 +62,7 @@ require_installed_brew "ripgrep-all"                 # rga: ripgrep, but also se
 require_installed_brew "bat"                         # Clone of cat(1) with syntax highlighting and Git integration: https://github.com/sharkdp/bat
 require_installed_brew "jq"                          # Lightweight and flexible command-line JSON processor: https://stedolan.github.io/jq/
 require_installed_brew "jid"                         # Json Incremental Digger. You can drill down JSON interactively by using filtering queries like jq: https://github.com/simeji/jid
+require_installed_brew "jd"                          # JSON diff and patch. jd is a commandline utility and Go library for diffing and patching JSON and YAML values: https://github.com/josephburnett/jd
 require_installed_brew "xq"                          # Command-line XML and HTML beautifier and content extractor: https://github.com/sibprogrammer/xq
 require_installed_brew "pup"                         # Parsing HTML at the command line: https://github.com/ericchiang/pup
 require_installed_brew "cascadia"                    # Go cascadia package command line CSS selector: https://github.com/suntong/cascadia
