@@ -140,15 +140,31 @@ _binutils-register-command-not-found-handler() {
 # Enable the custom binutils command-not-found handler.
 _binutils-register-command-not-found-handler
 
-# grc overides for ls
+# grc overrides for ls
 #   Made possible through contributions from generous benefactors like
 #   `brew install coreutils`
-if $(gls &>/dev/null)
-then
-  alias ls="gls -F --color"
-  alias l="gls -lAh --color"
-  alias ll="gls -l --color"
-  alias la='gls -A --color'
+#
+# Notes:
+# - We prefer GNU `ls` (gls) because it has richer flags than BSD/macOS `ls`.
+# - `--color=auto` means:
+#     - Show colours when writing to a terminal.
+#     - Suppress colours when piped/redirected (avoids polluting output).
+# - `-F` appends a symbol to entries: `/` for dirs, `*` for executables, etc.
+# - `-l` long format (permissions, owner, size, date).
+# - `-A` show all except `.` and `..` (like `-a` but cleaner).
+# - `-h` human-readable sizes (e.g. 1K, 234M).
+#
+# Aliases:
+#   ls   → normal with classify (-F) and colour
+#   l    → long, almost-all, human-readable
+#   ll   → long format only
+#   la   → almost-all
+if (( $+commands[gls] )); then
+  alias ls="gls --color=auto"
+  # alias ls="gls -F --color=auto"
+  alias l="gls -lAh --color=auto"
+  alias ll="gls -l --color=auto"
+  alias la="gls -A --color=auto"
 fi
 
 # zoxide is a smarter cd command, inspired by z and autojump.
