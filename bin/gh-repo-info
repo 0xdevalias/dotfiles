@@ -1,0 +1,194 @@
+#!/bin/bash
+
+SCRIPT_NAME="$(basename "$0")"
+
+# Default values
+verbose=false
+output_format="text"
+
+# Function to display usage
+show_usage() {
+    cat << EOF
+Usage: $SCRIPT_NAME [OPTIONS] REPOSITORY
+
+Extract repository description and README information from a GitHub repository.
+
+REPOSITORY can be a full GitHub URL (https://github.com/owner/repo) or
+just the repo path (owner/repo).
+
+Options:
+  -h, --help           Show this help message and exit
+  -v, --verbose        Show more detailed output
+  -f, --format FORMAT  Output format: text (default), json, or csv
+
+Examples:
+  $SCRIPT_NAME sourcegraph/lsif-protocol
+  $SCRIPT_NAME --format json https://github.com/sourcegraph/lsif-protocol
+  $SCRIPT_NAME -v kubernetes/kubernetes
+
+This script requires the GitHub CLI (gh) to be installed and authenticated.
+EOF
+    exit 0
+}
+
+error_exit() {
+  local msg="$1"
+  local footer="${2:-Usage: '$SCRIPT_NAME --help'}"
+
+  echo "Error: $msg" >&2
+  echo "  $footer" >&2
+  exit 1
+}
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      show_usage
+      ;;
+    -v|--verbose)
+      verbose=true
+      shift
+      ;;
+    -f|--format)
+      if [[ -n "$2" ]]; then
+        output_format="$2"
+        shift 2
+      else
+        error_exit "Error: --format requires an argument"
+      fi
+      ;;
+    --) # end of options
+      shift
+      break
+      ;;
+    -*) # unknown flag
+      error_exit "Unknown option: $1"
+      ;;
+    *) # first non-flag arg = repo
+      break
+      ;;
+  esac
+done
+
+# After getopt parsing, before resolving repos
+for arg in "$@"; do
+  case "$arg" in
+    -*)
+      error_exit "Error: option '$arg' must be placed before the repository argument(s)."
+      ;;
+  esac
+done
+
+# Check that exactly one repository is provided
+if [ $# -lt 1 ]; then
+    error_exit "REPOSITORY is required"
+elif [ $# -gt 1 ]; then
+    error_exit "Only a single REPOSITORY may be specified at a time"
+fi
+
+# Extract repo name from input
+if [[ $1 =~ github.com/(.+) ]]; then
+    repo=${BASH_REMATCH[1]}
+else
+    repo=$1
+fi
+
+# Check if gh is installed
+if ! command -v gh &> /dev/null; then
+    error_exit \
+        "Error: GitHub CLI (gh) is not installed." \
+        "Please install it from https://cli.github.com/"
+fi
+
+# Check if gh is authenticated
+if ! gh auth status &> /dev/null; then
+    error_exit \
+        "Error: GitHub CLI is not authenticated." \
+        "Please run 'gh auth login' first."
+fi
+
+# Get repository information
+if $verbose; then
+    echo "Fetching data for $repo..."
+fi
+
+# Get repository description
+if ! description=$(gh repo view "$repo" --json description --jq .description 2>/dev/null); then
+    error_exit \
+        "Error: Failed to fetch repository information." \
+        "Please check if the repository exists and that you have access."
+fi
+
+# Get README content and extract information
+if ! readme_response=$(gh api "repos/$repo/readme" 2>/dev/null); then
+    readme_title="N/A"
+    readme_first_para="N/A"
+    if $verbose; then
+        echo "Warning: README not found or not accessible."
+    fi
+else
+    readme_content=$(echo "$readme_response" | jq -r .content | base64 -d)
+
+    # Extract title (first heading)
+    if ! readme_title=$(echo "$readme_content" | grep -m 1 "^#" | sed 's/^#* //'); then
+        readme_title="N/A"
+    fi
+
+    # Extract first paragraph / intro block
+    if ! readme_first_para=$(
+        echo "$readme_content" | awk '
+          BEGIN { inpara=0 }
+          /^#/   { if (inpara) exit; next }          # heading = stop if already capturing
+          /^---/ { if (inpara) exit; next }          # horizontal rule = stop if already capturing
+          {
+            # Handle blank lines
+            if ($0 ~ /^[[:space:]]*$/) {
+              if (inpara) { buf = buf "\n"; next }   # keep internal blank lines
+              else next                              # skip leading blanks
+            }
+            inpara=1
+            buf = buf $0 "\n"                        # accumulate content
+          }
+          END {
+            sub(/^[[:space:]\n]+/, "", buf)          # trim leading blank lines/spaces
+            sub(/[[:space:]\n]+$/, "", buf)          # trim trailing blank lines/spaces
+            printf "%s", buf                         # print without adding extra newline
+          }
+        '
+    ); then
+        readme_first_para="N/A"
+    fi
+fi
+
+# Output based on format
+case "$output_format" in
+    "json")
+        jq -n \
+          --arg repository "$repo" \
+          --arg description "$description" \
+          --arg readme_title "$readme_title" \
+          --arg readme_first_paragraph "$readme_first_para" \
+          '{
+            $repository,
+            $description,
+            $readme_title,
+            $readme_first_paragraph
+          }'
+        ;;
+    "csv")
+        echo "Repository,Description,README Title,README First Paragraph"
+        printf '"%s","%s","%s","%s"\n' \
+          "$repo" \
+          "${description//\"/\"\"}" \
+          "${readme_title//\"/\"\"}" \
+          "${readme_first_para//\"/\"\"}"
+        ;;
+    "text"|*)
+        echo "Repository: $repo"
+        echo "Description: $description"
+        echo "README Title: $readme_title"
+        echo "README First Paragraph:"
+        echo "$readme_first_para"
+        ;;
+esac
