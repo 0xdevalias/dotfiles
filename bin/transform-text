@@ -47,6 +47,7 @@
 SCRIPT_NAME=$(basename "$0")
 DEFAULT_OUTPUT_MODE="standalone"
 ENABLE_QUICKLOOK=false
+OUTPUT_MODE=""
 
 # Define available transformations
 read -r -d '' TRANSFORMS << 'TRANSFORMS'
@@ -117,15 +118,18 @@ error_exit() {
 while [[ $# -gt 0 ]]; do
   case $1 in
     -o|--output)
-      case "$2" in
+      case "${2:l-}" in
         standalone|alfred)
-          OUTPUT_MODE="$2"
+          OUTPUT_MODE="${2:l}"
+          shift 2
+          ;;
+        "")
+          error_exit "--output: missing MODE. Must be 'standalone' or 'alfred'"
           ;;
         *)
-          error_exit "Invalid output mode '$2'. Must be 'standalone' or 'alfred'"
+          error_exit "--output: invalid MODE '$2'. Must be 'standalone' or 'alfred'"
           ;;
       esac
-      shift 2
       ;;
     -t|--transform)
       TRANSFORM="$2"
@@ -151,23 +155,31 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Apply defaults for unset parameters
+# Default to standalone mode when the user omits --output.
 OUTPUT_MODE="${OUTPUT_MODE:-$DEFAULT_OUTPUT_MODE}"
 
-# Validate requirements
-if [[ $OUTPUT_MODE == "standalone" && -z "$TRANSFORM" ]]; then
-  error_exit \
-    "--transform TYPE is required in standalone mode" \
-    "Run '$SCRIPT_NAME --list-transforms' to see available transformations"
-fi
+# Validate requirements based on selected output mode
+case "$OUTPUT_MODE" in
+  standalone)
+    if [[ "$ENABLE_QUICKLOOK" == "true" ]]; then
+      error_exit "--quicklook: cannot be used in standalone mode (only available with --output alfred)"
+    fi
 
-if [[ "$OUTPUT_MODE" == "alfred" && -n "$TRANSFORM" ]]; then
-  error_exit "--transform cannot be used in alfred mode"
-fi
-
-if [[ "$ENABLE_QUICKLOOK" == "true" && "$OUTPUT_MODE" != "alfred" ]]; then
-  error_exit "--quicklook requires --output alfred"
-fi
+    if [[ -z "$TRANSFORM" ]]; then
+      error_exit \
+        "--transform: TYPE is required in standalone mode" \
+        "Run '$SCRIPT_NAME --list-transforms' to see available transformations"
+    fi
+    ;;
+  alfred)
+    if [[ -n "$TRANSFORM" ]]; then
+      error_exit "--transform: cannot be used in alfred mode (only available with --output standalone)"
+    fi
+    ;;
+  *)
+    error_exit "--output: unexpected mode '$OUTPUT_MODE'"
+    ;;
+esac
 
 # Read from stdin if no text argument provided
 if [[ -z "$TEXT" ]] && [[ -t 0 ]]; then
