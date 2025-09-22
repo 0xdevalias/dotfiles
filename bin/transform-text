@@ -275,6 +275,7 @@ jq -n --raw-output --join-output \
          .type as $type |
          ($query | apply_transform($type)) as $transformed |
          {
+           uid: ("transform-text-" + $type),
            title,
            subtitle: ("Result: " + ($transformed | escape_newlines)),
            valid: true,
@@ -290,6 +291,7 @@ jq -n --raw-output --join-output \
          } | add_quicklook($type)
        ))
        + [{
+           uid: "transform-text-as-is",
            title: "Output as-is",
            subtitle: ("Result: " + ($query | escape_newlines) + " (Hold ⌘, ⌥, or ⌃ to select)"),
            valid: false,
