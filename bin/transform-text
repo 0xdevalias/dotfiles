@@ -55,7 +55,8 @@ read -r -d '' TRANSFORMS << 'TRANSFORMS'
   { "type": "indent4", "title": "Indent: 4 spaces", "description": "Indent with 4 spaces" },
   { "type": "dedent2", "title": "Dedent: 2 spaces", "description": "Remove 2 space indentation" },
   { "type": "blockquote", "title": "Markdown Blockquote", "description": "Add Markdown blockquote" },
-  { "type": "list", "title": "Markdown List", "description": "Add Markdown list items" }
+  { "type": "list", "title": "Markdown List", "description": "Add Markdown list items" },
+  { "type": "listblockquote", "title": "Markdown List + Blockquote", "description": "List where each item is a blockquote" }
 ]
 TRANSFORMS
 
@@ -261,6 +262,19 @@ jq -n --raw-output --join-output \
      prefix_lines("> "; 1)
    elif type == "list" then
      prefix_lines("- "; 1)
+   elif type == "listblockquote" then
+     (
+       split("\n")
+       | to_entries
+       | map(
+           if .key == 0 then
+             "- > " + .value
+           else
+             "  > " + .value
+           end
+         )
+       | join("\n")
+     )
    else
      error("Unknown transform type: " + type)
    end;
