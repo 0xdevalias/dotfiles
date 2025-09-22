@@ -121,7 +121,7 @@ error_exit() {
 while [[ $# -gt 0 ]]; do
   case $1 in
     -o|--output)
-      case "${2:l-}" in
+      case "${2:l}" in
         standalone|alfred)
           OUTPUT_MODE="${2:l}"
           shift 2
@@ -148,7 +148,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --disable-as-is)
-      case "${2:l-}" in
+      case "${2:l}" in
         default|cmd|alt|ctrl|none)
           DISABLE_AS_IS="${2:l}"
           shift 2
