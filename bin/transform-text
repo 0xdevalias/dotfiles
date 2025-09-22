@@ -347,9 +347,27 @@ jq -n --raw-output --join-output \
            valid: ($disable_as_is != "default"),
            arg: $query,
            mods: {
-             cmd: { valid: ($disable_as_is != "cmd"), arg: $query, variables: { TEXT: $query } },
-             alt: { valid: ($disable_as_is != "alt"), arg: $query, variables: { TEXT: $query } },
-             ctrl: { valid: ($disable_as_is != "ctrl"), arg: $query, variables: { TEXT: $query } }
+             cmd: (
+               if $disable_as_is == "cmd" then
+                 { valid: false, subtitle: "⌘: Command modifier disabled" }
+               else
+                 { valid: true, arg: $query, variables: { TEXT: $query } }
+               end
+             ),
+             alt: (
+               if $disable_as_is == "alt" then
+                 { valid: false, subtitle: "⌥: Option modifier disabled" }
+               else
+                 { valid: true, arg: $query, variables: { TEXT: $query } }
+               end
+             ),
+             ctrl: (
+               if $disable_as_is == "ctrl" then
+                 { valid: false, subtitle: "⌃: Control modifier disabled" }
+               else
+                 { valid: true, arg: $query, variables: { TEXT: $query } }
+               end
+             )
            },
            text: { copy: $query, largetype: $query }
          } | add_quicklook("as-is")]
