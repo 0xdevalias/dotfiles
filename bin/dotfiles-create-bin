@@ -1,8 +1,13 @@
 #!/usr/bin/env zsh
 
+# TODO: add fzf mode for filename selection / previews in future
+
 script_name=$(basename "$0")  # Using basename for script name
 watch_mode=false              # Default: Do not wait for file save
 save_dir="$ZSH/bin"           # Bin script save directory
+new_file_input=""             # Raw --file argument
+new_file=""                   # Resolved path if provided via --file
+insert_snippet=true           # Default: insert template snippet
 
 usage() {
   echo "Usage: $script_name [options]"
@@ -12,56 +17,226 @@ usage() {
   echo "and prompts the user to save the script."
   echo
   echo "Options:"
-  echo "  -w, --watch  Wait for the file to be saved and prompt before making it executable"
-  echo "  -h, --help   Show this help message"
+  echo "  -f, --file <name|path>"
+  echo "                      Create a script (bare names go to $save_dir), make it executable, and open in Sublime"
+  echo "      --no-snippet   Do not insert the zsh snippet (still sets Bash filetype)"
+  echo "  -w, --watch        Wait for the file to be saved and prompt before making it executable"
+  echo "  -h, --help         Show this help message"
+  echo
+  echo "Mutually Exclusive Options:"
+  echo "  --file and --watch cannot be used together."
+  echo
+  echo "Dependencies:"
+  echo "  Requires Sublime Text's \`subl\` CLI and \`jq\`."
   exit 0
 }
 
-# Parse arguments
+error_exit() {
+  local msg="$1"
+  local footer="${2:-Usage: '$script_name --help'}"
+
+  echo ""
+  echo "Error: $msg" >&2
+  echo "  $footer" >&2
+  echo ""
+  exit 1
+}
+
+# Check for required dependencies using alternating key/value pairs
+# Usage:
+#   check_dependencies \
+#     subl "brew install --cask sublime-text" \
+#     jq   "brew install jq"
+check_dependencies() {
+  if (( $# == 0 )); then
+    error_exit "check_dependencies requires at least one dependency pair"
+  fi
+
+  if (( $# % 2 != 0 )); then
+    error_exit "check_dependencies expects key/hint pairs"
+  fi
+
+  local -A deps=("$@")
+  local missing=()
+
+  for cmd hint in "${(@kv)deps}"; do
+    if ! (( $+commands[$cmd] )); then
+      missing+=("$cmd (install: $hint)")
+    fi
+  done
+
+  if (( ${#missing[@]} > 0 )); then
+    echo ""
+    echo "Error: Missing required dependencies:" >&2
+    for dep in "${missing[@]}"; do
+      echo "  - $dep" >&2
+    done
+    echo ""
+    exit 1
+  fi
+}
+
+# === Parse arguments ===
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -w|--watch)
       watch_mode=true
       shift
       ;;
+    -f|--file)
+      if [[ -z "$2" ]]; then
+        error_exit "--file requires a path argument"
+      fi
+      new_file_input="$2"
+      shift 2
+      ;;
+    --no-snippet)
+      insert_snippet=false
+      shift
+      ;;
     -h|--help)
       usage
       ;;
     *)
-      echo "error: Unknown option '$1'" >&2
-      usage
+      error_exit "Unknown option '$1'"
       ;;
   esac
 done
 
-# Ensure Sublime Text CLI is available
-if ! (( $+commands[subl] )); then
-  echo "error: Need Sublime Text's subl CLI to use this helper" >&2
-  exit 1
+# === Validation ===
+if $watch_mode && [[ -n "$new_file_input" ]]; then
+  error_exit "--file and --watch cannot be used together"
 fi
+
+if [[ -n "$new_file_input" ]]; then
+  if [[ "$new_file_input" == */* ]]; then
+    new_file="$new_file_input"
+  else
+    new_file="$save_dir/$new_file_input"
+  fi
+
+  save_dir_abs=${save_dir:A}
+  new_file_abs=${new_file:A}
+
+  if [[ "$new_file_abs" != "$save_dir_abs" && "$new_file_abs" != ${save_dir_abs}/* ]]; then
+    echo ""
+    echo "⚠️  Target path is outside $save_dir_abs: $new_file_abs"
+    echo -n "Proceed anyway? [y/N] "
+    if ! read -q; then
+      echo ""
+      error_exit "Aborting creation outside dotfiles bin" "User canceled operation"
+    fi
+    echo ""
+  fi
+
+  new_file="$new_file_abs"
+
+  if [[ -e "$new_file" ]]; then
+    error_exit "File already exists: $new_file"
+  fi
+fi
+
+# === Dependency Checks ===
+check_dependencies \
+  subl "brew install --cask sublime-text" \
+  jq   "brew install jq"
 
 # Function to get a list of files in a directory, sorted by last modified time (newest first)
 get_sorted_files() {
   local dir="$1"
-  # Run 'ls -t' to get files sorted by last modified time
-  # - The '(@f)' modifier ensures output is split into an array (one filename per entry)
-  echo "${(@f)$(ls -t "$dir" 2>/dev/null)}"
+
+  # ls -1t: one per line, sorted newest first
+  # (@f): split output into an array (one filename per entry)
+  echo "${(@f)$(ls -1t "$dir" 2>/dev/null)}"
 }
 
+# Prompt user to make file executable
+prompt_make_executable() {
+  local file="$1"
+
+  if [[ ! -f "$file" ]]; then
+    echo ""
+    echo "⚠️  $file is not a regular file; skipping executable check."
+    return
+  fi
+
+  if [[ -x "$file" ]]; then
+    echo ""
+    echo "ℹ️  $file is already executable."
+  else
+    echo ""
+    echo -n "Make $file executable? [y/N] "
+    if read -q; then
+      chmod +x "$file"
+      echo -e "\n\n✅ $file is now executable!"
+    else
+      echo -e "\n\nSkipping chmod +x. You can do this manually with:"
+      echo "  chmod +x \"$file\""
+    fi
+  fi
+}
+
+# Launch Sublime
+# Modes:
+#   file  → open an existing file, set file type, insert snippet (optional)
+#   watch → open blank, set file type, insert snippet (optional), prompt Save As
+launch_sublime() {
+  local mode="$1"
+  local target_path="$2"
+
+  local cmds=()
+  cmds+=('{"command":"set_file_type","args":{"syntax":"Packages/ShellScript/Bash.sublime-syntax"}}')
+
+  if $insert_snippet; then
+    cmds+=('{"command":"insert_snippet","args":{"name":"Packages/User/zsh_script_template.sublime-snippet"}}')
+  fi
+
+  if [[ "$mode" == "watch" ]]; then
+    cmds+=('{"command":"prompt_save_as"}')
+  fi
+
+  local chain
+  chain=$(jq -cn --argjson cmds "[${(j:, :)cmds}]" '{commands:$cmds}')
+
+  case "$mode" in
+    file)
+      subl --new-window --command "chain $chain" "$target_path"
+      ;;
+    watch)
+      subl --new-window --command "chain $chain"
+      ;;
+    *)
+      error_exit "launch_sublime invalid mode: $mode"
+      ;;
+  esac
+}
+
+# === File mode ===
+if [[ -n "$new_file" ]]; then
+  echo "Creating new script at $new_file..."
+  mkdir -p "$(dirname "$new_file")"
+  touch "$new_file"
+  chmod +x "$new_file"
+
+  launch_sublime file "$new_file"
+
+  echo ""
+  echo "✅ Script created at: $new_file"
+  echo "   It was made executable and opened in Sublime for editing."
+  exit 0
+fi
+
+# === Watch mode ===
 echo "Generating a new ${ZSH}/bin script using Sublime Text ZSH template snippet"
-echo "You could also do this manually within Sublime Text by triggering the zsh_script_template snippet"
+echo "You could also do this manually by triggering the zsh_script_template snippet in Sublime."
 
 # Capture initial file list if watching
 if $watch_mode; then
   initial_files=($(get_sorted_files "$save_dir"))
 fi
 
-# Launch Sublime Text
-subl --new-window --command 'chain {"commands":[
-    {"command": "insert_snippet", "args": {"name": "Packages/User/zsh_script_template.sublime-snippet"}},
-    {"command": "set_file_type", "args": {"syntax": "Packages/ShellScript/Bash.sublime-syntax"}},
-    {"command": "prompt_save_as"}
-  ]}'
+# Launch Sublime in 'watch' mode:
+launch_sublime watch
 
 if $watch_mode; then
   echo ""
@@ -97,17 +272,10 @@ if $watch_mode; then
     fi
   fi
 
-  # Ask user before making the script executable
-  echo ""
-  echo -n "Make $new_script executable? [y/N] "
-  if read -q; then
-    chmod +x "$new_script"
-    echo -e "\n\n$new_script is now executable!"
-  else
-    echo -e "\n\nSkipping chmod +x. You can do this manually with:"
-    echo "  chmod +x \"$new_script\""
-  fi
+  # Prompt to make it executable
+  prompt_make_executable "$new_script"
 else
+  echo ""
   echo "Remember to make the script executable:"
   echo "  chmod +x <new_script_path>"
 fi
