@@ -46,6 +46,7 @@
 # Script configuration
 SCRIPT_NAME=$(basename "$0")
 DEFAULT_OUTPUT_MODE="standalone"
+ENABLE_QUICKLOOK=false
 
 # Define available transformations
 read -r -d '' TRANSFORMS << 'TRANSFORMS'
@@ -81,6 +82,7 @@ Options:
   -o, --output MODE       Output mode: standalone or alfred (default: $DEFAULT_OUTPUT_MODE)
   -t, --transform TYPE    Apply specific transformation (standalone mode only; available types: $(get_transform_types))
   -l, --list-transforms   List available transformations
+  -q, --quicklook         Generate Quick Look previews (alfred mode only)
   -h, --help              Show this help message
 
 Available transformations:
@@ -133,6 +135,10 @@ while [[ $# -gt 0 ]]; do
       print_transforms_list
       exit 0
       ;;
+    -q|--quicklook)
+      ENABLE_QUICKLOOK=true
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -158,6 +164,10 @@ if [[ "$OUTPUT_MODE" == "alfred" && -n "$TRANSFORM" ]]; then
   error_exit "--transform cannot be used in alfred mode"
 fi
 
+if [[ "$ENABLE_QUICKLOOK" == "true" && "$OUTPUT_MODE" != "alfred" ]]; then
+  error_exit "--quicklook requires --output alfred"
+fi
+
 # Read from stdin if no text argument provided
 if [[ -z "$TEXT" ]] && [[ -t 0 ]]; then
   usage
@@ -166,12 +176,52 @@ elif [[ -z "$TEXT" ]]; then
   TEXT=$(cat)
 fi
 
+# In Alfred mode, generate Quick Look preview files for each transform (and "as-is").
+# Each transform result is written to /tmp with a predictable filename so Alfred can
+# display the contents when 'shift' is pressed.
+#
+# At the same time, build a JSON object mapping transform type -> file path, which is
+# passed into jq for use as `quicklookurl`.
+#
+# See Also:
+#   https://www.alfredapp.com/help/workflows/inputs/script-filter/json/#:~:text=quicklookurl%20%3A%20STRING%20(optional)
+QUICKLOOK_JSON="{}"
+if [[ "$OUTPUT_MODE" == "alfred" && "$ENABLE_QUICKLOOK" == "true" ]]; then
+  # Directory and filename prefix for Quick Look preview files
+  preview_dir="/tmp"
+  prefix="dotfiles-transform-text-alfred-quicklook-preview"
+
+  QUICKLOOK_JSON=$(
+    # Start jq array mode, then combine later
+    # for t in as-is indent2 indent4 dedent2 blockquote list; do
+    for t in as-is $(jq -r '.[].type' <<<"$TRANSFORMS"); do
+      if [[ "$t" == "as-is" ]]; then
+        # "as-is" version
+        transformed="$TEXT"
+      else
+        # Transform versions
+        transformed="$(printf "%s" "$TEXT" | "$0" --transform "$t")"
+      fi
+
+      tmpfile="${preview_dir}/${prefix}-${t}.txt"
+      printf "%s\n" "$transformed" > "$tmpfile"
+
+      # Emit as one JSON object per line
+      printf '{"%s": "%s"}\n' "$t" "$tmpfile"
+    done | jq -s 'add'
+  )
+
+  echo "Wrote preview files to $preview_dir with prefix $prefix" >&2
+fi
+
 # Process text through jq
 jq -n --raw-output --join-output \
       --arg query "$TEXT" \
       --arg mode "$OUTPUT_MODE" \
       --arg transform "$TRANSFORM" \
-      --argjson transforms "$TRANSFORMS" '
+      --argjson transforms "$TRANSFORMS" \
+      --argjson quicklook_path "$QUICKLOOK_JSON" \
+ '
  # Repeat a string s, n times.
  def repeat_str(s; n):
    if n <= 0 then
@@ -190,6 +240,14 @@ jq -n --raw-output --join-output \
  # Escape newline characters (for subtitle display only).
  def escape_newlines:
    gsub("\n"; "\\n");
+
+ # Optionally attach Quick Look previews to Alfred items.
+ def add_quicklook(t):
+   if ($quicklook_path | length) > 0 and ($quicklook_path | has(t)) then
+     . + { quicklookurl: $quicklook_path[t] }
+   else
+     .
+   end;
 
  # Apply transformation based on type
  def apply_transform(type):
@@ -229,7 +287,7 @@ jq -n --raw-output --join-output \
              copy: $transformed,
              largetype: $transformed
            }
-         }
+         } | add_quicklook($type)
        ))
        + [{
            title: "Output as-is",
@@ -242,7 +300,7 @@ jq -n --raw-output --join-output \
              ctrl: { valid: true, arg: $query, variables: { TEXT: $query } }
            },
            text: { copy: $query, largetype: $query }
-         }]
+         } | add_quicklook("as-is")]
      )
    }
  else
