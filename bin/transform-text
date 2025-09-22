@@ -93,6 +93,23 @@ Examples:
 EOF
 }
 
+error_exit() {
+  if [[ $# -gt 0 ]]; then
+    printf "Error: %s\n" "$1" >&2
+    shift
+  else
+    printf "Error: Unknown error\n" >&2
+  fi
+
+  local line
+  for line in "$@"; do
+    printf "%s\n" "$line" >&2
+  done
+
+  printf "Run '%s --help' for usage.\n" "$SCRIPT_NAME" >&2
+  exit 1
+}
+
 # Process command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -102,8 +119,7 @@ while [[ $# -gt 0 ]]; do
           OUTPUT_MODE="$2"
           ;;
         *)
-          echo "Error: Invalid output mode '$2'. Must be 'standalone' or 'alfred'" >&2
-          exit 1
+          error_exit "Invalid output mode '$2'. Must be 'standalone' or 'alfred'"
           ;;
       esac
       shift 2
@@ -133,14 +149,13 @@ OUTPUT_MODE="${OUTPUT_MODE:-$DEFAULT_OUTPUT_MODE}"
 
 # Validate requirements
 if [[ $OUTPUT_MODE == "standalone" && -z "$TRANSFORM" ]]; then
-  echo "Error: --transform TYPE is required in standalone mode" >&2
-  echo "Run '$SCRIPT_NAME --list-transforms' to see available transformations" >&2
-  exit 1
+  error_exit \
+    "--transform TYPE is required in standalone mode" \
+    "Run '$SCRIPT_NAME --list-transforms' to see available transformations"
 fi
 
 if [[ "$OUTPUT_MODE" == "alfred" && -n "$TRANSFORM" ]]; then
-  echo "Error: --transform cannot be used in alfred mode" >&2
-  exit 1
+  error_exit "--transform cannot be used in alfred mode"
 fi
 
 # Read from stdin if no text argument provided
