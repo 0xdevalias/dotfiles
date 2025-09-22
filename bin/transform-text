@@ -308,12 +308,12 @@ jq -n --raw-output --join-output \
            uid: "transform-text-as-is",
            title: "Output as-is",
            subtitle: ("Result: " + ($query | escape_newlines) + " (Hold ⌘, ⌥, or ⌃ to select)"),
-           valid: false,
+           valid: true,
            arg: $query,
            mods: {
-             cmd: { valid: true, arg: $query, variables: { TEXT: $query } },
-             alt: { valid: true, arg: $query, variables: { TEXT: $query } },
-             ctrl: { valid: true, arg: $query, variables: { TEXT: $query } }
+            cmd: { valid: false },
+            alt: { valid: true, arg: $query, variables: { TEXT: $query } },
+            ctrl: { valid: true, arg: $query, variables: { TEXT: $query } }
            },
            text: { copy: $query, largetype: $query }
          } | add_quicklook("as-is")]
