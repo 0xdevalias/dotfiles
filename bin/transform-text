@@ -342,7 +342,6 @@ jq -n --raw-output --join-output \
          } | add_quicklook($type)
        ))
        + [{
-           uid: "transform-text-as-is",
            title: "Output as-is",
            subtitle: ("Result: " + ($query | escape_newlines) + " (Hold ⌘, ⌥, or ⌃ to select)"),
            valid: ($disable_as_is != "default"),
