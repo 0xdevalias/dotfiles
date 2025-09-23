@@ -1,12 +1,14 @@
 {
 	"extensions":
 	[
+		"json5",
 		".csslintrc",
 		".bowerrc",
 		".stylelintrc",
 		"geojson",
 		".jshintrc",
 		".babelrc",
+		".eslintrc",
 		".jscsrc",
 	],
 }
