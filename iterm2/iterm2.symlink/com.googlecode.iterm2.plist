@@ -2151,6 +2151,8 @@ The script should do this: \(ai.prompt)</string>
 	</array>
 	<key>UIElementRequiresHotkeys</key>
 	<true/>
+	<key>Use background pattern indicator</key>
+	<true/>
 	<key>UseBorder</key>
 	<false/>
 	<key>UseRecommendedAIModel</key>
