@@ -115,13 +115,15 @@ _binutils-register-command-not-found-handler() {
     fi
 
     # Then, if binutils is installed and provides the tool, print a dimmed usage hint
-    if [[ -d "$binutils_prefix" && -x "$binutils_prefix/$cmd" ]]; then
-      echo
-      echo "${dim}ℹ️ '$cmd' is provided by the 'binutils' formula (installed via Homebrew), but is not linked by default."
-      echo "   Run with: binutils-exec $*${reset}"
-    else
-      # Only show our "install binutils" hint if the previous handler did not already suggest it
-      if [[ "$prev_output" != *"brew install binutils"* ]]; then
+    if [[ -d "$binutils_prefix" ]]; then
+      if [[ -x "$binutils_prefix/$cmd" ]]; then
+        echo
+        echo "${dim}ℹ️ '$cmd' is provided by the 'binutils' formula (installed via Homebrew), but is not linked by default."
+        echo "   Run with: binutils-exec $*${reset}"
+      fi
+    elif [[ "$prev_output" != *"brew install binutils"* ]]; then
+      local -a binutils_known_tools=(addr2line ar c++filt coffdump dlltool dllwrap elfedit nm objcopy objdump ranlib readelf size srconv strings strip sysdump windmc windres gaddr2line gar gc++filt gcoffdump gdlltool gdllwrap gelfedit gnm gobjcopy gobjdump granlib greadelf gsize gsrconv gstrings gstrip gsysdump gwindmc gwindres)
+      if (( ${binutils_known_tools[(Ie)$cmd]} )); then
         echo
         echo "${dim}ℹ️ '$cmd' is available in the 'binutils' formula."
         echo "   Install with: brew install binutils${reset}"
