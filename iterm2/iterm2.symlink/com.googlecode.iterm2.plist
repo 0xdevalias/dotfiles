@@ -52,6 +52,8 @@ The script should do this: \(ai.prompt)</string>
 	<false/>
 	<key>Default Bookmark Guid</key>
 	<string>26C8C255-53E1-48B5-9433-21620924A031</string>
+	<key>DimOnlyText</key>
+	<true/>
 	<key>DoubleClickPerformsSmartSelection</key>
 	<true/>
 	<key>EnableAPIServer</key>
