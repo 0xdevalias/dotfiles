@@ -40,6 +40,10 @@ The script should do this: \(ai.prompt)</string>
 	<false/>
 	<key>AlternateMouseScroll</key>
 	<true/>
+	<key>AutoCommandHistory</key>
+	<false/>
+	<key>AutoComposer</key>
+	<false/>
 	<key>BracketedPasteMode</key>
 	<true/>
 	<key>ConvertDosNewlines</key>
@@ -267,6 +271,8 @@ The script should do this: \(ai.prompt)</string>
 			<integer>80</integer>
 			<key>Command</key>
 			<string></string>
+			<key>Composer Top Offset</key>
+			<real>0.0</real>
 			<key>Cursor Color</key>
 			<dict>
 				<key>Blue Component</key>
@@ -1149,6 +1155,8 @@ The script should do this: \(ai.prompt)</string>
 			<integer>80</integer>
 			<key>Command</key>
 			<string></string>
+			<key>Composer Top Offset</key>
+			<real>0.0</real>
 			<key>Cursor Color</key>
 			<dict>
 				<key>Blue Component</key>
