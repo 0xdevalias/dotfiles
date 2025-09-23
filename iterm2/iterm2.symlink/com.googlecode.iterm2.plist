@@ -2180,7 +2180,7 @@ The script should do this: \(ai.prompt)</string>
 	<false/>
 	<key>ToolbeltTools</key>
 	<array>
-		<string>Recent Directories</string>
+		<string>Codecierge</string>
 	</array>
 	<key>UIElementRequiresHotkeys</key>
 	<true/>
