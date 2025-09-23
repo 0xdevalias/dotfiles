@@ -52,6 +52,8 @@ The script should do this: \(ai.prompt)</string>
 	<false/>
 	<key>Default Bookmark Guid</key>
 	<string>26C8C255-53E1-48B5-9433-21620924A031</string>
+	<key>Default Browser Profile Guid</key>
+	<string>E0F68429-9C4B-4734-9337-2E00B1B99691</string>
 	<key>DimOnlyText</key>
 	<true/>
 	<key>DoubleClickPerformsSmartSelection</key>
@@ -2071,6 +2073,33 @@ The script should do this: \(ai.prompt)</string>
 			<key>Working Directory</key>
 			<string>/Users/devalias</string>
 		</dict>
+		<dict>
+			<key>Command</key>
+			<string>/bin/bash --login</string>
+			<key>Custom Command</key>
+			<string>Browser</string>
+			<key>Default Bookmark</key>
+			<string>No</string>
+			<key>Guid</key>
+			<string>2343A995-A527-498A-A992-99E484B23C5B</string>
+			<key>Icon</key>
+			<integer>0</integer>
+			<key>Instant Replay</key>
+			<false/>
+			<key>Jobs to Ignore</key>
+			<array>
+				<string>rlogin</string>
+				<string>ssh</string>
+				<string>slogin</string>
+				<string>telnet</string>
+			</array>
+			<key>Name</key>
+			<string>Web Browser</string>
+			<key>Prompt Before Closing 2</key>
+			<false/>
+			<key>Tags</key>
+			<array/>
+		</dict>
 	</array>
 	<key>OpenArrangementAtStartup</key>
 	<false/>
@@ -2165,6 +2194,8 @@ The script should do this: \(ai.prompt)</string>
 	<true/>
 	<key>VisualIndicatorForEsc</key>
 	<false/>
+	<key>WebKitAdblockEnabled</key>
+	<true/>
 	<key>WordCharacters</key>
 	<string>/-+\~_.</string>
 	<key>findMode_iTerm</key>
