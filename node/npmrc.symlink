@@ -1,11 +1,18 @@
-// npm init
+# npmrc: The npm config files
+#   https://docs.npmjs.com/cli/v11/configuring-npm/npmrc
+
+# npm init: Create a package.json file
+#   https://docs.npmjs.com/cli/v11/commands/npm-init
+#   https://docs.npmjs.com/cli/v11/commands/npm-init#configuration
 init-author-name="Glenn 'devalias' Grant"
 init-author-email = ""
 init-author-url = "https://devalias.net/"
 init-license = "MIT"
 init-version = "0.0.1"
-//init-module = "/Users/devalias/.npm-init.js" // TODO: Potentially customise this later..? https://github.com/npm/init-package-json/blob/main/lib/default-input.js
+#init-module = "/Users/devalias/.npm-init.js" # TODO: Potentially customise this later..? https://github.com/npm/init-package-json/blob/main/lib/default-input.js
 
-// npm version
+# npm version: Bump a package version
+#   https://docs.npmjs.com/cli/v11/commands/npm-version
+#   https://docs.npmjs.com/cli/v11/commands/npm-version#configuration
 sign-git-commit = false
 sign-git-tag = false
