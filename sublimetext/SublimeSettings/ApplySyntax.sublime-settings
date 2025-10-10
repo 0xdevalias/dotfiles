@@ -19,6 +19,16 @@
   // Put your custom syntax rules here:
   "syntaxes": [
     {
+      // This rule requires the INI plugin to be installed (via Package Control
+      // or https://github.com/clintberry/sublime-text-2-ini)
+      "syntax": "INI/INI",
+      "rules": [
+        {
+          "globmatch": ["**/npmrc*"]
+        }
+      ]
+    },
+    {
       "syntax": "Markdown/Markdown",
       "rules": [
         {
