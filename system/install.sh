@@ -61,6 +61,7 @@ require_installed_brew "fd"                          # Simple, fast and user-fri
 require_installed_brew "ripgrep"                     # ripgrep recursively searches directories for a regex pattern while respecting your gitignore: https://github.com/BurntSushi/ripgrep
 require_installed_brew "ripgrep-all"                 # rga: ripgrep, but also search in PDFs, E-Books, Office documents, zip, tar.gz, etc: https://github.com/phiresky/ripgrep-all
 require_installed_brew "bat"                         # Clone of cat(1) with syntax highlighting and Git integration: https://github.com/sharkdp/bat
+require_installed_brew "bat-extras"                  # Bash scripts that integrate bat with various command-line tools: https://github.com/eth-p/bat-extras
 require_installed_brew "glow"                        # Render markdown on the CLI: https://github.com/charmbracelet/glow
 require_installed_brew "jq"                          # Lightweight and flexible command-line JSON processor: https://stedolan.github.io/jq/
 require_installed_brew "jid"                         # Json Incremental Digger. You can drill down JSON interactively by using filtering queries like jq: https://github.com/simeji/jid
