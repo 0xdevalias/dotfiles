@@ -1,0 +1,434 @@
+#!/usr/bin/env zsh
+
+SCRIPT_NAME=$(basename "$0")
+
+usage() {
+  echo "Usage: $SCRIPT_NAME <repo-name> <public|private> [--description <text>]"
+  echo "   or: $SCRIPT_NAME --repo <name> --visibility <public|private> [--description <text>]"
+  echo ""
+  echo "Create a new GitHub repository with the specified name and visibility."
+  echo ""
+  echo "Arguments:"
+  echo "  <repo-name>           Name of the new GitHub repository."
+  echo "  <public|private>      Repository visibility."
+  echo ""
+  echo "Options:"
+  echo "  --repo <name>         Name of the new GitHub repository."
+  echo "  --visibility <type>   Repository visibility ('private' or 'public')."
+  echo "  --description <text>  Description of the new repository."
+  echo "  -h, --help            Show this help message and exit."
+  echo ""
+  echo "Notes:"
+  echo "  Run from a populated directory to optionally move existing files into the new repo."
+  echo "  Creates a tar.gz backup of the current directory before cloning."
+}
+
+usage_hint() {
+  echo "Run '$SCRIPT_NAME --help' for usage information." >&2
+}
+
+error() {
+  echo "Error: $1" >&2
+  usage_hint
+  return 1
+}
+
+check_dependencies() {
+  local missing=()
+  local command_name
+
+  for command_name in gh git jq tar npm find mv dirname basename date pwd; do
+    if ! (( $+commands[$command_name] )); then
+      missing+=("$command_name")
+    fi
+  done
+
+  if (( ${#missing[@]} > 0 )); then
+    echo "Error: Missing required dependencies:" >&2
+    local missing_command
+    for missing_command in "${missing[@]}"; do
+      echo "  - $missing_command" >&2
+    done
+    return 127
+  fi
+}
+
+prompt_yes_no() {
+  local prompt_text="$1"
+  local default_answer="${2:-}"
+  local reply
+
+  while true; do
+    echo "$prompt_text"
+    read -r reply
+
+    if [[ -z "$reply" && -n "$default_answer" ]]; then
+      reply="$default_answer"
+    fi
+
+    case "$reply" in
+      y|Y|yes|YES)
+        return 0
+        ;;
+      n|N|no|NO)
+        return 1
+        ;;
+      *)
+        echo "Please answer 'y' or 'n'."
+        ;;
+    esac
+  done
+}
+
+collect_existing_items() {
+  local repo_name="$1"
+  local item
+  local -a collected_items=()
+
+  for item in ./* ./.??*; do
+    [[ "$item" == "./." || "$item" == "./.." ]] && continue
+    [[ "$item" == "./.git" ]] && continue
+    [[ -n "$repo_name" && "$item" == "./$repo_name" ]] && continue
+    [[ ! -e "$item" ]] && continue
+    collected_items+=("$item")
+  done
+
+  if (( ${#collected_items[@]} > 0 )); then
+    printf '%s\n' "${collected_items[@]}"
+  fi
+}
+
+print_existing_items() {
+  local original_dir="$1"
+  shift
+  local -a existing_items=("$@")
+  local item
+
+  if (( ${#existing_items[@]} == 0 )); then
+    return 0
+  fi
+
+  echo "Detected existing files/directories in '$original_dir':"
+  for item in "${existing_items[@]}"; do
+    printf '  %s\n' "${item#./}"
+  done
+  echo ""
+}
+
+build_backup_target() {
+  local original_parent="$1"
+  local original_basename="$2"
+  local timestamp
+  local backup_target
+  local backup_base
+  local suffix
+
+  timestamp=$(date +"%Y%m%d%H%M%S")
+  backup_target="$original_parent/${original_basename}-pre-gh-init-$timestamp.tar.gz"
+
+  if [[ -e "$backup_target" ]]; then
+    suffix=1
+    backup_base="${backup_target%.tar.gz}"
+    while [[ -e "${backup_base}-$suffix.tar.gz" ]]; do
+      suffix=$((suffix + 1))
+    done
+    backup_target="${backup_base}-$suffix.tar.gz"
+  fi
+
+  printf '%s\n' "$backup_target"
+}
+
+resolve_repo_slug_from_origin() {
+  local origin_url
+  local repo_slug
+
+  if ! origin_url=$(git remote get-url origin 2>/dev/null); then
+    return 1
+  fi
+
+  case "$origin_url" in
+    git@*:* )
+      repo_slug="${origin_url#git@*:}"
+      ;;
+    https://*/* )
+      repo_slug="${origin_url#https://*/}"
+      ;;
+    http://*/* )
+      repo_slug="${origin_url#http://*/}"
+      ;;
+    ssh://git@*/* )
+      repo_slug="${origin_url#ssh://git@*/}"
+      ;;
+    * )
+      return 1
+      ;;
+  esac
+
+  repo_slug="${repo_slug%.git}"
+  [[ "$repo_slug" == */* ]] || return 1
+
+  printf '%s\n' "$repo_slug"
+}
+
+move_existing_items() {
+  local repo_name="$1"
+  shift
+  local -a existing_items=("$@")
+  local -a moved_items=()
+  local item
+  local source_name
+
+  if (( ${#existing_items[@]} == 0 )); then
+    return 0
+  fi
+
+  if ! prompt_yes_no "Move the detected files into '$repo_name'? (y/N)" "n"; then
+    echo "Leaving existing files in '$(pwd)'."
+    echo ""
+    return 0
+  fi
+
+  for item in "${existing_items[@]}"; do
+    source_name="${item#./}"
+
+    [[ -e "$source_name" ]] || continue
+
+    if [[ -e "$repo_name/$source_name" ]]; then
+      echo "warning: '$source_name' already exists in '$repo_name'."
+
+      if (cd "$repo_name" && git ls-files --error-unmatch "$source_name" >/dev/null 2>&1); then
+        if (cd "$repo_name" && [[ -n "$(git status --short -- "$source_name")" ]]); then
+          echo "  Destination tracked but modified; skipping to avoid data loss."
+          continue
+        fi
+
+        echo "  Destination tracked and clean; overwriting with existing file."
+      else
+        echo "  Destination not tracked; skipping."
+        continue
+      fi
+    fi
+
+    if ! mv "$source_name" "$repo_name/"; then
+      echo "Error: failed to move '$source_name' into '$repo_name'" >&2
+      return 1
+    fi
+
+    moved_items+=("$source_name")
+  done
+
+  if (( ${#moved_items[@]} > 0 )); then
+    echo "Moved the following into '$repo_name':"
+    for item in "${moved_items[@]}"; do
+      printf '  %s\n' "$item"
+    done
+  else
+    echo "No files moved."
+  fi
+
+  echo ""
+}
+
+main() {
+  set -euo pipefail
+
+  local repo_name=""
+  local visibility=""
+  local description=""
+  local show_help=0
+  local repo_name_set_positionally=0
+  local original_dir
+  local original_parent
+  local original_basename
+  local backup_target
+  local repo_slug
+  local -a existing_items=()
+  local -a create_args=()
+  local item
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --repo)
+        if [[ $# -lt 2 ]]; then
+          error "--repo requires a value"
+          return 1
+        fi
+        if [[ -n "$repo_name" ]]; then
+          error "repo name was provided more than once"
+          return 1
+        fi
+        repo_name="$2"
+        shift 2
+        ;;
+      --visibility)
+        if [[ $# -lt 2 ]]; then
+          error "--visibility requires a value ('public' or 'private')"
+          return 1
+        fi
+        if [[ -n "$visibility" ]]; then
+          error "visibility was provided more than once"
+          return 1
+        fi
+        visibility="$2"
+        shift 2
+        ;;
+      --description)
+        if [[ $# -lt 2 ]]; then
+          error "--description requires a value"
+          return 1
+        fi
+        if [[ -n "$description" ]]; then
+          error "description was provided more than once"
+          return 1
+        fi
+        description="$2"
+        shift 2
+        ;;
+      -h|--help)
+        show_help=1
+        shift
+        ;;
+      *)
+        if [[ -z "$repo_name" ]]; then
+          repo_name="$1"
+          repo_name_set_positionally=1
+        elif [[ -z "$visibility" ]]; then
+          if (( ! repo_name_set_positionally )); then
+            error "positional visibility is only allowed when the repo name is also provided positionally"
+            return 1
+          fi
+          visibility="$1"
+        else
+          error "too many positional arguments: $1"
+          return 1
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  if (( show_help )); then
+    usage
+    return 0
+  fi
+
+  if [[ -z "$repo_name" ]]; then
+    error "--repo is required"
+    return 1
+  fi
+
+  if [[ -z "$visibility" ]]; then
+    error "--visibility is required ('private' or 'public')"
+    return 1
+  fi
+
+  case "$visibility" in
+    private|public)
+      ;;
+    *)
+      error "invalid visibility '$visibility' (must be 'private' or 'public')"
+      return 1
+      ;;
+  esac
+
+  check_dependencies || return $?
+
+  original_dir=$(pwd)
+  original_parent=$(dirname "$original_dir")
+  original_basename=$(basename "$original_dir")
+
+  while IFS= read -r item; do
+    [[ -n "$item" ]] || continue
+    existing_items+=("$item")
+  done < <(collect_existing_items "$repo_name")
+
+  print_existing_items "$original_dir" "${existing_items[@]}"
+
+  backup_target=$(build_backup_target "$original_parent" "$original_basename")
+
+  echo "This will create a new GitHub repository named '$repo_name' with '$visibility' visibility,"
+  echo "configured with a Node .gitignore and MIT license."
+  if [[ -n "$description" ]]; then
+    echo "Description: $description"
+  fi
+  echo "A tar backup of '$original_dir' will be created before cloning:"
+  printf '  %s\n' "$backup_target"
+  echo ""
+
+  if ! prompt_yes_no "Do you want to continue? (y/n)"; then
+    echo "Operation cancelled."
+    return 1
+  fi
+
+  echo "Creating backup archive..."
+  if ! tar -czf "$backup_target" -C "$original_parent" "$original_basename"; then
+    echo "Error: failed to create backup archive at '$backup_target'" >&2
+    return 1
+  fi
+  echo "Backup written to:"
+  printf '  %s\n' "$backup_target"
+  echo ""
+
+  echo "Creating and cloning repo..."
+  create_args=(
+    "$repo_name"
+    --disable-wiki
+    --add-readme
+    --gitignore Node
+    --license MIT
+    --"$visibility"
+    --clone
+  )
+
+  if [[ -n "$description" ]]; then
+    create_args+=(--description "$description")
+  fi
+
+  if ! gh repo create "${create_args[@]}"; then
+    echo "Error: failed to create or clone repository" >&2
+    return 1
+  fi
+
+  if [[ ! -d "$repo_name" ]]; then
+    echo "Error: repository directory '$repo_name' not found after clone" >&2
+    return 1
+  fi
+
+  move_existing_items "$repo_name" "${existing_items[@]}" || return $?
+
+  cd "$repo_name" || {
+    echo "Error: failed to enter directory '$repo_name'" >&2
+    return 1
+  }
+
+  echo "Repository cloned to:"
+  printf '  %s\n' "$(pwd)"
+
+  if ! repo_slug=$(resolve_repo_slug_from_origin); then
+    echo "Error: failed to resolve repository slug from git remote 'origin'" >&2
+    return 1
+  fi
+
+  local set_default_output
+  if ! set_default_output=$(gh repo set-default "$repo_slug" 2>&1); then
+    echo "Error: failed to set default repository context" >&2
+    if [[ -n "$set_default_output" ]]; then
+      printf '%s\n' "$set_default_output" >&2
+    fi
+    return 1
+  fi
+
+  echo "Repository details:"
+  gh repo view --json url,sshUrl,description | jq
+
+  echo "Initializing npm package..."
+  if ! gh init-npm; then
+    echo "Error: failed to initialize npm package" >&2
+    return 1
+  fi
+
+  echo "Opening repository in browser..."
+  gh repo view --web
+}
+
+main "$@"
