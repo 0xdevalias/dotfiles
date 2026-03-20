@@ -823,6 +823,8 @@ The script should do this: \(ai.prompt)</string>
 			<integer>0</integer>
 			<key>Prompt Before Closing 2</key>
 			<false/>
+			<key>Prompt Path Click Opens Navigator</key>
+			<true/>
 			<key>Reduce Flicker</key>
 			<true/>
 			<key>Right Option Key Sends</key>
@@ -1770,7 +1772,7 @@ The script should do this: \(ai.prompt)</string>
 			<key>Silence Bell</key>
 			<true/>
 			<key>Space</key>
-			<integer>0</integer>
+			<integer>-1</integer>
 			<key>Status Bar Layout</key>
 			<dict>
 				<key>advanced configuration</key>
@@ -2101,6 +2103,8 @@ The script should do this: \(ai.prompt)</string>
 			</array>
 			<key>Name</key>
 			<string>Web Browser</string>
+			<key>Open Toolbelt</key>
+			<true/>
 			<key>Prompt Before Closing 2</key>
 			<false/>
 			<key>Tags</key>
@@ -2112,7 +2116,7 @@ The script should do this: \(ai.prompt)</string>
 	<key>OpenBookmark</key>
 	<false/>
 	<key>OpenNoWindowsAtStartup</key>
-	<true/>
+	<false/>
 	<key>OpenTmuxWindowsIn</key>
 	<integer>1</integer>
 	<key>PMPrintingExpandedStateForPrint2</key>
