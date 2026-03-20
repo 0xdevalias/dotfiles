@@ -122,6 +122,8 @@ aliases:
           fi
         }; gh_extensions_outdated $@
     notifications: '!$HOME/.dotfiles/bin/gh-notifications $@'
+    release-notes: '!$HOME/.dotfiles/bin/gh-release-notes $@'
+    changelogs: release-notes
     gist-edit: |
       !gist_edit() {
         if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
