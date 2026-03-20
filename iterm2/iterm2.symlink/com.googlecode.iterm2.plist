@@ -40,6 +40,8 @@ The script should do this: \(ai.prompt)</string>
 	<false/>
 	<key>AlternateMouseScroll</key>
 	<true/>
+	<key>AnimateGraphStatusBarComponents</key>
+	<true/>
 	<key>AutoCommandHistory</key>
 	<false/>
 	<key>AutoComposer</key>
@@ -259,6 +261,8 @@ The script should do this: \(ai.prompt)</string>
 	<false/>
 	<key>HapticFeedbackForEsc</key>
 	<false/>
+	<key>HideActivityIndicator</key>
+	<false/>
 	<key>HideFromDockAndAppSwitcher</key>
 	<false/>
 	<key>HideMenuBarInFullscreen</key>
@@ -281,6 +285,8 @@ The script should do this: \(ai.prompt)</string>
 	<integer>262401</integer>
 	<key>MaxVertically</key>
 	<true/>
+	<key>MetalRedrawPeriod</key>
+	<real>3600</real>
 	<key>New Bookmarks</key>
 	<array>
 		<dict>
@@ -443,8 +449,6 @@ The script should do this: \(ai.prompt)</string>
 				<key>Red Component</key>
 				<integer>0</integer>
 			</dict>
-			<key>Background Image Location</key>
-			<string></string>
 			<key>Blinking Cursor</key>
 			<false/>
 			<key>Blur</key>
@@ -1325,8 +1329,8 @@ The script should do this: \(ai.prompt)</string>
 				<key>Red Component</key>
 				<integer>0</integer>
 			</dict>
-			<key>Background Image Location</key>
-			<string></string>
+			<key>Background Image Mode</key>
+			<integer>0</integer>
 			<key>Blend</key>
 			<real>0.5</real>
 			<key>Blinking Cursor</key>
@@ -1344,6 +1348,8 @@ The script should do this: \(ai.prompt)</string>
 				<key>Red Component</key>
 				<integer>1</integer>
 			</dict>
+			<key>Bound Hosts</key>
+			<array/>
 			<key>Character Encoding</key>
 			<integer>4</integer>
 			<key>Close Sessions On End</key>
@@ -1735,6 +1741,8 @@ The script should do this: \(ai.prompt)</string>
 			<integer>0</integer>
 			<key>Prompt Before Closing 2</key>
 			<false/>
+			<key>Prompt Path Click Opens Navigator</key>
+			<true/>
 			<key>Reduce Flicker</key>
 			<true/>
 			<key>Right Option Key Sends</key>
@@ -2106,7 +2114,7 @@ The script should do this: \(ai.prompt)</string>
 			<key>Open Toolbelt</key>
 			<true/>
 			<key>Prompt Before Closing 2</key>
-			<false/>
+			<integer>0</integer>
 			<key>Tags</key>
 			<array/>
 		</dict>
@@ -2200,6 +2208,8 @@ The script should do this: \(ai.prompt)</string>
 	<true/>
 	<key>UseBorder</key>
 	<false/>
+	<key>UseMetal</key>
+	<true/>
 	<key>UseRecommendedAIModel</key>
 	<true/>
 	<key>VisualIndicatorForEsc</key>
@@ -2214,5 +2224,7 @@ The script should do this: \(ai.prompt)</string>
 	<integer>0</integer>
 	<key>kCPKSelectionViewShowHSBTextFieldsKey</key>
 	<false/>
+	<key>preferIntegratedGPU</key>
+	<true/>
 </dict>
 </plist>
