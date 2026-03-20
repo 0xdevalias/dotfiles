@@ -1,0 +1,578 @@
+#!/usr/bin/env zsh
+
+SCRIPT_NAME="${0##*/}"
+
+# Print CLI help and summarize the supported filtering/output modes.
+usage() {
+  cat <<EOF
+Usage: $SCRIPT_NAME [options] [OWNER/REPO]
+
+List GitHub releases with URLs, optionally filtered by an inclusive semantic
+version range parsed from the end of each tag.
+
+Options:
+  --repo OWNER/REPO           Repository to query. Defaults to the current gh
+                              repo context.
+  --min-version VERSION       Inclusive lower bound. Only releases whose parsed
+                              version is >= VERSION are included.
+  --since VERSION             Alias for --min-version.
+  --max-version VERSION       Inclusive upper bound. Only releases whose parsed
+                              version is <= VERSION are included.
+  --until VERSION             Alias for --max-version.
+  --include-drafts            Include draft releases.
+  --include-prereleases       Include prereleases.
+  --per-page N                Releases to request per batch. Defaults to 100.
+  --limit N                   Maximum number of filtered results to print.
+  --urls-only                 Print only the release URLs.
+  -h, --help                  Show this help message and exit.
+
+Output columns are tab-separated:
+  tag_name    published_at    html_url
+
+Supported tag examples:
+  v0.115.0
+  rust-v0.115.0
+  cli-v1.2.3
+
+Notes:
+  - OWNER/REPO may be passed positionally instead of using --repo.
+  - Tags are matched using a trailing semver-like suffix. Unparseable tags are
+    skipped with a warning to stderr.
+  - When --min-version is set, paging stops after the first batch that reaches
+    or drops below that lower bound. This assumes newer releases tend to have
+    newer versions.
+EOF
+}
+
+# Show a short follow-up hint for error paths.
+usage_hint() {
+  echo "Run '$SCRIPT_NAME --help' for usage information." >&2
+}
+
+# Emit a formatted error and usage hint to stderr.
+error() {
+  echo "Error: $1" >&2
+  usage_hint
+  return 1
+}
+
+# Fail early if the external tools this script depends on are unavailable.
+check_dependencies() {
+  local -a missing=()
+  local command_name
+
+  for command_name in gh jq git; do
+    if ! (( $+commands[$command_name] )); then
+      missing+=("$command_name")
+    fi
+  done
+
+  if (( ${#missing[@]} > 0 )); then
+    echo "Error: Missing required dependencies:" >&2
+    for command_name in "${missing[@]}"; do
+      echo "  - $command_name" >&2
+    done
+    return 127
+  fi
+}
+
+# Extract the trailing semver-like portion from a release tag such as rust-v1.2.3-rc.1.
+extract_semver_suffix() {
+  setopt localoptions rematchpcre
+
+  local tag_name="$1"
+  local semver_regex='(v?[0-9]+\.[0-9]+(\.[0-9]+)?(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?)$'
+ 
+  if [[ "$tag_name" =~ $semver_regex ]]; then
+    printf '%s\n' "$match[1]"
+    return 0
+  fi
+
+  return 1
+}
+
+# Parse a semver-like string into numeric core + prerelease fields for comparison.
+parse_semver() {
+  local raw_version="$1"
+  local semver_suffix
+  local version_without_prefix
+  local version_without_build
+  local version_core
+  local prerelease=""
+  local -a version_parts
+  local major minor patch
+
+  semver_suffix=$(extract_semver_suffix "$raw_version") || return 1
+
+  # Build metadata does not affect precedence, so strip it before comparing.
+  version_without_prefix="${semver_suffix#v}"
+  version_without_build="${version_without_prefix%%+*}"
+
+  # Split the numeric core from any prerelease identifiers.
+  if [[ "$version_without_build" == *-* ]]; then
+    version_core="${version_without_build%%-*}"
+    prerelease="${version_without_build#*-}"
+  else
+    version_core="$version_without_build"
+  fi
+
+  version_parts=("${(@s:.:)version_core}")
+
+  major="${version_parts[1]:-0}"
+  minor="${version_parts[2]:-0}"
+  patch="${version_parts[3]:-0}"
+
+  printf '%s\t%s\t%s\t%s\n' "$major" "$minor" "$patch" "$prerelease"
+}
+
+# Compare a single prerelease identifier pair using semver precedence rules.
+compare_semver_identifiers() {
+  local left_identifier="$1"
+  local right_identifier="$2"
+
+  if [[ "$left_identifier" == "$right_identifier" ]]; then
+    printf '0\n'
+    return 0
+  fi
+
+  # Numeric prerelease identifiers sort before non-numeric ones in semver.
+  if [[ "$left_identifier" == <-> && "$right_identifier" == <-> ]]; then
+    if (( left_identifier < right_identifier )); then
+      printf '%s\n' '-1'
+    else
+      printf '%s\n' '1'
+    fi
+    return 0
+  fi
+
+  if [[ "$left_identifier" == <-> ]]; then
+    printf '%s\n' '-1'
+    return 0
+  fi
+
+  if [[ "$right_identifier" == <-> ]]; then
+    printf '%s\n' '1'
+    return 0
+  fi
+
+  if [[ "$left_identifier" < "$right_identifier" ]]; then
+    printf '%s\n' '-1'
+  else
+    printf '%s\n' '1'
+  fi
+}
+
+# Compare two semver-like strings and print -1, 0, or 1.
+compare_semver() {
+  local left_version="$1"
+  local right_version="$2"
+  local left_major left_minor left_patch left_prerelease
+  local right_major right_minor right_patch right_prerelease
+  local comparison_result=0
+  local -a left_prerelease_parts
+  local -a right_prerelease_parts
+  local max_parts=0
+  local index
+
+  IFS=$'\t' read -r left_major left_minor left_patch left_prerelease <<<"$(parse_semver "$left_version")" || return 1
+  IFS=$'\t' read -r right_major right_minor right_patch right_prerelease <<<"$(parse_semver "$right_version")" || return 1
+
+  # Compare the numeric core first; prerelease precedence only matters on ties.
+  for comparison_result in \
+    $(( left_major - right_major )) \
+    $(( left_minor - right_minor )) \
+    $(( left_patch - right_patch )); do
+    if (( comparison_result < 0 )); then
+      printf '%s\n' '-1'
+      return 0
+    fi
+    if (( comparison_result > 0 )); then
+      printf '%s\n' '1'
+      return 0
+    fi
+  done
+
+  if [[ -z "$left_prerelease" && -z "$right_prerelease" ]]; then
+    printf '0\n'
+    return 0
+  fi
+
+  if [[ -z "$left_prerelease" ]]; then
+    printf '%s\n' '1'
+    return 0
+  fi
+
+  if [[ -z "$right_prerelease" ]]; then
+    printf '%s\n' '-1'
+    return 0
+  fi
+
+  left_prerelease_parts=("${(@s:.:)left_prerelease}")
+  right_prerelease_parts=("${(@s:.:)right_prerelease}")
+
+  # Compare prerelease identifiers left-to-right until they differ.
+  max_parts=${#left_prerelease_parts[@]}
+  if (( ${#right_prerelease_parts[@]} > max_parts )); then
+    max_parts=${#right_prerelease_parts[@]}
+  fi
+
+  for (( index = 1; index <= max_parts; index++ )); do
+    if (( index > ${#left_prerelease_parts[@]} )); then
+      printf '%s\n' '-1'
+      return 0
+    fi
+
+    if (( index > ${#right_prerelease_parts[@]} )); then
+      printf '%s\n' '1'
+      return 0
+    fi
+
+    comparison_result=$(compare_semver_identifiers "${left_prerelease_parts[index]}" "${right_prerelease_parts[index]}")
+    if [[ "$comparison_result" != '0' ]]; then
+      printf '%s\n' "$comparison_result"
+      return 0
+    fi
+  done
+
+  printf '0\n'
+}
+
+# Resolve the repo slug, either from --repo / positional input or the current git/gh context.
+resolve_repo_slug() {
+  local repo="$1"
+  local resolved_repo=""
+
+  if [[ -n "$repo" ]]; then
+    printf '%s\n' "$repo"
+    return 0
+  fi
+
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    error "no repo specified and the current directory is not a Git repository; use --repo OWNER/REPO"
+    return 1
+  fi
+
+  resolved_repo=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)
+
+  if [[ -z "$resolved_repo" ]]; then
+    error "unable to infer a GitHub repo from the current directory; use --repo OWNER/REPO"
+    return 1
+  fi
+
+  printf '%s\n' "$resolved_repo"
+}
+
+# Split an OWNER/REPO slug into separate owner and repo fields for GraphQL variables.
+split_repo_slug() {
+  local repo_slug="$1"
+  local owner="${repo_slug%%/*}"
+  local repo_name="${repo_slug#*/}"
+
+  if [[ -z "$owner" || -z "$repo_name" || "$owner" == "$repo_name" ]]; then
+    error "invalid repo slug: $repo_slug"
+    return 1
+  fi
+
+  printf '%s\t%s\n' "$owner" "$repo_name"
+}
+
+# Fetch one GraphQL batch of releases for the given repo and cursor position.
+fetch_release_batch() {
+  local owner="$1"
+  local repo_name="$2"
+  local per_page="$3"
+  local after_cursor="${4:-}"
+  local -a gh_args=()
+
+  gh_args+=(
+    graphql
+    -F "owner=$owner"
+    -F "name=$repo_name"
+    -F "first=$per_page"
+    -f 'query=
+      query($owner: String!, $name: String!, $first: Int!, $after: String) {
+        repository(owner: $owner, name: $name) {
+          releases(first: $first, after: $after, orderBy: {field: CREATED_AT, direction: DESC}) {
+            nodes {
+              tagName
+              publishedAt
+              url
+              isDraft
+              isPrerelease
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+      }
+    '
+  )
+
+  if [[ -n "$after_cursor" ]]; then
+    gh_args+=(-F "after=$after_cursor")
+  fi
+
+  GH_PAGER=cat gh api "${gh_args[@]}"
+}
+
+# Flatten one GraphQL batch into a metadata line plus tab-separated release rows.
+emit_batch_lines() {
+  jq -r '
+    .data.repository.releases as $releases
+    | ["__META__", ($releases.pageInfo.hasNextPage | if . then "1" else "0" end), ($releases.pageInfo.endCursor // ""), (($releases.nodes | length) | tostring)] | @tsv,
+      ($releases.nodes[] | [.tagName, .publishedAt, .url, (.isDraft | tostring), (.isPrerelease | tostring)] | @tsv)
+  '
+}
+
+# Parse args, fetch release batches, apply filters, and print the final result set.
+main() {
+  set -euo pipefail
+
+  local repo=""
+  local min_version=""
+  local max_version=""
+  local resolved_repo=""
+  local repo_owner=""
+  local repo_name=""
+  local per_page=""
+  local result_limit=""
+  local include_drafts=0
+  local include_prereleases=0
+  local urls_only=0
+  local show_help=0
+  local after_cursor=""
+  local has_next_page=1
+  local response_json
+  local stop_after_this_batch=0
+  local tag_name
+  local published_at
+  local html_url
+  local is_draft
+  local is_prerelease
+  local version_comparison=0
+  local batch_count=0
+  local batch_lines=""
+  local batch_meta=""
+  local emitted_count=0
+  local -a output_rows=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --repo)
+        [[ $# -ge 2 ]] || { error "--repo requires a value"; return 1; }
+        [[ -z "$repo" ]] || { error "repo was provided more than once"; return 1; }
+        repo="$2"
+        shift 2
+        ;;
+      --min-version|--since)
+        [[ $# -ge 2 ]] || { error "--min-version requires a value"; return 1; }
+        [[ -z "$min_version" ]] || { error "min version was provided more than once"; return 1; }
+        min_version="$2"
+        shift 2
+        ;;
+      --max-version|--until)
+        [[ $# -ge 2 ]] || { error "--max-version requires a value"; return 1; }
+        [[ -z "$max_version" ]] || { error "max version was provided more than once"; return 1; }
+        max_version="$2"
+        shift 2
+        ;;
+      --include-drafts)
+        include_drafts=1
+        shift
+        ;;
+      --include-prereleases)
+        include_prereleases=1
+        shift
+        ;;
+      --urls-only)
+        urls_only=1
+        shift
+        ;;
+      --per-page)
+        [[ $# -ge 2 ]] || { error "--per-page requires a value"; return 1; }
+        [[ -z "$per_page" ]] || { error "per-page was provided more than once"; return 1; }
+        per_page="$2"
+        shift 2
+        ;;
+      --limit)
+        [[ $# -ge 2 ]] || { error "--limit requires a value"; return 1; }
+        [[ -z "$result_limit" ]] || { error "limit was provided more than once"; return 1; }
+        result_limit="$2"
+        shift 2
+        ;;
+      *=*)
+        error "option values must use a space, not '=': $1"
+        return 1
+        ;;
+      -h|--help)
+        show_help=1
+        shift
+        ;;
+      *)
+        if [[ -z "$repo" && "$1" == */* ]]; then
+          repo="$1"
+          shift
+        else
+          error "unknown argument: $1"
+          return 1
+        fi
+        ;;
+    esac
+  done
+
+  if (( show_help )); then
+    usage
+    return 0
+  fi
+
+  check_dependencies || return $?
+
+  resolved_repo=$(resolve_repo_slug "$repo") || return 1
+  IFS=$'\t' read -r repo_owner repo_name <<<"$(split_repo_slug "$resolved_repo")" || return 1
+
+  if [[ -z "$per_page" ]]; then
+    per_page=100
+  fi
+
+  if [[ ! "$per_page" == <-> ]]; then
+    error "--per-page must be an integer"
+    return 1
+  fi
+
+  if (( per_page < 1 || per_page > 100 )); then
+    error "--per-page must be between 1 and 100"
+    return 1
+  fi
+
+  if [[ -n "$result_limit" ]]; then
+    if [[ ! "$result_limit" == <-> ]]; then
+      error "--limit must be an integer"
+      return 1
+    fi
+
+    if (( result_limit < 1 )); then
+      error "--limit must be greater than 0"
+      return 1
+    fi
+  fi
+
+  if [[ -n "$min_version" ]]; then
+    parse_semver "$min_version" >/dev/null || {
+      error "could not parse --min-version: $min_version"
+      return 1
+    }
+  fi
+
+  if [[ -n "$max_version" ]]; then
+    parse_semver "$max_version" >/dev/null || {
+      error "could not parse --max-version: $max_version"
+      return 1
+    }
+  fi
+
+  if [[ -n "$min_version" && -n "$max_version" ]]; then
+    version_comparison=$(compare_semver "$min_version" "$max_version") || {
+      error "could not compare --min-version and --max-version"
+      return 1
+    }
+
+    if (( version_comparison > 0 )); then
+      error "--min-version must be less than or equal to --max-version"
+      return 1
+    fi
+  fi
+
+  while (( has_next_page )); do
+    response_json=$(fetch_release_batch "$repo_owner" "$repo_name" "$per_page" "$after_cursor")
+    batch_lines=$(emit_batch_lines <<<"$response_json")
+    batch_meta=${batch_lines%%$'\n'*}
+
+    if [[ "$batch_meta" == "$batch_lines" ]]; then
+      batch_lines=""
+    else
+      batch_lines=${batch_lines#*$'\n'}
+    fi
+
+    IFS=$'\t' read -r _ has_next_page after_cursor batch_count <<<"$batch_meta"
+
+    if [[ "$batch_count" -eq 0 ]]; then
+      break
+    fi
+
+    stop_after_this_batch=0
+
+    while IFS=$'\t' read -r tag_name published_at html_url is_draft is_prerelease; do
+      [[ -n "$tag_name" ]] || continue
+
+      if (( ! include_drafts )) && [[ "$is_draft" == "true" ]]; then
+        continue
+      fi
+
+      if (( ! include_prereleases )) && [[ "$is_prerelease" == "true" ]]; then
+        continue
+      fi
+
+      parse_semver "$tag_name" >/dev/null || {
+        echo "Warning: skipping unfilterable tag: $tag_name" >&2
+        continue
+      }
+
+      if [[ -n "$max_version" ]]; then
+        version_comparison=$(compare_semver "$tag_name" "$max_version") || {
+          echo "Warning: skipping unfilterable tag: $tag_name" >&2
+          continue
+        }
+
+        if (( version_comparison > 0 )); then
+          continue
+        fi
+      fi
+
+      if [[ -n "$min_version" ]]; then
+        version_comparison=$(compare_semver "$tag_name" "$min_version") || {
+          echo "Warning: skipping unfilterable tag: $tag_name" >&2
+          continue
+        }
+
+        if (( version_comparison < 0 )); then
+          stop_after_this_batch=1
+          continue
+        fi
+
+        if (( version_comparison == 0 )); then
+          stop_after_this_batch=1
+        fi
+      fi
+
+      if (( urls_only )); then
+        output_rows+=("$html_url")
+      else
+        output_rows+=("$tag_name"$'\t'"$published_at"$'\t'"$html_url")
+      fi
+      emitted_count=$((emitted_count + 1))
+
+      if [[ -n "$result_limit" && "$emitted_count" -ge "$result_limit" ]]; then
+        break 2
+      fi
+    done <<<"$batch_lines"
+
+    if (( stop_after_this_batch )) && [[ -n "$min_version" ]]; then
+      break
+    fi
+  done
+
+  if (( ${#output_rows[@]} > 0 )); then
+    if [[ -t 1 && -n "${commands[column]:-}" ]]; then
+      printf '%s\n' "${output_rows[@]}" | column -ts $'\t'
+    else
+      printf '%s\n' "${output_rows[@]}"
+    fi
+  fi
+}
+
+# Only run the CLI entrypoint at the top level; sourcing the file keeps helpers available for tests.
+if [[ "$ZSH_EVAL_CONTEXT" == 'toplevel' ]]; then
+  main "$@"
+fi
