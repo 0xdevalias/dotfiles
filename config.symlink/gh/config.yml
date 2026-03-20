@@ -17,61 +17,39 @@ aliases:
     clone-repo: '!git clone $1'
     init-repo: 'repo create'
     init-repo-node: |
-        !init_repo_node() {
-          if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ $# -ne 2 ]; then
-            echo "Usage: gh init-repo-node <repo-name> <visibility>"
-            echo "Create a new GitHub repository with specified name and visibility."
+      !"$HOME/.dotfiles/bin/gh-init-repo-node" "$@"
+    init-repo-node-private: |
+      !init_repo_node_private() {
+        case "$1" in
+          ""|-h|--help)
+            echo "Usage: gh init-repo-node-private <repo-name> [options]"
             echo ""
-            echo "Arguments:"
-            echo "  <repo-name>    Name of the new GitHub repository."
-            echo "  <visibility>   Visibility of the repository ('private' or 'public')."
+            echo "Shortcut for creating a private repo via 'gh init-repo-node'."
+            echo "Run 'gh init-repo-node --help' for full options and behavior."
+            ;;
+          *)
+            repo_name=$1
+            shift
+            "$HOME/.dotfiles/bin/gh-init-repo-node" --repo "$repo_name" --visibility private "$@"
+            ;;
+        esac
+      }; init_repo_node_private "$@"
+    init-repo-node-public: |
+      !init_repo_node_public() {
+        case "$1" in
+          ""|-h|--help)
+            echo "Usage: gh init-repo-node-public <repo-name> [options]"
             echo ""
-            echo "Options:"
-            echo "  -h, --help     Show this help message and exit."
-            return 0
-          fi
-
-          REPO_NAME=$1
-          VISIBILITY=$2
-
-          case "$VISIBILITY" in
-            private|public)
-              ;; # Continue with the script if valid
-            *)
-              echo "Invalid visibility: $VISIBILITY"
-              echo "Visibility must be either 'private' or 'public'"
-              return 1
-              ;;
-          esac
-
-          echo "This will create a new GitHub repository named '$REPO_NAME' with '$VISIBILITY' visibility, configured with a Node .gitignore, and MIT license."
-          echo "Do you want to continue? (y/n)"
-          read -r confirm
-          if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
-            echo "Operation cancelled."
-            return 1
-          fi
-
-          echo "Creating + cloning repo..."
-          gh repo create "$REPO_NAME" --disable-wiki --add-readme --gitignore Node --license MIT --"$VISIBILITY" --clone
-          cd "$REPO_NAME"
-
-          echo "Repo cloned to:"
-          pwd
-
-          gh repo set-default
-
-          echo "Repo details:"
-          (gh repo view --json url,sshUrl,description | jq)
-
-          echo "Initing npm package..."
-          gh init-npm
-
-          echo "Opening repo in browser..."
-          gh repo view --web "$REPO_NAME"
-        }; init_repo_node $@
-    init-repo-node-private: 'init-repo-node $1 private'
-    init-repo-node-public: 'init-repo-node $1 public'
+            echo "Shortcut for creating a public repo via 'gh init-repo-node'."
+            echo "Run 'gh init-repo-node --help' for full options and behavior."
+            ;;
+          *)
+            repo_name=$1
+            shift
+            "$HOME/.dotfiles/bin/gh-init-repo-node" --repo "$repo_name" --visibility public "$@"
+            ;;
+        esac
+      }; init_repo_node_public "$@"
     init-npm: '!npm init && echo "You may like to run npm-package-sort after this too."'
     outdated: |
         !gh_extensions_outdated() {
