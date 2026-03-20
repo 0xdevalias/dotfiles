@@ -53,7 +53,7 @@ The script should do this: \(ai.prompt)</string>
 	<key>Default Bookmark Guid</key>
 	<string>26C8C255-53E1-48B5-9433-21620924A031</string>
 	<key>Default Browser Profile Guid</key>
-	<string>E0F68429-9C4B-4734-9337-2E00B1B99691</string>
+	<string>E0567515-99D3-4536-AAED-A325FA154A7E</string>
 	<key>DimOnlyText</key>
 	<true/>
 	<key>DoubleClickPerformsSmartSelection</key>
@@ -1397,22 +1397,28 @@ The script should do this: \(ai.prompt)</string>
 			<true/>
 			<key>Horizontal Spacing</key>
 			<real>1</real>
+			<key>HotKey Activated By Modifier</key>
+			<false/>
+			<key>HotKey Alternate Shortcuts</key>
+			<array/>
 			<key>HotKey Characters</key>
 			<string>`</string>
 			<key>HotKey Characters Ignoring Modifiers</key>
 			<string>`</string>
 			<key>HotKey Key Code</key>
 			<integer>50</integer>
+			<key>HotKey Modifier Activation</key>
+			<integer>0</integer>
 			<key>HotKey Modifier Flags</key>
-			<integer>262401</integer>
+			<integer>262144</integer>
 			<key>HotKey Window Animates</key>
 			<true/>
 			<key>HotKey Window AutoHides</key>
 			<true/>
 			<key>HotKey Window Dock Click Action</key>
-			<integer>0</integer>
+			<integer>1</integer>
 			<key>HotKey Window Floats</key>
-			<false/>
+			<true/>
 			<key>HotKey Window Reopens On Activation</key>
 			<false/>
 			<key>Idle Code</key>
