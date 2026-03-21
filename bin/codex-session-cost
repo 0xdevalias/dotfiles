@@ -1,0 +1,712 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+SCRIPT_NAME="${0:t}"
+SCRIPT_DIR="${0:A:h}"
+DEFAULT_OUTPUT_FORMAT="summary"
+PRICING_SOURCE_URL="https://www.llm-prices.com/current-v1.json"
+PRICING_CACHE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/codex-session-cost"
+PRICING_CACHE_FILE="${PRICING_CACHE_DIR}/pricing-openai.json"
+DEFAULT_PRICING_STALE_DAYS=7
+DEFAULT_PRICING_JSON='{
+  "source"              : "hardcoded",
+  "source_url"          : "embedded",
+  "vendor"              : "openai",
+  "reference_updated_at": "2026-03-17",
+  "fetched_at"          : null,
+  "checked_at"          : null,
+  "etag"                : null,
+  "prices"              : {
+    "gpt-5"              : { "input": 1.25, "cached_input": 0.125, "output": 10.00 },
+    "gpt-5-mini"         : { "input": 0.25, "cached_input": 0.025, "output":  2.00 },
+    "gpt-5-nano"         : { "input": 0.05, "cached_input": 0.005, "output":  0.40 },
+    "gpt-5.2"            : { "input": 1.75, "cached_input": 0.175, "output": 14.00 },
+    "gpt-5.1-codex"      : { "input": 1.25, "cached_input": 0.125, "output": 10.00 },
+    "gpt-5.1-codex-mini" : { "input": 0.25, "cached_input": 0.025, "output":  2.00 },
+    "gpt-5.4"            : { "input": 2.50, "cached_input": 0.250, "output": 15.00 },
+    "gpt-5.4-mini"       : { "input": 0.75, "cached_input": 0.075, "output":  4.50 }
+  }
+}'
+
+usage() {
+  cat <<EOF
+Usage: $SCRIPT_NAME [OPTIONS] <session-id>
+
+Look up a Codex session by ID, print the final token_count totals, and
+estimate the OpenAI API cost using the configured pricing table.
+
+Options:
+  --session-id ID  Explicitly provide the session ID.
+  --format MODE    Output mode: summary, cost-only, kv, json.
+  --refresh-pricing
+                    Refresh the cached OpenAI pricing data from
+                    $PRICING_SOURCE_URL.
+  --pricing-status  Show pricing source/cache status and exit.
+  --no-auto-refresh Disable the automatic stale-cache refresh check.
+  -h, --help       Show this help message and exit.
+
+Environment overrides:
+  CODEX_SESSION_COST_PRICING_JSON
+  CODEX_SESSION_COST_PRICING_FILE
+  CODEX_WRAP_PRICE_INPUT_PER_MTOK
+  CODEX_WRAP_PRICE_CACHED_INPUT_PER_MTOK
+  CODEX_WRAP_PRICE_OUTPUT_PER_MTOK
+EOF
+}
+
+usage_hint() {
+  echo "Run '$SCRIPT_NAME --help' for usage information." >&2
+}
+
+error() {
+  echo "Error: $1" >&2
+  usage_hint
+  return 1
+}
+
+check_dependencies() {
+  local -a missing=()
+  local command_name
+
+  for command_name in jq; do
+    if ! (( $+commands[$command_name] )); then
+      missing+=("$command_name")
+    fi
+  done
+
+  if ! (( $+commands[fd] )) && ! (( $+commands[find] )); then
+    missing+=("fd/find")
+  fi
+
+  if ! (( $+commands[curl] )); then
+    echo "Warning: curl not found; pricing cache refresh is unavailable." >&2
+  fi
+
+  if (( ${#missing[@]} > 0 )); then
+    echo "Error: Missing required dependencies:" >&2
+    for command_name in "${missing[@]}"; do
+      echo "  - $command_name" >&2
+    done
+    return 127
+  fi
+
+  if ! (( $+commands[sqlite3] )); then
+    echo "Warning: sqlite3 not found; model lookup will rely on the session JSONL only." >&2
+  fi
+}
+
+current_utc_timestamp() {
+  date -u +"%Y-%m-%dT%H:%M:%SZ"
+}
+
+format_if_none_match_etag() {
+  local etag_value="${1:-}"
+  if [[ -z "$etag_value" ]]; then
+    return 1
+  fi
+
+  if [[ "$etag_value" == W/* ]]; then
+    printf 'W/"%s"\n' "${etag_value#W/}"
+  else
+    printf '"%s"\n' "$etag_value"
+  fi
+}
+
+parse_response_etag() {
+  local etag_value="${1:-}"
+
+  if [[ "$etag_value" == W/\"*\" ]]; then
+    etag_value="W/${etag_value#W/\"}"
+    etag_value="${etag_value%\"}"
+  elif [[ "$etag_value" == \"*\" ]]; then
+    etag_value="${etag_value#\"}"
+    etag_value="${etag_value%\"}"
+  fi
+
+  printf '%s\n' "$etag_value"
+}
+
+file_mtime_epoch() {
+  local target_file="$1"
+
+  if [[ ! -e "$target_file" ]]; then
+    return 1
+  fi
+
+  if stat -f '%m' "$target_file" >/dev/null 2>&1; then
+    stat -f '%m' "$target_file"
+  else
+    stat -c '%Y' "$target_file"
+  fi
+}
+
+is_pricing_cache_stale() {
+  local cache_file="$1"
+  local stale_days="${2:-$DEFAULT_PRICING_STALE_DAYS}"
+  local now_epoch cache_epoch max_age_seconds
+
+  if [[ ! -e "$cache_file" ]]; then
+    return 0
+  fi
+
+  cache_epoch="$(file_mtime_epoch "$cache_file")" || return 0
+  now_epoch="$(date -u +%s)"
+  max_age_seconds=$(( stale_days * 86400 ))
+
+  (( now_epoch - cache_epoch >= max_age_seconds ))
+}
+
+find_session_file() {
+  local session_id="$1"
+  local codex_home="${CODEX_HOME:-$HOME/.codex}"
+  local session_root="${codex_home}/sessions"
+  local -a session_matches
+
+  if (( $+commands[fd] )); then
+    session_matches=("${(@f)$(fd -a -g "*-${session_id}.jsonl" "$session_root" 2>/dev/null)}")
+  else
+    session_matches=("${(@f)$(find "$session_root" -type f -name "*-${session_id}.jsonl" -print 2>/dev/null)}")
+  fi
+
+  if (( ${#session_matches[@]} > 0 )); then
+    printf '%s\n' "${session_matches[1]}"
+  fi
+}
+
+find_state_db() {
+  local codex_home="${CODEX_HOME:-$HOME/.codex}"
+  local -a state_dbs=("$codex_home"/state_*.sqlite(N))
+
+  if (( ${#state_dbs[@]} > 0 )); then
+    printf '%s\n' "${state_dbs[-1]}"
+  fi
+}
+
+lookup_model_from_session_file() {
+  local session_file="$1"
+
+  jq -nr --slurpfile session "$session_file" '
+    reduce $session[] as $item (null;
+      if $item.type == "turn_context" and (($item.payload.model // "") | length) > 0 then
+        $item.payload.model
+      elif $item.type == "session_meta" and (($item.payload.model // "") | length) > 0 then
+        $item.payload.model
+      elif $item.type == "event_msg" and ($item.payload.type // "") == "session_configured" and (($item.payload.model // $item.payload.info.model // "") | length) > 0 then
+        ($item.payload.model // $item.payload.info.model)
+      else
+        .
+      end
+    ) // empty
+  '
+}
+
+lookup_model_from_state_db() {
+  local session_id="$1"
+  local state_db
+
+  if ! (( $+commands[sqlite3] )); then
+    return 0
+  fi
+
+  state_db="$(find_state_db)"
+
+  if [[ -n "$state_db" ]]; then
+    sqlite3 "$state_db" "select coalesce(model, '') from threads where id = '$session_id' limit 1;" 2>/dev/null
+  fi
+}
+
+lookup_model() {
+  local session_id="$1"
+  local session_file="$2"
+  local model_name
+
+  model_name="$(lookup_model_from_session_file "$session_file")"
+  if [[ -n "$model_name" ]]; then
+    printf '%s\n' "$model_name"
+    return 0
+  fi
+
+  lookup_model_from_state_db "$session_id"
+}
+
+resolve_pricing_json() {
+  local model="$1"
+  local pricing_json
+
+  pricing_json="$(load_active_pricing_json)"
+
+  if [[ -n "${CODEX_SESSION_COST_PRICING_FILE:-}" ]]; then
+    if [[ ! -r "${CODEX_SESSION_COST_PRICING_FILE}" ]]; then
+      echo "Error: pricing file is not readable: ${CODEX_SESSION_COST_PRICING_FILE}" >&2
+      return 1
+    fi
+    pricing_json="$(<"${CODEX_SESSION_COST_PRICING_FILE}")"
+  elif [[ -n "${CODEX_SESSION_COST_PRICING_JSON:-}" ]]; then
+    pricing_json="${CODEX_SESSION_COST_PRICING_JSON}"
+  fi
+
+  if [[ -n "${CODEX_WRAP_PRICE_INPUT_PER_MTOK:-}" && -n "${CODEX_WRAP_PRICE_CACHED_INPUT_PER_MTOK:-}" && -n "${CODEX_WRAP_PRICE_OUTPUT_PER_MTOK:-}" && -n "$model" ]]; then
+    pricing_json="$(
+      jq -cn \
+        --argjson base "$pricing_json" \
+        --arg model "$model" \
+        --arg input "${CODEX_WRAP_PRICE_INPUT_PER_MTOK}" \
+        --arg cached_input "${CODEX_WRAP_PRICE_CACHED_INPUT_PER_MTOK}" \
+        --arg output "${CODEX_WRAP_PRICE_OUTPUT_PER_MTOK}" '
+          $base
+          | .prices = (.prices // {})
+          | .prices[$model] = {
+              input: ($input | tonumber),
+              cached_input: ($cached_input | tonumber),
+              output: ($output | tonumber)
+            }
+        '
+    )"
+  fi
+
+  printf '%s\n' "$pricing_json"
+}
+
+load_cache_pricing_json() {
+  if [[ -r "$PRICING_CACHE_FILE" ]]; then
+    cat "$PRICING_CACHE_FILE"
+  fi
+}
+
+load_active_pricing_json() {
+  local cache_json fallback_json cache_ref fallback_ref
+
+  fallback_json="$DEFAULT_PRICING_JSON"
+  cache_json="$(load_cache_pricing_json)"
+
+  if [[ -z "$cache_json" ]]; then
+    printf '%s\n' "$fallback_json"
+    return 0
+  fi
+
+  cache_ref="$(jq -r '.reference_updated_at // ""' <<<"$cache_json")"
+  fallback_ref="$(jq -r '.reference_updated_at // ""' <<<"$fallback_json")"
+
+  if [[ -n "$fallback_ref" && ( -z "$cache_ref" || "$cache_ref" < "$fallback_ref" ) ]]; then
+    printf '%s\n' "$fallback_json"
+  else
+    printf '%s\n' "$cache_json"
+  fi
+}
+
+refresh_pricing_cache() {
+  local refresh_mode="${1:-best-effort}"
+  local now_utc etag_header cached_etag request_etag curl_exit_code http_code tmp_body tmp_headers filtered_json
+
+  if ! (( $+commands[curl] )); then
+    if [[ "$refresh_mode" == "required" ]]; then
+      echo "Error: curl not found; cannot refresh pricing cache." >&2
+      return 1
+    fi
+    return 0
+  fi
+
+  mkdir -p "$PRICING_CACHE_DIR"
+  now_utc="$(current_utc_timestamp)"
+  cached_etag=""
+  if [[ -r "$PRICING_CACHE_FILE" ]]; then
+    cached_etag="$(jq -r '.etag // ""' "$PRICING_CACHE_FILE" 2>/dev/null || true)"
+  fi
+
+  tmp_body="$(mktemp "${TMPDIR:-/tmp}/codex-pricing-body.XXXXXX")" || return 1
+  tmp_headers="$(mktemp "${TMPDIR:-/tmp}/codex-pricing-headers.XXXXXX")" || {
+    rm -f "$tmp_body"
+    return 1
+  }
+
+  if [[ -n "$cached_etag" ]]; then
+    request_etag="$(format_if_none_match_etag "$cached_etag")"
+    if [[ "$refresh_mode" == "required" ]]; then
+      http_code="$(curl -sSL -D "$tmp_headers" -H "If-None-Match: $request_etag" -o "$tmp_body" -w '%{http_code}' "$PRICING_SOURCE_URL")"
+    else
+      http_code="$(curl -sSL -D "$tmp_headers" -H "If-None-Match: $request_etag" -o "$tmp_body" -w '%{http_code}' "$PRICING_SOURCE_URL" 2>/dev/null)"
+    fi
+    curl_exit_code=$?
+  else
+    if [[ "$refresh_mode" == "required" ]]; then
+      http_code="$(curl -sSL -D "$tmp_headers" -o "$tmp_body" -w '%{http_code}' "$PRICING_SOURCE_URL")"
+    else
+      http_code="$(curl -sSL -D "$tmp_headers" -o "$tmp_body" -w '%{http_code}' "$PRICING_SOURCE_URL" 2>/dev/null)"
+    fi
+    curl_exit_code=$?
+  fi
+
+  if (( curl_exit_code != 0 )); then
+    rm -f "$tmp_body" "$tmp_headers"
+    if [[ "$refresh_mode" == "required" ]]; then
+      echo "Error: failed to refresh pricing cache from $PRICING_SOURCE_URL" >&2
+      return 1
+    fi
+    return 0
+  fi
+
+  if [[ "$http_code" == "304" && -r "$PRICING_CACHE_FILE" ]]; then
+    filtered_json="$(
+      jq -S \
+        --arg checked_at "$now_utc" \
+        --arg etag "$cached_etag" \
+        '.checked_at = $checked_at
+         | .etag = (if ($etag | length) > 0 then $etag else .etag end)' \
+        "$PRICING_CACHE_FILE"
+    )"
+    printf '%s\n' "$filtered_json" > "$PRICING_CACHE_FILE"
+    rm -f "$tmp_body" "$tmp_headers"
+    return 0
+  fi
+
+  etag_header="$(awk 'BEGIN{IGNORECASE=1} /^etag:/ {sub(/\r$/,""); sub(/^[^:]+:[[:space:]]*/,""); print; exit}' "$tmp_headers")"
+  etag_header="$(parse_response_etag "$etag_header")"
+
+  filtered_json="$(
+    jq -S \
+      --arg fetched_at "$now_utc" \
+      --arg checked_at "$now_utc" \
+      --arg etag "$etag_header" \
+      --arg source_url "$PRICING_SOURCE_URL" '
+        {
+          source: "llm-prices",
+          source_url: $source_url,
+          vendor: "openai",
+          reference_updated_at: (.updated_at // ""),
+          fetched_at: $fetched_at,
+          checked_at: $checked_at,
+          etag: (if ($etag | length) > 0 then $etag else null end),
+          prices: (
+            .prices
+            | map(select(.vendor == "openai"))
+            | map({
+                key: .id,
+                value: {
+                  input: .input,
+                  cached_input: .input_cached,
+                  output: .output
+                }
+              })
+            | from_entries
+          )
+        }
+      ' "$tmp_body"
+  )"
+
+  printf '%s\n' "$filtered_json" > "$PRICING_CACHE_FILE"
+  rm -f "$tmp_body" "$tmp_headers"
+}
+
+print_pricing_status() {
+  local output_format="${1:-$DEFAULT_OUTPUT_FORMAT}"
+  local active_json cache_json cache_exists cache_stale
+  local stale_days="${CODEX_SESSION_COST_STALE_DAYS:-$DEFAULT_PRICING_STALE_DAYS}"
+  local status_json
+
+  active_json="$(load_active_pricing_json)"
+  cache_json="$(load_cache_pricing_json)"
+  if [[ -n "$cache_json" ]]; then
+    cache_exists="yes"
+  else
+    cache_exists="no"
+  fi
+
+  if is_pricing_cache_stale "$PRICING_CACHE_FILE" "$stale_days"; then
+    cache_stale="yes"
+  else
+    cache_stale="no"
+  fi
+
+  status_json="$(
+    jq -nr \
+    --arg cache_file "$PRICING_CACHE_FILE" \
+    --arg cache_exists "$cache_exists" \
+    --arg cache_stale "$cache_stale" \
+    --arg stale_days "$stale_days" \
+    --argjson active "$active_json" \
+    --argjson cache "$(if [[ -n "$cache_json" ]]; then printf '%s' "$cache_json"; else printf 'null'; fi)" '
+      {
+        active_source: ($active.source // "unknown"),
+        active_reference_updated_at: ($active.reference_updated_at // "unknown"),
+        active_vendor: ($active.vendor // "unknown"),
+        cache_file: $cache_file,
+        cache_exists: ($cache_exists == "yes"),
+        cache_stale: ($cache_stale == "yes"),
+        cache_reference_updated_at: ($cache.reference_updated_at // null),
+        cache_checked_at: ($cache.checked_at // null),
+        cache_fetched_at: ($cache.fetched_at // null),
+        cache_etag: ($cache.etag // null),
+        stale_after_days: ($stale_days | tonumber)
+      }'
+  )"
+
+  if [[ "$output_format" == "json" ]]; then
+    jq '.' <<<"$status_json"
+  else
+    jq -r '
+      [
+        "Pricing source: \(.active_source) (\(.active_reference_updated_at // "unknown"))",
+        "Cache file: \(.cache_file)",
+        "Cache exists: \(.cache_exists)",
+        "Cache stale: \(.cache_stale) after \(.stale_after_days) days",
+        "Cache checked_at: \(.cache_checked_at // "unknown")",
+        "Cache fetched_at: \(.cache_fetched_at // "unknown")",
+        "Cache etag: \(.cache_etag // "unknown")"
+      ]
+      | .[]
+    ' <<<"$status_json"
+  fi
+}
+
+print_session_cost() {
+  local session_id="$1"
+  local output_format="$2"
+  local session_file model pricing_json rendered_output
+
+  session_file="$(find_session_file "$session_id")"
+  if [[ -z "$session_file" || ! -r "$session_file" ]]; then
+    echo "Error: could not find session file for session_id=$session_id" >&2
+    return 1
+  fi
+
+  model="$(lookup_model "$session_id" "$session_file")"
+  pricing_json="$(resolve_pricing_json "$model")"
+
+  rendered_output="$(
+    jq -nr \
+      --arg session_id "$session_id" \
+      --arg session_file "$session_file" \
+      --arg model "${model:-}" \
+      --arg output_format "$output_format" \
+      --argjson pricing "$pricing_json" \
+      --slurpfile session "$session_file" '
+        def last_token_info:
+          reduce $session[] as $item (null;
+            if $item.type == "event_msg" and ($item.payload.type // "") == "token_count" then
+              $item.payload.info
+            else
+              .
+            end
+          );
+
+        def lookup_prices($model):
+          if ($model | length) == 0 then null else ($pricing.prices[$model] // null) end;
+
+        def fmt_int:
+          tostring;
+
+        def fmt_int_commas:
+          tostring as $s
+          | ($s | explode | reverse) as $digits
+          | (
+              reduce range(0; $digits | length) as $i
+                ({chars: []};
+                  .chars += [$digits[$i]]
+                  + (if ($i % 3) == 2 and $i < (($digits | length) - 1) then [44] else [] end)
+                )
+              | .chars
+              | reverse
+              | implode
+            );
+
+        def fmt_money:
+          if . == "unknown" then .
+          elif . == null then "unknown"
+          else "$" + tostring
+          end;
+
+        def round_cost($value):
+          ((($value * 1000000) | round) / 1000000);
+
+        def calc_cost($token_count; $rate):
+          round_cost(($token_count / 1000000) * ($rate // 0));
+
+        last_token_info as $info
+        | if $info == null then
+            empty
+          else
+            ($info.total_token_usage.input_tokens // 0) as $input_tokens
+            | ($info.total_token_usage.cached_input_tokens // 0) as $cached_input_tokens
+            | (($input_tokens - $cached_input_tokens) | if . < 0 then 0 else . end) as $uncached_input_tokens
+            | ($info.total_token_usage.output_tokens // 0) as $output_tokens
+            | ($info.total_token_usage.reasoning_output_tokens // 0) as $reasoning_output_tokens
+            | ($info.total_token_usage.total_tokens // 0) as $session_total_tokens
+            | ($uncached_input_tokens + $output_tokens) as $display_total_tokens
+            | ($info.model_context_window // 0) as $model_context_window
+            | lookup_prices($model) as $prices
+            | (
+                if $prices == null then
+                  {
+                    uncached_input_cost: "unknown",
+                    cached_input_cost: "unknown",
+                    output_cost: "unknown",
+                    total_cost: "unknown"
+                  }
+                else
+                  (calc_cost($uncached_input_tokens; $prices.input)) as $uncached_input_cost
+                  | (calc_cost($cached_input_tokens; $prices.cached_input)) as $cached_input_cost
+                  | (calc_cost($output_tokens; $prices.output)) as $output_cost
+                  | {
+                      uncached_input_cost: $uncached_input_cost,
+                      cached_input_cost: $cached_input_cost,
+                      output_cost: $output_cost,
+                      total_cost: round_cost($uncached_input_cost + $cached_input_cost + $output_cost)
+                    }
+                end
+              ) as $costs
+            | {
+                session_id: $session_id,
+                session_file: $session_file,
+                model: (if ($model | length) > 0 then $model else "unknown" end),
+                input_tokens: $input_tokens,
+                uncached_input_tokens: $uncached_input_tokens,
+                cached_input_tokens: $cached_input_tokens,
+                output_tokens: $output_tokens,
+                reasoning_output_tokens: $reasoning_output_tokens,
+                total_tokens: $display_total_tokens,
+                session_total_tokens: $session_total_tokens,
+                model_context_window: $model_context_window,
+                uncached_input_cost_usd: $costs.uncached_input_cost,
+                cached_input_cost_usd: $costs.cached_input_cost,
+                output_cost_usd: $costs.output_cost,
+                estimated_cost_usd: $costs.total_cost
+              } as $summary
+            | if $output_format == "json" then
+                $summary
+              elif $output_format == "kv" then
+                ($summary | to_entries[] | "\(.key)=\(.value)")
+              elif $output_format == "cost-only" then
+                "Estimated token cost: total=\($summary.estimated_cost_usd | fmt_money) input=\($summary.uncached_input_cost_usd | fmt_money) (+ cached \($summary.cached_input_cost_usd | fmt_money)) output=\($summary.output_cost_usd | fmt_money)"
+              else
+                [
+                  "Model: \($summary.model) | Session: \($summary.session_id)",
+                  "Token usage: total=\($summary.total_tokens | fmt_int_commas) (est. \($summary.estimated_cost_usd | fmt_money)) input=\($summary.uncached_input_tokens | fmt_int_commas) (est. \($summary.uncached_input_cost_usd | fmt_money)) (+ \($summary.cached_input_tokens | fmt_int_commas) cached (est. \($summary.cached_input_cost_usd | fmt_money))) output=\($summary.output_tokens | fmt_int_commas) (est. \($summary.output_cost_usd | fmt_money), incl. reasoning \($summary.reasoning_output_tokens | fmt_int_commas))"
+                ]
+                | .[]
+              end
+          end
+      '
+  )"
+
+  if [[ -z "$rendered_output" ]]; then
+    echo "Error: no token_count event found in $session_file" >&2
+    return 1
+  fi
+
+  printf '%s\n' "$rendered_output"
+}
+
+main() {
+  local session_id=""
+  local output_format="$DEFAULT_OUTPUT_FORMAT"
+  local stale_days="${CODEX_SESSION_COST_STALE_DAYS:-$DEFAULT_PRICING_STALE_DAYS}"
+  local refresh_pricing=0
+  local pricing_status=0
+  local auto_refresh=1
+  local show_help=0
+
+  while (( $# )); do
+    case "$1" in
+      -h|--help)
+        show_help=1
+        shift
+        ;;
+      --session-id)
+        if (( $# < 2 )) || [[ -z "${2:-}" ]]; then
+          error "--session-id requires a value"
+          exit 2
+        fi
+        session_id="$2"
+        shift 2
+        ;;
+      --format)
+        if (( $# < 2 )) || [[ -z "${2:-}" ]]; then
+          error "--format requires a value"
+          exit 2
+        fi
+        output_format="$2"
+        shift 2
+        ;;
+      --refresh-pricing)
+        refresh_pricing=1
+        shift
+        ;;
+      --pricing-status)
+        pricing_status=1
+        shift
+        ;;
+      --no-auto-refresh)
+        auto_refresh=0
+        shift
+        ;;
+      --)
+        shift
+        while (( $# )); do
+          if [[ -z "$session_id" ]]; then
+            session_id="$1"
+            shift
+          else
+            error "unexpected argument: $1"
+            exit 2
+          fi
+        done
+        ;;
+      -*)
+        error "unknown option: $1"
+        exit 2
+        ;;
+      *)
+        if [[ -z "$session_id" ]]; then
+          session_id="$1"
+          shift
+        else
+          error "unexpected argument: $1"
+          exit 2
+        fi
+        ;;
+    esac
+  done
+
+  if (( show_help )); then
+    usage
+    exit 0
+  fi
+
+  case "$output_format" in
+    summary|cost-only|kv|json)
+      ;;
+    *)
+      error "unsupported --format: $output_format"
+      exit 2
+      ;;
+  esac
+
+  check_dependencies
+
+  if (( refresh_pricing )); then
+    refresh_pricing_cache required
+  elif (( auto_refresh )) && is_pricing_cache_stale "$PRICING_CACHE_FILE" "$stale_days"; then
+    refresh_pricing_cache best-effort || true
+  fi
+
+  if (( pricing_status )); then
+    print_pricing_status "$output_format"
+    if [[ -z "$session_id" ]]; then
+      exit 0
+    fi
+  fi
+
+  if (( refresh_pricing )) && [[ -z "$session_id" ]] && (( ! pricing_status )); then
+    print_pricing_status "$output_format"
+    exit 0
+  fi
+
+  if [[ -z "$session_id" ]]; then
+    error "missing <session-id>"
+    exit 1
+  fi
+
+  print_session_cost "$session_id" "$output_format"
+}
+
+main "$@"
