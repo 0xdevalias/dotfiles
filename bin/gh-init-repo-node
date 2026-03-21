@@ -82,13 +82,23 @@ prompt_yes_no() {
 
 collect_existing_items() {
   local repo_name="$1"
+  collect_directory_items "." "$repo_name"
+}
+
+collect_directory_items() {
+  setopt local_options null_glob
+
+  local target_dir="$1"
+  local excluded_name="${2:-}"
+  local skip_git="${3:-1}"
   local item
   local -a collected_items=()
 
-  for item in ./* ./.??*; do
-    [[ "$item" == "./." || "$item" == "./.." ]] && continue
-    [[ "$item" == "./.git" ]] && continue
-    [[ -n "$repo_name" && "$item" == "./$repo_name" ]] && continue
+  # Reused for both "move user files" scans and "flatten the nested clone" scans.
+  for item in "$target_dir"/* "$target_dir"/.[!.]* "$target_dir"/..?*; do
+    [[ "$item" == "$target_dir/." || "$item" == "$target_dir/.." ]] && continue
+    [[ "$skip_git" == "1" && "$item" == "$target_dir/.git" ]] && continue
+    [[ -n "$excluded_name" && "$item" == "$target_dir/$excluded_name" ]] && continue
     [[ ! -e "$item" ]] && continue
     collected_items+=("$item")
   done
@@ -224,6 +234,94 @@ move_existing_items() {
     done
   else
     echo "No files moved."
+  fi
+
+  echo ""
+}
+
+flatten_nested_clone_if_safe() {
+  local repo_name="$1"
+  local original_dir="$2"
+  local original_basename="$3"
+  local nested_repo_dir="$original_dir/$repo_name"
+  local item
+  local source_name
+  local -a remaining_items=()
+  local -a nested_items=()
+  local -a conflicting_items=()
+
+  # Only flatten the common foo/foo case produced by cloning into an already-named cwd.
+  [[ "$original_basename" == "$repo_name" ]] || return 0
+  [[ -d "$nested_repo_dir" ]] || return 0
+  [[ -d "$nested_repo_dir/.git" ]] || return 0
+
+  # If the outer directory is already a repo, do not try to merge repo metadata.
+  if [[ -e "$original_dir/.git" ]]; then
+    echo "warning: '$original_dir' already contains a .git directory; leaving the clone nested."
+    echo ""
+    return 0
+  fi
+
+  # Flatten only when the outer directory is otherwise empty apart from the nested clone.
+  while IFS= read -r item; do
+    [[ -n "$item" ]] || continue
+    remaining_items+=("$item")
+  done < <(collect_directory_items "$original_dir" "$repo_name")
+
+  if (( ${#remaining_items[@]} > 0 )); then
+    echo "Leaving the clone nested because '$original_dir' still contains other items:"
+    for item in "${remaining_items[@]}"; do
+      printf '  %s\n' "${item#$original_dir/}"
+    done
+    echo ""
+    return 0
+  fi
+
+  # The nested repo payload must include hidden entries such as .git.
+  while IFS= read -r item; do
+    [[ -n "$item" ]] || continue
+    nested_items+=("$item")
+  done < <(collect_directory_items "$nested_repo_dir" "" "0")
+
+  if (( ${#nested_items[@]} == 0 )); then
+    echo "warning: cloned repository '$nested_repo_dir' is empty; leaving it nested."
+    echo ""
+    return 0
+  fi
+
+  echo "Current directory name matches '$repo_name'; flattening the nested clone back into '$original_dir'."
+
+  # Preflight collisions up front so the warning is complete and no partial move occurs.
+  for item in "${nested_items[@]}"; do
+    source_name="${item#$nested_repo_dir/}"
+
+    if [[ -e "$original_dir/$source_name" ]]; then
+      conflicting_items+=("$source_name")
+    fi
+  done
+
+  if (( ${#conflicting_items[@]} > 0 )); then
+    echo "warning: cannot flatten nested clone because these paths already exist in '$original_dir':"
+    for item in "${conflicting_items[@]}"; do
+      printf '  %s\n' "$item"
+    done
+    echo "Leaving the clone nested."
+    echo ""
+    return 0
+  fi
+
+  # Move only after the full preflight passes so flattening stays all-or-nothing.
+  for item in "${nested_items[@]}"; do
+    if ! mv "$item" "$original_dir/"; then
+      echo "Error: failed to flatten '$item' into '$original_dir'" >&2
+      return 1
+    fi
+  done
+
+  # Remove the emptied wrapper dir.
+  if ! rmdir "$nested_repo_dir"; then
+    echo "Error: failed to remove now-empty directory '$nested_repo_dir'" >&2
+    return 1
   fi
 
   echo ""
@@ -395,9 +493,15 @@ main() {
   fi
 
   move_existing_items "$repo_name" "${existing_items[@]}" || return $?
+  flatten_nested_clone_if_safe "$repo_name" "$original_dir" "$original_basename" || return $?
 
-  cd "$repo_name" || {
-    echo "Error: failed to enter directory '$repo_name'" >&2
+  local repo_dir="$repo_name"
+  if [[ ! -d "$repo_dir/.git" && -d "$original_dir/.git" ]]; then
+    repo_dir="$original_dir"
+  fi
+
+  cd "$repo_dir" || {
+    echo "Error: failed to enter repository directory '$repo_dir'" >&2
     return 1
   }
 
