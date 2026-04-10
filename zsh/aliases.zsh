@@ -1,5 +1,4 @@
 alias reload!='. ~/.zshrc'
-alias dotfiles-edit='subl --new-window $ZSH'
 
 _dotfiles-search-commits() {
   if [[ $# -eq 0 ]]; then

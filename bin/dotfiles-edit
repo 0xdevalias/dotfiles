@@ -1,0 +1,140 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+SCRIPT_NAME="${0:t}"
+SCRIPT_DIR="${0:A:h}"
+
+usage() {
+  cat <<EOF
+Usage:
+  $SCRIPT_NAME [target]
+  $SCRIPT_NAME -h | --help
+
+Open the dotfiles repo in Sublime Text, optionally focusing a target within it.
+
+Behavior:
+  No target                Open the dotfiles repo root in a new Sublime window.
+  Directory target         Open only the target directory to avoid duplicate roots.
+  File target              Open the dotfiles repo root plus the target file.
+  Relative target          Resolve relative to the dotfiles repo root, not \$PWD.
+  Absolute target          Allowed only if it resolves within the dotfiles repo.
+
+Examples:
+  $SCRIPT_NAME
+  $SCRIPT_NAME bin
+  $SCRIPT_NAME bin/dotfiles-edit
+  $SCRIPT_NAME /Users/devalias/.dotfiles/bin/dotfiles-edit
+EOF
+}
+
+usage_hint() {
+  echo "Run '$SCRIPT_NAME --help' for usage information." >&2
+}
+
+error() {
+  echo "Error: $1" >&2
+  usage_hint
+  return 1
+}
+
+check_dependencies() {
+  local -a missing=()
+  local command_name
+
+  for command_name in subl; do
+    if ! (( $+commands[$command_name] )); then
+      missing+=("$command_name")
+    fi
+  done
+
+  if (( ${#missing[@]} > 0 )); then
+    echo "Error: Missing required dependencies:" >&2
+    for command_name in "${missing[@]}"; do
+      echo "  - $command_name" >&2
+    done
+    return 127
+  fi
+}
+
+resolve_target_path() {
+  local repo_root="$1"
+  local input_target="$2"
+  local target_path
+
+  if [[ "$input_target" = /* ]]; then
+    target_path="$input_target"
+  else
+    target_path="$repo_root/$input_target"
+  fi
+
+  target_path="${target_path:A}"
+
+  if [[ "$target_path" != "$repo_root" && "$target_path" != "$repo_root/"* ]]; then
+    error "target must resolve within $repo_root"
+    return 1
+  fi
+
+  printf '%s\n' "$target_path"
+}
+
+main() {
+  local repo_root="${ZSH:-${SCRIPT_DIR:h}}"
+  local input_target=""
+  local target_path=""
+  local positional_args=()
+  local -a subl_args
+
+  while (( $# > 0 )); do
+    case "$1" in
+      -h|--help)
+        usage
+        return 0
+        ;;
+      --)
+        shift
+        break
+        ;;
+      -*)
+        error "unknown option: $1"
+        return 1
+        ;;
+      *)
+        positional_args+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  if (( $# > 0 )); then
+    positional_args+=("$@")
+  fi
+
+  if (( ${#positional_args[@]} > 1 )); then
+    error "expected at most one target path"
+    return 1
+  fi
+
+  if (( ${#positional_args[@]} == 1 )); then
+    input_target="${positional_args[1]}"
+  fi
+
+  check_dependencies || return $?
+  repo_root="${repo_root:A}"
+
+  if [[ -z "$input_target" ]]; then
+    subl --new-window "$repo_root"
+    return 0
+  fi
+
+  target_path="$(resolve_target_path "$repo_root" "$input_target")" || return 1
+
+  if [[ -d "$target_path" ]]; then
+    subl_args=(--new-window "$target_path")
+  else
+    subl_args=(--new-window "$repo_root" "$target_path")
+  fi
+
+  subl "${subl_args[@]}"
+}
+
+main "$@"
