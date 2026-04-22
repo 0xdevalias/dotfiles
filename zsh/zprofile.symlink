@@ -1,0 +1,13 @@
+# Sourced by login zsh shells, after /etc/zprofile has run. On macOS this
+# usually means new terminal windows/tabs, but not every zsh script or subshell.
+
+# Homebrew is also initialized in ~/.zshenv so non-login shells can find
+# brew-installed tools. This repeat keeps Homebrew first after macOS path_helper
+# has rebuilt PATH for login shells.
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  # Apple Silicon Homebrew installs under /opt/homebrew.
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+  # Intel and older migrated Homebrew installs use /usr/local.
+  eval "$(/usr/local/bin/brew shellenv)"
+fi

@@ -1,0 +1,12 @@
+# Sourced by every zsh shell, including scripts and non-interactive tools.
+
+# Homebrew is also initialized in ~/.zprofile because macOS login shells run
+# /etc/zprofile path_helper after this file, which can move Homebrew later in
+# PATH. Keeping both makes non-login shells work and restores login precedence.
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  # Apple Silicon Homebrew installs under /opt/homebrew.
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+  # Intel and older migrated Homebrew installs use /usr/local.
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
