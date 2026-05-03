@@ -1,0 +1,657 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+# Move a local Codex session between the normal Chats area and a project.
+#
+# Codex sidebar grouping is driven by durable metadata in:
+#   - $CODEX_HOME/state_*.sqlite: threads.cwd
+#   - $CODEX_HOME/sessions/.../rollout-*.jsonl: first session_meta.payload.cwd
+#   - $CODEX_HOME/.codex-global-state.json:
+#       projectless-thread-ids
+#       thread-workspace-root-hints
+#
+# Apply runs must happen while Codex.app is closed. The app appears to rewrite
+# .codex-global-state.json from in-memory state on exit, so edits made while it
+# is running may be lost.
+
+SCRIPT_NAME="${0:t}"
+CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
+CHAT_ROOT="${CODEX_CHAT_ROOT:-$HOME/Documents/Codex}"
+
+usage() {
+  cat <<EOF
+Usage:
+  $SCRIPT_NAME <session-id> --chat [--dry-run] [--yes]
+  $SCRIPT_NAME <session-id> --project <project-root> [--dry-run] [--yes]
+  $SCRIPT_NAME cleanup [session-id] [--dry-run] [--yes]
+
+Description:
+  Move a local Codex session between normal chats and project workspaces by
+  updating the durable Codex metadata that controls session grouping.
+
+Modes:
+  --chat             Move the session to a generated normal-chat cwd under:
+                       $CHAT_ROOT/YYYY-MM-DD/<title-slug>
+  --project <path>   Move the session to a project cwd at <path>.
+  cleanup            Find and delete backups created by this tool.
+
+Options:
+  --dry-run          Print the plan only; do not change files.
+  --yes              Skip the interactive confirmation prompt.
+  -h, --help         Show this help message and exit.
+
+Environment:
+  CODEX_HOME         Codex state directory (default: $HOME/.codex)
+  CODEX_CHAT_ROOT    Normal chat root (default: $HOME/Documents/Codex)
+EOF
+}
+
+usage_hint() {
+  echo "Run '$SCRIPT_NAME --help' for usage information." >&2
+}
+
+error() {
+  echo "Error: $1" >&2
+  usage_hint
+  return 1
+}
+
+validate_session_id() {
+  local session_id="$1"
+
+  if [[ ! "$session_id" =~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' ]]; then
+    error "invalid Codex session id: $session_id"
+    return 1
+  fi
+}
+
+check_dependencies() {
+  local -a missing=()
+  local command_name
+
+  for command_name in sqlite3 ruby find cp mkdir rm date; do
+    if ! (( $+commands[$command_name] )); then
+      missing+=("$command_name")
+    fi
+  done
+
+  if [[ "$(uname -s)" == "Darwin" ]] && ! (( $+commands[osascript] )); then
+    missing+=("osascript")
+  fi
+
+  if (( ${#missing[@]} > 0 )); then
+    echo "Error: Missing required dependencies:" >&2
+    for command_name in "${missing[@]}"; do
+      echo "  - $command_name" >&2
+    done
+    return 127
+  fi
+}
+
+codex_is_running() {
+  local running
+
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    return 1
+  fi
+
+  running="$(/usr/bin/osascript -e 'application "Codex" is running' 2>/dev/null)" || return 1
+  [[ "$running" == "true" ]]
+}
+
+sql_escape() {
+  printf "%s" "${1//\'/\'\'}"
+}
+
+find_state_db() {
+  local -a state_dbs=("$CODEX_HOME"/state_*.sqlite(N))
+
+  if (( ${#state_dbs[@]} == 0 )); then
+    return 1
+  fi
+
+  printf "%s\n" "${state_dbs[-1]}"
+}
+
+find_session_file() {
+  local session_id="$1"
+  local session_root="$CODEX_HOME/sessions"
+  local output
+  local -a matches=()
+
+  output="$(find "$session_root" -type f -name "*-${session_id}.jsonl" -print 2>/dev/null | sort)"
+  if [[ -n "$output" ]]; then
+    matches=("${(@f)output}")
+  fi
+
+  if (( ${#matches[@]} == 0 )); then
+    return 1
+  fi
+
+  if (( ${#matches[@]} > 1 )); then
+    echo "Error: found multiple rollout files for session: $session_id" >&2
+    printf "  %s\n" "${matches[@]}" >&2
+    return 1
+  fi
+
+  printf "%s\n" "${matches[1]}"
+}
+
+thread_value() {
+  local state_db="$1"
+  local session_id="$2"
+  local column="$3"
+  local escaped_id
+
+  escaped_id="$(sql_escape "$session_id")"
+  sqlite3 "$state_db" "select coalesce($column, '') from threads where id = '$escaped_id' limit 1;"
+}
+
+require_thread_exists() {
+  local state_db="$1"
+  local session_id="$2"
+  local escaped_id count
+
+  escaped_id="$(sql_escape "$session_id")"
+  count="$(sqlite3 "$state_db" "select count(*) from threads where id = '$escaped_id';")"
+  [[ "$count" == "1" ]]
+}
+
+slugify() {
+  local text="$1"
+  local fallback="$2"
+
+  TEXT="$text" FALLBACK="$fallback" ruby -e '
+    text = ENV.fetch("TEXT")
+    fallback = ENV.fetch("FALLBACK")
+    slug = text.downcase.gsub(/[^a-z0-9]+/, "-").gsub(/\A-+|-+\z/, "")
+    slug = fallback if slug.empty?
+    puts slug[0, 80].gsub(/-+\z/, "")
+  '
+}
+
+created_date_for_thread() {
+  local state_db="$1"
+  local session_id="$2"
+  local created_at_ms
+
+  created_at_ms="$(thread_value "$state_db" "$session_id" "created_at_ms")"
+
+  if [[ -n "$created_at_ms" ]]; then
+    CREATED_AT_MS="$created_at_ms" ruby -e 'puts Time.at(ENV.fetch("CREATED_AT_MS").to_i / 1000.0).getlocal.strftime("%Y-%m-%d")'
+  else
+    date "+%Y-%m-%d"
+  fi
+}
+
+unique_path() {
+  local base_path="$1"
+  local candidate="$base_path"
+  local index=2
+
+  while [[ -e "$candidate" ]]; do
+    candidate="${base_path}-${index}"
+    index=$(( index + 1 ))
+  done
+
+  printf "%s\n" "$candidate"
+}
+
+generated_chat_cwd() {
+  local state_db="$1"
+  local session_id="$2"
+  local title date_part fallback slug base_path
+
+  title="$(thread_value "$state_db" "$session_id" "title")"
+  date_part="$(created_date_for_thread "$state_db" "$session_id")"
+  fallback="codex-session-${session_id[1,8]}"
+  slug="$(slugify "$title" "$fallback")"
+  base_path="${CHAT_ROOT}/${date_part}/${slug}"
+
+  unique_path "$base_path"
+}
+
+is_chat_cwd() {
+  local cwd="$1"
+
+  [[ "$cwd" == "$CHAT_ROOT" || "$cwd" == "$CHAT_ROOT/"* ]]
+}
+
+read_rollout_cwd() {
+  local session_file="$1"
+
+  SESSION_FILE="$session_file" ruby -rjson -e '
+    event = JSON.parse(File.open(ENV.fetch("SESSION_FILE"), &:readline))
+    puts event.dig("payload", "cwd").to_s
+  '
+}
+
+print_plan() {
+  local mode="$1"
+  local session_id="$2"
+  local current_cwd="$3"
+  local target_cwd="$4"
+  local state_db="$5"
+  local session_file="$6"
+  local global_state="$7"
+
+  cat <<EOF
+Session:
+  id:    $session_id
+  mode:  $mode
+
+Move:
+  from:  $current_cwd
+  to:    $target_cwd
+
+Will update:
+  - $state_db
+      threads.cwd
+  - $session_file
+      first session_meta.payload.cwd
+  - $global_state
+EOF
+
+  case "$mode" in
+    chat)
+      cat <<EOF
+      add projectless-thread-ids entry
+      set thread-workspace-root-hints entry to $CHAT_ROOT
+      create target chat directory if missing
+EOF
+      ;;
+    project)
+      cat <<EOF
+      remove projectless-thread-ids entry
+      remove thread-workspace-root-hints entry
+EOF
+      ;;
+  esac
+}
+
+confirm_or_exit() {
+  local yes="$1"
+  local response
+
+  if (( yes )); then
+    return 0
+  fi
+
+  printf "Continue? [y/N] "
+  read -r response
+
+  case "$response" in
+    y|Y|yes|YES)
+      return 0
+      ;;
+    *)
+      echo "Aborted."
+      exit 1
+      ;;
+  esac
+}
+
+backup_file() {
+  local file="$1"
+  local session_id="$2"
+  local stamp="$3"
+  local backup="${file}.codex-session-move-${session_id}-${stamp}.bak"
+
+  cp -p "$file" "$backup"
+  printf "%s\n" "$backup"
+}
+
+update_sqlite_cwd() {
+  local state_db="$1"
+  local session_id="$2"
+  local target_cwd="$3"
+  local escaped_id escaped_cwd
+
+  escaped_id="$(sql_escape "$session_id")"
+  escaped_cwd="$(sql_escape "$target_cwd")"
+  sqlite3 "$state_db" "update threads set cwd = '$escaped_cwd' where id = '$escaped_id';"
+}
+
+update_rollout_cwd() {
+  local session_file="$1"
+  local session_id="$2"
+  local target_cwd="$3"
+
+  SESSION_FILE="$session_file" SESSION_ID="$session_id" TARGET_CWD="$target_cwd" ruby -rjson -e '
+    path = ENV.fetch("SESSION_FILE")
+    session_id = ENV.fetch("SESSION_ID")
+    target_cwd = ENV.fetch("TARGET_CWD")
+    tmp = "#{path}.tmp-#{$$}"
+    stat = File.stat(path)
+
+    File.open(tmp, "w") do |out|
+      File.foreach(path) do |line|
+        begin
+          event = JSON.parse(line)
+          if event["type"] == "session_meta" && event.dig("payload", "id") == session_id
+            event["payload"]["cwd"] = target_cwd
+            out.puts(JSON.generate(event))
+          else
+            out.write(line)
+          end
+        rescue JSON::ParserError
+          out.write(line)
+        end
+      end
+    end
+
+    File.chmod(stat.mode & 07777, tmp)
+    File.rename(tmp, path)
+  '
+}
+
+update_global_state() {
+  local global_state="$1"
+  local session_id="$2"
+  local mode="$3"
+
+  GLOBAL_STATE="$global_state" SESSION_ID="$session_id" MODE="$mode" CHAT_ROOT="$CHAT_ROOT" ruby -rjson -e '
+    path = ENV.fetch("GLOBAL_STATE")
+    id = ENV.fetch("SESSION_ID")
+    mode = ENV.fetch("MODE")
+    chat_root = ENV.fetch("CHAT_ROOT")
+
+    state = JSON.parse(File.read(path))
+    state["projectless-thread-ids"] ||= []
+    state["thread-workspace-root-hints"] ||= {}
+
+    case mode
+    when "chat"
+      state["projectless-thread-ids"] << id unless state["projectless-thread-ids"].include?(id)
+      state["thread-workspace-root-hints"][id] = chat_root
+    when "project"
+      state["projectless-thread-ids"].delete(id)
+      state["thread-workspace-root-hints"].delete(id)
+    else
+      abort("unknown mode: #{mode}")
+    end
+
+    File.write(path, JSON.generate(state))
+  '
+}
+
+verify_move() {
+  local mode="$1"
+  local session_id="$2"
+  local target_cwd="$3"
+  local state_db="$4"
+  local session_file="$5"
+  local global_state="$6"
+  local sqlite_cwd rollout_cwd projectless hint
+
+  sqlite_cwd="$(thread_value "$state_db" "$session_id" "cwd")"
+  rollout_cwd="$(read_rollout_cwd "$session_file")"
+  projectless="$(SESSION_ID="$session_id" GLOBAL_STATE="$global_state" ruby -rjson -e 's=JSON.parse(File.read(ENV.fetch("GLOBAL_STATE"))); puts s.fetch("projectless-thread-ids", []).include?(ENV.fetch("SESSION_ID"))')"
+  hint="$(SESSION_ID="$session_id" GLOBAL_STATE="$global_state" ruby -rjson -e 's=JSON.parse(File.read(ENV.fetch("GLOBAL_STATE"))); value=s.fetch("thread-workspace-root-hints", {})[ENV.fetch("SESSION_ID")]; puts value.nil? ? "" : value')"
+
+  echo ""
+  echo "Verification:"
+  echo "  sqlite cwd:   $sqlite_cwd"
+  echo "  rollout cwd:  $rollout_cwd"
+  echo "  projectless:  $projectless"
+  echo "  hint:         ${hint:-<none>}"
+
+  [[ "$sqlite_cwd" == "$target_cwd" ]] || return 1
+  [[ "$rollout_cwd" == "$target_cwd" ]] || return 1
+
+  case "$mode" in
+    chat)
+      [[ "$projectless" == "true" ]] || return 1
+      [[ "$hint" == "$CHAT_ROOT" ]] || return 1
+      ;;
+    project)
+      [[ "$projectless" == "false" ]] || return 1
+      [[ -z "$hint" ]] || return 1
+      ;;
+  esac
+}
+
+move_session() {
+  local session_id="$1"
+  local mode="$2"
+  local project_root="${3:-}"
+  local dry_run="$4"
+  local yes="$5"
+  local state_db session_file global_state current_cwd target_cwd stamp
+  local -a backups=()
+
+  validate_session_id "$session_id" || return $?
+  check_dependencies || return $?
+
+  state_db="$(find_state_db)" || {
+    error "could not find $CODEX_HOME/state_*.sqlite"
+    return $?
+  }
+  session_file="$(find_session_file "$session_id")" || {
+    error "could not find rollout JSONL for session: $session_id"
+    return $?
+  }
+  global_state="$CODEX_HOME/.codex-global-state.json"
+
+  [[ -f "$global_state" ]] || {
+    error "missing global state file: $global_state"
+    return $?
+  }
+  require_thread_exists "$state_db" "$session_id" || {
+    error "session not found in state database: $session_id"
+    return $?
+  }
+
+  current_cwd="$(thread_value "$state_db" "$session_id" "cwd")"
+
+  case "$mode" in
+    chat)
+      if is_chat_cwd "$current_cwd"; then
+        target_cwd="$current_cwd"
+      else
+        target_cwd="$(generated_chat_cwd "$state_db" "$session_id")"
+      fi
+      ;;
+    project)
+      [[ -n "$project_root" ]] || {
+        error "--project requires a project root"
+        return $?
+      }
+      [[ -d "$project_root" ]] || {
+        error "project root does not exist: $project_root"
+        return $?
+      }
+      target_cwd="${project_root:A}"
+      ;;
+    *)
+      error "unknown move mode: $mode"
+      return $?
+      ;;
+  esac
+
+  print_plan "$mode" "$session_id" "$current_cwd" "$target_cwd" "$state_db" "$session_file" "$global_state"
+
+  if (( dry_run )); then
+    echo ""
+    echo "Dry run only; no files changed."
+    return 0
+  fi
+
+  if codex_is_running; then
+    echo "" >&2
+    echo "Error: Codex.app is running. Quit Codex fully and rerun this command so global state is not overwritten." >&2
+    return 1
+  fi
+
+  confirm_or_exit "$yes"
+
+  stamp="$(date "+%Y%m%d-%H%M%S")"
+  backups+=("$(backup_file "$state_db" "$session_id" "$stamp")")
+  backups+=("$(backup_file "$session_file" "$session_id" "$stamp")")
+  backups+=("$(backup_file "$global_state" "$session_id" "$stamp")")
+
+  if [[ "$mode" == "chat" ]]; then
+    mkdir -p "$target_cwd"
+  fi
+
+  update_sqlite_cwd "$state_db" "$session_id" "$target_cwd"
+  update_rollout_cwd "$session_file" "$session_id" "$target_cwd"
+  update_global_state "$global_state" "$session_id" "$mode"
+
+  if ! verify_move "$mode" "$session_id" "$target_cwd" "$state_db" "$session_file" "$global_state"; then
+    echo "Error: verification failed. Backups were kept:" >&2
+    printf "  %s\n" "${backups[@]}" >&2
+    return 1
+  fi
+
+  echo ""
+  echo "Backups kept:"
+  printf "  %s\n" "${backups[@]}"
+  echo ""
+  echo "After confirming Codex shows the session correctly, clean these up with:"
+  echo "  $SCRIPT_NAME cleanup $session_id"
+}
+
+cleanup_backups() {
+  local session_id="${1:-}"
+  local dry_run="$2"
+  local yes="$3"
+  local pattern output
+  local -a matches=()
+  local response
+
+  check_dependencies || return $?
+
+  if [[ -n "$session_id" ]]; then
+    validate_session_id "$session_id" || return $?
+    pattern="*.codex-session-move-${session_id}-*.bak"
+  else
+    pattern="*.codex-session-move-*.bak"
+  fi
+
+  output="$(find "$CODEX_HOME" -type f -name "$pattern" -print 2>/dev/null | sort)"
+  if [[ -n "$output" ]]; then
+    matches=("${(@f)output}")
+  fi
+
+  if (( ${#matches[@]} == 0 )); then
+    echo "No codex-session-move backups found."
+    return 0
+  fi
+
+  echo "Backups to remove:"
+  printf "  %s\n" "${matches[@]}"
+
+  if (( dry_run )); then
+    echo ""
+    echo "Dry run only; no files changed."
+    return 0
+  fi
+
+  if (( ! yes )); then
+    printf "Delete these backups? [y/N] "
+    read -r response
+    case "$response" in
+      y|Y|yes|YES)
+        ;;
+      *)
+        echo "Aborted."
+        return 1
+        ;;
+    esac
+  fi
+
+  rm -- "${matches[@]}"
+  echo "Removed ${#matches[@]} backup file(s)."
+}
+
+main() {
+  local dry_run=0
+  local yes=0
+  local mode=""
+  local session_id=""
+  local project_root=""
+  local -a positional=()
+
+  while (( $# > 0 )); do
+    case "$1" in
+      -h|--help)
+        usage
+        return 0
+        ;;
+      --dry-run)
+        dry_run=1
+        shift
+        ;;
+      --yes)
+        yes=1
+        shift
+        ;;
+      --chat)
+        [[ -z "$mode" ]] || {
+          error "choose only one destination mode"
+          return $?
+        }
+        mode="chat"
+        shift
+        ;;
+      --project)
+        [[ -z "$mode" ]] || {
+          error "choose only one destination mode"
+          return $?
+        }
+        [[ -n "${2:-}" ]] || {
+          error "--project requires a value"
+          return $?
+        }
+        mode="project"
+        project_root="$2"
+        shift 2
+        ;;
+      --)
+        shift
+        positional+=("$@")
+        break
+        ;;
+      -*)
+        error "unknown option: $1"
+        return $?
+        ;;
+      *)
+        positional+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  if (( ${#positional[@]} == 0 )); then
+    error "missing session id or subcommand"
+    return 1
+  fi
+
+  if [[ "${positional[1]}" == "cleanup" ]]; then
+    if (( ${#positional[@]} > 2 )); then
+      error "cleanup accepts at most one optional session id"
+      return 1
+    fi
+
+    cleanup_backups "${positional[2]:-}" "$dry_run" "$yes"
+    return $?
+  fi
+
+  if (( ${#positional[@]} != 1 )); then
+    error "expected exactly one session id"
+    return 1
+  fi
+
+  session_id="${positional[1]}"
+
+  if [[ -z "$mode" ]]; then
+    error "missing destination: use --chat or --project <project-root>"
+    return 1
+  fi
+
+  move_session "$session_id" "$mode" "$project_root" "$dry_run" "$yes"
+}
+
+main "$@"
