@@ -20,7 +20,8 @@ usage() {
   echo ""
   echo "Notes:"
   echo "  Run from a populated directory to optionally move existing files into the new repo."
-  echo "  Creates a tar.gz backup of the current directory before cloning."
+  echo "  Creates a tar.gz backup only for populated in-place project initialization."
+  echo "  Run from a parent directory to clone the new repo into a child directory without backing up the parent."
 }
 
 usage_hint() {
@@ -109,7 +110,7 @@ collect_directory_items() {
 }
 
 print_existing_items() {
-  local original_dir="$1"
+  local project_dir="$1"
   shift
   local -a existing_items=("$@")
   local item
@@ -118,7 +119,7 @@ print_existing_items() {
     return 0
   fi
 
-  echo "Detected existing files/directories in '$original_dir':"
+  echo "Detected existing files/directories in '$project_dir':"
   for item in "${existing_items[@]}"; do
     printf '  %s\n' "${item#./}"
   done
@@ -126,15 +127,15 @@ print_existing_items() {
 }
 
 build_backup_target() {
-  local original_parent="$1"
-  local original_basename="$2"
+  local project_parent="$1"
+  local project_basename="$2"
   local timestamp
   local backup_target
   local backup_base
   local suffix
 
   timestamp=$(date +"%Y%m%d%H%M%S")
-  backup_target="$original_parent/${original_basename}-pre-gh-init-$timestamp.tar.gz"
+  backup_target="$project_parent/${project_basename}-pre-gh-init-$timestamp.tar.gz"
 
   if [[ -e "$backup_target" ]]; then
     suffix=1
@@ -241,9 +242,9 @@ move_existing_items() {
 
 flatten_nested_clone_if_safe() {
   local repo_name="$1"
-  local original_dir="$2"
-  local original_basename="$3"
-  local nested_repo_dir="$original_dir/$repo_name"
+  local project_dir="$2"
+  local project_basename="$3"
+  local nested_repo_dir="$project_dir/$repo_name"
   local item
   local source_name
   local -a remaining_items=()
@@ -251,13 +252,13 @@ flatten_nested_clone_if_safe() {
   local -a conflicting_items=()
 
   # Only flatten the common foo/foo case produced by cloning into an already-named cwd.
-  [[ "$original_basename" == "$repo_name" ]] || return 0
+  [[ "$project_basename" == "$repo_name" ]] || return 0
   [[ -d "$nested_repo_dir" ]] || return 0
   [[ -d "$nested_repo_dir/.git" ]] || return 0
 
   # If the outer directory is already a repo, do not try to merge repo metadata.
-  if [[ -e "$original_dir/.git" ]]; then
-    echo "warning: '$original_dir' already contains a .git directory; leaving the clone nested."
+  if [[ -e "$project_dir/.git" ]]; then
+    echo "warning: '$project_dir' already contains a .git directory; leaving the clone nested."
     echo ""
     return 0
   fi
@@ -266,12 +267,12 @@ flatten_nested_clone_if_safe() {
   while IFS= read -r item; do
     [[ -n "$item" ]] || continue
     remaining_items+=("$item")
-  done < <(collect_directory_items "$original_dir" "$repo_name")
+  done < <(collect_directory_items "$project_dir" "$repo_name")
 
   if (( ${#remaining_items[@]} > 0 )); then
-    echo "Leaving the clone nested because '$original_dir' still contains other items:"
+    echo "Leaving the clone nested because '$project_dir' still contains other items:"
     for item in "${remaining_items[@]}"; do
-      printf '  %s\n' "${item#$original_dir/}"
+      printf '  %s\n' "${item#$project_dir/}"
     done
     echo ""
     return 0
@@ -289,19 +290,19 @@ flatten_nested_clone_if_safe() {
     return 0
   fi
 
-  echo "Current directory name matches '$repo_name'; flattening the nested clone back into '$original_dir'."
+  echo "Current directory name matches '$repo_name'; flattening the nested clone back into '$project_dir'."
 
   # Preflight collisions up front so the warning is complete and no partial move occurs.
   for item in "${nested_items[@]}"; do
     source_name="${item#$nested_repo_dir/}"
 
-    if [[ -e "$original_dir/$source_name" ]]; then
+    if [[ -e "$project_dir/$source_name" ]]; then
       conflicting_items+=("$source_name")
     fi
   done
 
   if (( ${#conflicting_items[@]} > 0 )); then
-    echo "warning: cannot flatten nested clone because these paths already exist in '$original_dir':"
+    echo "warning: cannot flatten nested clone because these paths already exist in '$project_dir':"
     for item in "${conflicting_items[@]}"; do
       printf '  %s\n' "$item"
     done
@@ -312,8 +313,8 @@ flatten_nested_clone_if_safe() {
 
   # Move only after the full preflight passes so flattening stays all-or-nothing.
   for item in "${nested_items[@]}"; do
-    if ! mv "$item" "$original_dir/"; then
-      echo "Error: failed to flatten '$item' into '$original_dir'" >&2
+    if ! mv "$item" "$project_dir/"; then
+      echo "Error: failed to flatten '$item' into '$project_dir'" >&2
       return 1
     fi
   done
@@ -335,10 +336,12 @@ main() {
   local description=""
   local show_help=0
   local repo_name_set_positionally=0
-  local original_dir
-  local original_parent
-  local original_basename
+  local project_dir
+  local project_parent
+  local project_basename
   local backup_target
+  local in_place_mode=0
+  local backup_needed=0
   local repo_slug
   local -a existing_items=()
   local -a create_args=()
@@ -431,26 +434,65 @@ main() {
 
   check_dependencies || return $?
 
-  original_dir=$(pwd)
-  original_parent=$(dirname "$original_dir")
-  original_basename=$(basename "$original_dir")
+  project_dir=$(pwd)
+  project_parent=$(dirname "$project_dir")
+  project_basename=$(basename "$project_dir")
 
-  while IFS= read -r item; do
-    [[ -n "$item" ]] || continue
-    existing_items+=("$item")
-  done < <(collect_existing_items "$repo_name")
+  if [[ "$project_basename" == "$repo_name" ]]; then
+    in_place_mode=1
+  elif [[ -e "$repo_name" ]]; then
+    if [[ ! -d "$repo_name" ]]; then
+      echo "Error: './$repo_name' already exists but is not a directory." >&2
+      return 1
+    fi
 
-  print_existing_items "$original_dir" "${existing_items[@]}"
+    echo "Found existing './$repo_name'; entering it and continuing as an in-place repo initialization."
+    echo ""
 
-  backup_target=$(build_backup_target "$original_parent" "$original_basename")
+    cd "$repo_name" || {
+      echo "Error: failed to enter existing directory './$repo_name'" >&2
+      return 1
+    }
+
+    project_dir=$(pwd)
+    project_parent=$(dirname "$project_dir")
+    project_basename=$(basename "$project_dir")
+    in_place_mode=1
+  fi
+
+  if (( in_place_mode )); then
+    while IFS= read -r item; do
+      [[ -n "$item" ]] || continue
+      existing_items+=("$item")
+    done < <(collect_existing_items "$repo_name")
+  fi
+
+  if (( ${#existing_items[@]} > 0 )); then
+    backup_needed=1
+    backup_target=$(build_backup_target "$project_parent" "$project_basename")
+  fi
 
   echo "This will create a new GitHub repository named '$repo_name' with '$visibility' visibility,"
   echo "configured with a Node .gitignore and MIT license."
   if [[ -n "$description" ]]; then
     echo "Description: $description"
   fi
-  echo "A tar backup of '$original_dir' will be created before cloning:"
-  printf '  %s\n' "$backup_target"
+
+  if (( backup_needed )); then
+    echo ""
+    print_existing_items "$project_dir" "${existing_items[@]}"
+    echo "A tar backup of '$project_dir' will be created before cloning:"
+    printf '  %s\n' "$backup_target"
+  elif (( in_place_mode )); then
+    echo ""
+    echo "No backup needed: no existing files were detected in '$project_dir'."
+  else
+    echo ""
+    echo "The repository will be cloned into:"
+    printf '  %s\n' "$project_dir/$repo_name"
+    echo ""
+    echo "No backup needed: creating a new child repo; existing files in '$project_dir' will be left untouched."
+  fi
   echo ""
 
   if ! prompt_yes_no "Do you want to continue? (y/n)"; then
@@ -458,14 +500,16 @@ main() {
     return 1
   fi
 
-  echo "Creating backup archive..."
-  if ! tar -czf "$backup_target" -C "$original_parent" "$original_basename"; then
-    echo "Error: failed to create backup archive at '$backup_target'" >&2
-    return 1
+  if (( backup_needed )); then
+    echo "Creating backup archive..."
+    if ! tar -czf "$backup_target" -C "$project_parent" "$project_basename"; then
+      echo "Error: failed to create backup archive at '$backup_target'" >&2
+      return 1
+    fi
+    echo "Backup written to:"
+    printf '  %s\n' "$backup_target"
+    echo ""
   fi
-  echo "Backup written to:"
-  printf '  %s\n' "$backup_target"
-  echo ""
 
   echo "Creating and cloning repo..."
   create_args=(
@@ -492,12 +536,14 @@ main() {
     return 1
   fi
 
-  move_existing_items "$repo_name" "${existing_items[@]}" || return $?
-  flatten_nested_clone_if_safe "$repo_name" "$original_dir" "$original_basename" || return $?
+  if (( in_place_mode )); then
+    move_existing_items "$repo_name" "${existing_items[@]}" || return $?
+    flatten_nested_clone_if_safe "$repo_name" "$project_dir" "$project_basename" || return $?
+  fi
 
   local repo_dir="$repo_name"
-  if [[ ! -d "$repo_dir/.git" && -d "$original_dir/.git" ]]; then
-    repo_dir="$original_dir"
+  if [[ ! -d "$repo_dir/.git" && -d "$project_dir/.git" ]]; then
+    repo_dir="$project_dir"
   fi
 
   cd "$repo_dir" || {
