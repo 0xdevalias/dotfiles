@@ -22,6 +22,7 @@ usage() {
   echo "  Run from a populated directory to optionally move existing files into the new repo."
   echo "  Creates a tar.gz backup only for populated in-place project initialization."
   echo "  Run from a parent directory to clone the new repo into a child directory without backing up the parent."
+  echo "  If the GitHub repo already exists, prompts to clone it instead of creating it."
 }
 
 usage_hint() {
@@ -60,7 +61,12 @@ prompt_yes_no() {
   local reply
 
   while true; do
-    echo "$prompt_text"
+    if [[ -t 0 ]]; then
+      printf '%s ' "$prompt_text"
+    else
+      echo "$prompt_text"
+    fi
+
     read -r reply
 
     if [[ -z "$reply" && -n "$default_answer" ]]; then
@@ -179,6 +185,19 @@ resolve_repo_slug_from_origin() {
   [[ "$repo_slug" == */* ]] || return 1
 
   printf '%s\n' "$repo_slug"
+}
+
+is_repo_not_found_error() {
+  local output="$1"
+
+  case "$output" in
+    *"Could not resolve to a Repository"*|*"HTTP 404"*|*"Repository not found"*|*"repository not found"*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
 }
 
 move_existing_items() {
@@ -342,6 +361,14 @@ main() {
   local backup_target
   local in_place_mode=0
   local backup_needed=0
+  local already_cloned=0
+  local local_origin_slug=""
+  local remote_exists=0
+  local remote_repo_output
+  local remote_repo_slug=""
+  local remote_repo_url=""
+  local remote_repo_visibility=""
+  local run_npm_init=1
   local repo_slug
   local -a existing_items=()
   local -a create_args=()
@@ -467,15 +494,62 @@ main() {
     done < <(collect_existing_items "$repo_name")
   fi
 
-  if (( ${#existing_items[@]} > 0 )); then
+  if remote_repo_output=$(gh repo view "$repo_name" --json nameWithOwner,url,visibility 2>&1); then
+    remote_exists=1
+    remote_repo_slug=$(printf '%s\n' "$remote_repo_output" | jq -r '.nameWithOwner')
+    remote_repo_url=$(printf '%s\n' "$remote_repo_output" | jq -r '.url')
+    remote_repo_visibility=$(printf '%s\n' "$remote_repo_output" | jq -r '.visibility')
+  elif is_repo_not_found_error "$remote_repo_output"; then
+    remote_exists=0
+  else
+    echo "Error: failed to check whether GitHub repository '$repo_name' already exists." >&2
+    if [[ -n "$remote_repo_output" ]]; then
+      printf '%s\n' "$remote_repo_output" >&2
+    fi
+    return 1
+  fi
+
+  if (( in_place_mode )) && [[ -d .git ]]; then
+    if local_origin_slug=$(resolve_repo_slug_from_origin); then
+      if (( remote_exists )) && [[ "$local_origin_slug" == "$remote_repo_slug" ]]; then
+        already_cloned=1
+      elif (( remote_exists )); then
+        echo "Error: '$project_dir' is already a git repository, but its origin does not match '$remote_repo_slug'." >&2
+        echo "Current origin resolves to: $local_origin_slug" >&2
+        return 1
+      fi
+    elif (( remote_exists )); then
+      echo "Error: '$project_dir' is already a git repository, but its origin could not be resolved." >&2
+      return 1
+    fi
+  fi
+
+  if (( ${#existing_items[@]} > 0 && ! already_cloned )); then
     backup_needed=1
     backup_target=$(build_backup_target "$project_parent" "$project_basename")
   fi
 
-  echo "This will create a new GitHub repository named '$repo_name' with '$visibility' visibility,"
-  echo "configured with a Node .gitignore and MIT license."
-  if [[ -n "$description" ]]; then
-    echo "Description: $description"
+  if (( remote_exists )); then
+    echo "Found an existing GitHub repository for requested name '$repo_name':"
+    printf '  Repository: %s\n' "$remote_repo_slug"
+    printf '  URL: %s\n' "$remote_repo_url"
+    printf '  Visibility: %s\n' "$remote_repo_visibility"
+    echo ""
+    if (( already_cloned )); then
+      echo "The active project directory is already a git repository:"
+      printf '  %s\n' "$project_dir"
+      echo ""
+      echo "No clone needed: its origin matches '$remote_repo_slug'."
+    else
+      echo "This will clone the existing repository instead of creating a new one."
+      echo "Requested visibility, description, Node .gitignore, README, and MIT license settings will not be applied to the existing remote."
+    fi
+  else
+    echo "This will create a new GitHub repository named '$repo_name' with '$visibility' visibility,"
+    echo "configured with a Node .gitignore and MIT license."
+    if [[ -n "$description" ]]; then
+      echo "Description: $description"
+    fi
   fi
 
   if (( backup_needed )); then
@@ -483,6 +557,9 @@ main() {
     print_existing_items "$project_dir" "${existing_items[@]}"
     echo "A tar backup of '$project_dir' will be created before cloning:"
     printf '  %s\n' "$backup_target"
+  elif (( already_cloned )); then
+    echo ""
+    echo "No backup needed: repository is already cloned; existing files in '$project_dir' will be left untouched."
   elif (( in_place_mode )); then
     echo ""
     echo "No backup needed: no existing files were detected in '$project_dir'."
@@ -499,6 +576,7 @@ main() {
     echo "Operation cancelled."
     return 1
   fi
+  echo ""
 
   if (( backup_needed )); then
     echo "Creating backup archive..."
@@ -511,38 +589,52 @@ main() {
     echo ""
   fi
 
-  echo "Creating and cloning repo..."
-  create_args=(
-    "$repo_name"
-    --disable-wiki
-    --add-readme
-    --gitignore Node
-    --license MIT
-    --"$visibility"
-    --clone
-  )
+  if (( already_cloned )); then
+    echo "Using existing local repository..."
+  elif (( remote_exists )); then
+    echo "Cloning existing repo..."
+    if ! gh repo clone "$remote_repo_slug"; then
+      echo "Error: failed to clone existing repository '$remote_repo_slug'" >&2
+      return 1
+    fi
+  else
+    echo "Creating and cloning repo..."
+    create_args=(
+      "$repo_name"
+      --disable-wiki
+      --add-readme
+      --gitignore Node
+      --license MIT
+      --"$visibility"
+      --clone
+    )
 
-  if [[ -n "$description" ]]; then
-    create_args+=(--description "$description")
+    if [[ -n "$description" ]]; then
+      create_args+=(--description "$description")
+    fi
+
+    if ! gh repo create "${create_args[@]}"; then
+      echo "Error: failed to create or clone repository" >&2
+      return 1
+    fi
   fi
 
-  if ! gh repo create "${create_args[@]}"; then
-    echo "Error: failed to create or clone repository" >&2
-    return 1
-  fi
+  echo ""
 
-  if [[ ! -d "$repo_name" ]]; then
+  if (( ! already_cloned )) && [[ ! -d "$repo_name" ]]; then
     echo "Error: repository directory '$repo_name' not found after clone" >&2
     return 1
   fi
 
-  if (( in_place_mode )); then
+  if (( in_place_mode && ! already_cloned )); then
     move_existing_items "$repo_name" "${existing_items[@]}" || return $?
     flatten_nested_clone_if_safe "$repo_name" "$project_dir" "$project_basename" || return $?
   fi
 
   local repo_dir="$repo_name"
-  if [[ ! -d "$repo_dir/.git" && -d "$project_dir/.git" ]]; then
+  if (( already_cloned )); then
+    repo_dir="$project_dir"
+  elif [[ ! -d "$repo_dir/.git" && -d "$project_dir/.git" ]]; then
     repo_dir="$project_dir"
   fi
 
@@ -551,8 +643,13 @@ main() {
     return 1
   }
 
-  echo "Repository cloned to:"
+  if (( already_cloned )); then
+    echo "Repository already available at:"
+  else
+    echo "Repository cloned to:"
+  fi
   printf '  %s\n' "$(pwd)"
+  echo ""
 
   if ! repo_slug=$(resolve_repo_slug_from_origin); then
     echo "Error: failed to resolve repository slug from git remote 'origin'" >&2
@@ -570,12 +667,25 @@ main() {
 
   echo "Repository details:"
   gh repo view --json url,sshUrl,description | jq
+  echo ""
 
-  echo "Initializing npm package..."
-  if ! gh init-npm; then
-    echo "Error: failed to initialize npm package" >&2
-    return 1
+  if [[ -e package.json ]]; then
+    echo "npm package already appears initialized because package.json exists."
+    if ! prompt_yes_no "Run npm init anyway? (y/N)" "n"; then
+      run_npm_init=0
+      echo "Skipping npm initialization."
+    fi
   fi
+
+  if (( run_npm_init )); then
+    echo "Initializing npm package..."
+    if ! gh init-npm; then
+      echo "Error: failed to initialize npm package" >&2
+      return 1
+    fi
+  fi
+
+  echo ""
 
   echo "Opening repository in browser..."
   gh repo view --web
