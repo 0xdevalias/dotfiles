@@ -1,0 +1,6 @@
+codex.symlink/log/
+codex.symlink/sessions/
+
+codex.symlink/auth.json
+codex.symlink/history.jsonl
+codex.symlink/version.json
