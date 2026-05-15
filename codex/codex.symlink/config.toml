@@ -1,12 +1,31 @@
-# Ref: https://github.com/openai/codex/blob/main/codex-rs/config.md
-# model_provider = "openai"
-# model = "gpt-5"
-# model_reasoning_effort = "high"
-approval_policy = "on-request"
+# Ref: https://github.com/openai/codex/blob/main/docs/config.md
+#   https://developers.openai.com/codex/config-basic
+#   https://developers.openai.com/codex/config-advanced
+#   https://developers.openai.com/codex/config-reference
 
-# https://github.com/openai/codex#model-context-protocol-mcp
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+personality = "pragmatic"
+
+# Config from old computer
+# # approval_policy = "on-request"
+
+notify = ["/Users/devalias/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+
+[features]
+memories = true
+external_migration = true
+
+[tui]
+status_line = ["model-with-reasoning", "current-dir", "five-hour-limit", "weekly-limit", "session-id"]
+
+# https://developers.openai.com/codex/mcp
+# https://developers.openai.com/codex/config-advanced#mcp-servers
 # IMPORTANT: the top-level key is `mcp_servers` rather than `mcpServers`.
 # [mcp_servers.server-name]
 # command = "npx"
 # args = ["-y", "mcp-server"]
 # env = { "API_KEY" = "value" }
+
+[notice.model_migrations]
+"gpt-5.2" = "gpt-5.4"
