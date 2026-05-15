@@ -1,6 +1,40 @@
-codex.symlink/log/
+# Sessions, etc
+codex.symlink/session_index.jsonl
 codex.symlink/sessions/
+codex.symlink/archived_sessions/
+codex.symlink/browser/sessions/
 
+# Session derived data, etc
+codex.symlink/log/
+codex.symlink/ambient-suggestions/
+codex.symlink/memories/
+codex.symlink/generated_images/
+
+# Could be considered config'ish, but also maybe could be considered local state..
+codex.symlink/pets/*
+# codex.symlink/skills/
+codex.symlink/skills/.system/
+codex.symlink/skills/hatch-pet/
+
+# DBs, etc
+codex.symlink/logs_*.sqlite*
+codex.symlink/state_*.sqlite*
+
+# General codex support files, etc
+codex.symlink/cache/
+codex.symlink/computer-use/
+codex.symlink/node_repl/
+codex.symlink/shell_snapshots/
+codex.symlink/sqlite/
+codex.symlink/.tmp/
+codex.symlink/tmp/
+# codex.symlink/vendor_imports/
+
+# Etc?
+codex.symlink/.codex-global-state.json*
+codex.symlink/.personality_migration
 codex.symlink/auth.json
 codex.symlink/history.jsonl
+codex.symlink/installation_id
+codex.symlink/models_cache.json
 codex.symlink/version.json
