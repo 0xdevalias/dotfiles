@@ -9,7 +9,8 @@
 
 [gpg]
   # Note: install this with 'brew install gpg'
-  program = /usr/local/bin/gpg
+  # Older Intel Mac Homebrew installs may need: /usr/local/bin/gpg
+  program = /opt/homebrew/bin/gpg
 
 [commit]
   gpgsign = true
