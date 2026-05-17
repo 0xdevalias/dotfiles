@@ -2,10 +2,10 @@
 [core]
   excludesfile = ~/.gitignore_global
   editor = subl --new-window --wait
-  pager = delta                    # https://github.com/dandavison/delta#get-started
+  pager = delta                    # https://github.com/dandavison/delta#get-started , Note: install this with 'brew install git-delta'
 
 [interactive]
-  diffFilter = delta --color-only  # https://github.com/dandavison/delta#get-started
+  diffFilter = delta --color-only  # https://github.com/dandavison/delta#get-started , Note: install this with 'brew install git-delta'
 
 [gpg]
   # Note: install this with 'brew install gpg'
@@ -44,10 +44,12 @@
 	path = 
 
 # https://github.com/dandavison/delta#get-started
+# Note: install this with 'brew install git-delta'
 [difftool "delta"]
   cmd = delta "$LOCAL" "$REMOTE"
 
 # https://github.com/dandavison/delta#get-started
+# Note: install this with 'brew install git-delta'
 [delta]
   line-numbers = true
   navigate = true      # use n and N to move between diff sections
