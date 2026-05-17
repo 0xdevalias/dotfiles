@@ -15,7 +15,7 @@ require_installed_brew git-delete-merged-branches  # Command-line tool to delete
 # Authenticate the GitHub CLI + set up SSH key
 if (( $+commands[gh] )); then
   if ! gh auth status >/dev/null 2>&1; then
-    echo "  GitHub CLI (gh) not authenticated.. please login now"
+    echo "[git::install]  GitHub CLI (gh) not authenticated.. please login now"
     gh auth login
   fi
 
