@@ -19,11 +19,12 @@ just the repo path (owner/repo).
 Options:
   -h, --help           Show this help message and exit
   -v, --verbose        Show more detailed output
-  -f, --format FORMAT  Output format: text (default), json, or csv
+  -f, --format FORMAT  Output format: text (default), json, csv, or markdown
 
 Examples:
   $SCRIPT_NAME sourcegraph/lsif-protocol
   $SCRIPT_NAME --format json https://github.com/sourcegraph/lsif-protocol
+  $SCRIPT_NAME --format markdown sourcegraph/lsif-protocol
   $SCRIPT_NAME -v kubernetes/kubernetes
 
 This script requires the GitHub CLI (gh) to be installed and authenticated.
@@ -329,6 +330,18 @@ case "$output_format" in
           "${description//\"/\"\"}" \
           "${readme_title//\"/\"\"}" \
           "${readme_first_para//\"/\"\"}"
+        ;;
+    "markdown"|"md")
+        printf -- '- https://github.com/%s\n' "$repo"
+        if [[ -n "$readme_title" && "$readme_title" != "N/A" ]]; then
+          printf '  - > %s\n' "$readme_title"
+        fi
+        if [[ -n "$description" && "$description" != "N/A" ]]; then
+          printf '  - > %s\n' "$description"
+        fi
+        if [[ -n "$readme_first_para" && "$readme_first_para" != "N/A" ]]; then
+          printf '  - > %s\n' "$readme_first_para"
+        fi
         ;;
     "text"|*)
         echo "Repository: $repo"
