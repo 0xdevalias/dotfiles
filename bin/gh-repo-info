@@ -40,6 +40,170 @@ error_exit() {
   exit 1
 }
 
+extract_readme_title() {
+  awk '
+    function trim(value) {
+      sub(/^[[:space:]]+/, "", value)
+      sub(/[[:space:]]+$/, "", value)
+      return value
+    }
+
+    function clean_title(value) {
+      gsub(/!\[[^]]*\]\([^)]*\)/, "", value)
+      return trim(value)
+    }
+
+    {
+      line = $0
+
+      if (line ~ /^#[^#]/) {
+        sub(/^#[[:space:]]*/, "", line)
+        sub(/[[:space:]]+#+[[:space:]]*$/, "", line)
+        found = 1
+        print clean_title(line)
+        exit
+      }
+
+      if (previous != "" && line ~ /^[[:space:]]*(=+|-+)[[:space:]]*$/) {
+        found = 1
+        print clean_title(previous)
+        exit
+      }
+
+      if (fallback == "" && line ~ /^##+[^#]/) {
+        sub(/^##+[[:space:]]*/, "", line)
+        sub(/[[:space:]]+#+[[:space:]]*$/, "", line)
+        fallback = clean_title(line)
+      }
+
+      previous = line
+    }
+
+    END {
+      if (!found && fallback != "") {
+        print fallback
+      }
+    }
+  '
+}
+
+extract_readme_first_paragraph() {
+  awk '
+    function trim(value) {
+      sub(/^[[:space:]]+/, "", value)
+      sub(/[[:space:]]+$/, "", value)
+      return value
+    }
+
+    function replace_markdown_links(value,    before, label, token) {
+      while (match(value, /\[[^][]+\]\([^()]*\)/)) {
+        before = substr(value, 1, RSTART - 1)
+        token = substr(value, RSTART, RLENGTH)
+        label = token
+        sub(/^\[/, "", label)
+        sub(/\]\([^()]*\)$/, "", label)
+        value = before label substr(value, RSTART + RLENGTH)
+      }
+      return value
+    }
+
+    function visible_text(value) {
+      gsub(/!\[[^]]*\]\([^)]*\)/, "", value)
+      gsub(/<img[^>]*>/, "", value)
+      gsub(/<[^>]+>/, "", value)
+      value = replace_markdown_links(value)
+      gsub(/\[[[:space:]]*\]\([^)]*\)/, "", value)
+      gsub(/[`*_~#]/, "", value)
+      gsub(/&[[:alnum:]#]+;/, "X", value)
+      gsub(/[[:space:]]+/, " ", value)
+      return trim(value)
+    }
+
+    function strip_leading_setext_heading(value,    lines, count, line_number, result) {
+      count = split(value, lines, "\n")
+      if (count < 2 || trim(lines[2]) !~ /^(=+|-+)$/) {
+        return value
+      }
+
+      result = ""
+      for (line_number = 3; line_number <= count; line_number++) {
+        result = result (result == "" ? "" : "\n") lines[line_number]
+      }
+      return result
+    }
+
+    function is_structural_block(value,    lines, count, first, raw_first, second) {
+      count = split(value, lines, "\n")
+      raw_first = lines[1]
+      first = trim(lines[1])
+      second = count > 1 ? trim(lines[2]) : ""
+
+      return first ~ /^#/ || first ~ /^>/ || first ~ /^([-*+] |[0-9]+[.)] )/ || raw_first ~ /^    / || first ~ /^<([[:alnum:]]+)([[:space:]>]|$)/ || first ~ /^([-*_][[:space:]]*){3,}$/ || second ~ /^(=+|-+)$/ || (first ~ /\|/ && second ~ /^\|?[[:space:]]*:?-/)
+    }
+
+    function emit_if_prose(    prose, visible) {
+      if (block == "") {
+        return 0
+      }
+
+      block = strip_leading_setext_heading(block)
+      if (block == "") {
+        return 0
+      }
+
+      if (is_structural_block(block)) {
+        block = ""
+        return 0
+      }
+
+      prose = block
+      gsub(/\n[[:space:]]*/, " ", prose)
+      gsub(/[[:space:]]+/, " ", prose)
+      prose = trim(prose)
+      visible = visible_text(prose)
+      block = ""
+
+      if (length(visible) > 20) {
+        print prose
+        return 1
+      }
+
+      return 0
+    }
+
+    {
+      line = $0
+
+      if (line ~ /^[[:space:]]*(```|~~~)/) {
+        if (emit_if_prose()) {
+          exit
+        }
+        in_fence = !in_fence
+        next
+      }
+
+      if (in_fence) {
+        next
+      }
+
+      if (line ~ /^[[:space:]]*$/) {
+        if (emit_if_prose()) {
+          exit
+        }
+        next
+      }
+
+      block = block (block == "" ? "" : "\n") line
+    }
+
+    END {
+      if (block != "") {
+        emit_if_prose()
+      }
+    }
+  '
+}
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -130,33 +294,15 @@ if ! readme_response=$(gh api "repos/$repo/readme" 2>/dev/null); then
 else
     readme_content=$(echo "$readme_response" | jq -r .content | base64 -d)
 
-    # Extract title (first heading)
-    if ! readme_title=$(echo "$readme_content" | grep -m 1 "^#" | sed 's/^#* //'); then
+    # Extract title (first ATX or Setext heading)
+    readme_title=$(printf '%s\n' "$readme_content" | extract_readme_title)
+    if [[ -z "$readme_title" ]]; then
         readme_title="N/A"
     fi
 
-    # Extract first paragraph / intro block
-    if ! readme_first_para=$(
-        echo "$readme_content" | awk '
-          BEGIN { inpara=0 }
-          /^#/   { if (inpara) exit; next }          # heading = stop if already capturing
-          /^---/ { if (inpara) exit; next }          # horizontal rule = stop if already capturing
-          {
-            # Handle blank lines
-            if ($0 ~ /^[[:space:]]*$/) {
-              if (inpara) { buf = buf "\n"; next }   # keep internal blank lines
-              else next                              # skip leading blanks
-            }
-            inpara=1
-            buf = buf $0 "\n"                        # accumulate content
-          }
-          END {
-            sub(/^[[:space:]\n]+/, "", buf)          # trim leading blank lines/spaces
-            sub(/[[:space:]\n]+$/, "", buf)          # trim trailing blank lines/spaces
-            printf "%s", buf                         # print without adding extra newline
-          }
-        '
-    ); then
+    # Extract the first prose paragraph, skipping badges and structural blocks
+    readme_first_para=$(printf '%s\n' "$readme_content" | extract_readme_first_paragraph)
+    if [[ -z "$readme_first_para" ]]; then
         readme_first_para="N/A"
     fi
 fi
