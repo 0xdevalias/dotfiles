@@ -124,6 +124,7 @@ aliases:
     notifications: '!$HOME/.dotfiles/bin/gh-notifications $@'
     release-notes: '!$HOME/.dotfiles/bin/gh-release-notes $@'
     changelogs: release-notes
+    commits-oldest-page: '!$HOME/.dotfiles/bin/gh-commits-oldest-page "$@"'
     gist-edit: |
       !gist_edit() {
         if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then

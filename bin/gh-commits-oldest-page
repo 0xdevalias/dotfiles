@@ -1,0 +1,378 @@
+#!/usr/bin/env zsh
+
+SCRIPT_NAME="${0##*/}"
+DEFAULT_WEB_PAGE_SIZE=35
+
+usage() {
+  cat <<EOF
+Usage: $SCRIPT_NAME [options] [OWNER/REPO|github-url]
+
+Print the GitHub web commit-list URL for the oldest page of commits.
+
+This uses the GitHub GraphQL API via gh and does not clone the repository. When
+no repository is provided, gh resolves the current repository from the working
+directory.
+
+Options:
+  -R, --repo OWNER/REPO  Repository to query.
+  --ref REF             Branch, tag, or commit-ish history to inspect.
+                        Defaults to the repository default branch.
+  --branch REF          Alias for --ref.
+  --page-size N         GitHub web commit-list page size assumption.
+                        Defaults to $DEFAULT_WEB_PAGE_SIZE.
+  --json                Print metadata as JSON instead of only the URL.
+  --open, --web         Open the generated URL in the system browser.
+  --check-dependencies,
+  --check-deps          Show required dependency status and exit.
+  -h, --help            Show this help message and exit.
+
+Examples:
+  $SCRIPT_NAME ultraworkers/claw-code
+  $SCRIPT_NAME https://github.com/ultraworkers/claw-code --open
+  $SCRIPT_NAME --repo ultraworkers/claw-code --ref main --json
+  gh commits-oldest-page ultraworkers/claw-code
+EOF
+}
+
+usage_hint() {
+  echo "Run '$SCRIPT_NAME --help' for usage information." >&2
+}
+
+error() {
+  echo "Error: $1" >&2
+  usage_hint
+  return 1
+}
+
+check_dependencies() {
+  local print_status="${1:-}"
+  local -a missing=()
+  local command_name
+
+  for command_name in gh jq; do
+    if ! (( $+commands[$command_name] )); then
+      missing+=("$command_name")
+    fi
+  done
+
+  if [[ "$print_status" == "print" ]]; then
+    if (( ${#missing[@]} == 0 )); then
+      echo "All required dependencies are installed:"
+      for command_name in gh jq; do
+        echo "  - $command_name: ${commands[$command_name]}"
+      done
+    else
+      echo "Missing required dependencies:" >&2
+      for command_name in "${missing[@]}"; do
+        echo "  - $command_name" >&2
+      done
+    fi
+  fi
+
+  if (( ${#missing[@]} > 0 )); then
+    return 127
+  fi
+}
+
+normalize_repo() {
+  local input="$1"
+  local path_part owner name
+  local -a path_parts
+
+  if [[ -z "$input" ]]; then
+    return 0
+  fi
+
+  case "$input" in
+    git@github.com:*)
+      path_part="${input#git@github.com:}"
+      ;;
+    https://github.com/*)
+      path_part="${input#https://github.com/}"
+      ;;
+    http://github.com/*)
+      path_part="${input#http://github.com/}"
+      ;;
+    *://*)
+      error "Expected a github.com URL, got: $input"
+      return 1
+      ;;
+    *)
+      path_part="$input"
+      ;;
+  esac
+
+  path_part="${path_part%%\?*}"
+  path_part="${path_part%%\#*}"
+  path_part="${path_part#/}"
+  path_part="${path_part%/}"
+  path_parts=("${(@s:/:)path_part}")
+
+  owner="${path_parts[1]:-}"
+  name="${path_parts[2]:-}"
+  name="${name%.git}"
+
+  if [[ -z "$owner" || -z "$name" ]]; then
+    error "Could not parse repository: $input"
+    return 1
+  fi
+
+  printf '%s/%s\n' "$owner" "$name"
+}
+
+infer_current_repo() {
+  gh repo view --json nameWithOwner --jq .nameWithOwner
+}
+
+urlencode() {
+  printf '%s' "$1" | jq -sRr @uri
+}
+
+fetch_default_branch_history() {
+  local owner="$1"
+  local name="$2"
+
+  gh api graphql \
+    -f owner="$owner" \
+    -f name="$name" \
+    -f query='
+query($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    defaultBranchRef {
+      name
+      target {
+        ... on Commit {
+          oid
+          history(first: 1) {
+            totalCount
+          }
+        }
+      }
+    }
+  }
+}'
+}
+
+fetch_ref_history() {
+  local owner="$1"
+  local name="$2"
+  local ref="$3"
+
+  gh api graphql \
+    -f owner="$owner" \
+    -f name="$name" \
+    -f ref="$ref" \
+    -f query='
+query($owner: String!, $name: String!, $ref: String!) {
+  repository(owner: $owner, name: $name) {
+    object(expression: $ref) {
+      __typename
+      ... on Commit {
+        oid
+        history(first: 1) {
+          totalCount
+        }
+      }
+      ... on Tag {
+        target {
+          ... on Commit {
+            oid
+            history(first: 1) {
+              totalCount
+            }
+          }
+        }
+      }
+    }
+  }
+}'
+}
+
+main() {
+  set -euo pipefail
+
+  local repo=""
+  local ref=""
+  local web_page_size="$DEFAULT_WEB_PAGE_SIZE"
+  local output_json=false
+  local open_url=false
+  local arg
+
+  while (( $# > 0 )); do
+    arg="$1"
+
+    case "$arg" in
+      -h|--help)
+        usage
+        return 0
+        ;;
+      --check-dependencies|--check-deps)
+        check_dependencies print
+        return $?
+        ;;
+      -R|--repo)
+        if (( $# < 2 )); then
+          error "$arg requires OWNER/REPO"
+          return 1
+        fi
+        repo="$2"
+        shift 2
+        ;;
+      --ref|--branch)
+        if (( $# < 2 )); then
+          error "$arg requires a ref"
+          return 1
+        fi
+        ref="$2"
+        shift 2
+        ;;
+      --page-size)
+        if (( $# < 2 )); then
+          error "--page-size requires a positive integer"
+          return 1
+        fi
+        web_page_size="$2"
+        if [[ "$web_page_size" != <-> || "$web_page_size" -lt 1 ]]; then
+          error "--page-size must be a positive integer"
+          return 1
+        fi
+        shift 2
+        ;;
+      --json)
+        output_json=true
+        shift
+        ;;
+      --open|--web)
+        open_url=true
+        shift
+        ;;
+      --)
+        shift
+        if (( $# > 1 )); then
+          error "Only one repository may be specified"
+          return 1
+        fi
+        if (( $# == 1 )); then
+          if [[ -n "$repo" ]]; then
+            error "Only one repository may be specified"
+            return 1
+          fi
+          repo="$1"
+        fi
+        shift $#
+        ;;
+      -*)
+        error "Unknown argument: $arg"
+        return 1
+        ;;
+      *)
+        if [[ -n "$repo" ]]; then
+          error "Only one repository may be specified"
+          return 1
+        fi
+        repo="$arg"
+        shift
+        ;;
+    esac
+  done
+
+  check_dependencies
+
+  if [[ -z "$repo" ]]; then
+    repo="$(infer_current_repo)" || {
+      error "Could not infer repository from the current directory. Pass --repo OWNER/REPO."
+      return 1
+    }
+  fi
+
+  repo="$(normalize_repo "$repo")"
+
+  local owner="${repo%%/*}"
+  local name="${repo#*/}"
+  local result anchor_sha total_commits
+
+  if [[ -z "$ref" ]]; then
+    result="$(fetch_default_branch_history "$owner" "$name")"
+    ref="$(jq -er '.data.repository.defaultBranchRef.name' <<<"$result")"
+    anchor_sha="$(jq -er '.data.repository.defaultBranchRef.target.oid' <<<"$result")"
+    total_commits="$(jq -er '.data.repository.defaultBranchRef.target.history.totalCount' <<<"$result")"
+  else
+    result="$(fetch_ref_history "$owner" "$name" "$ref")"
+    anchor_sha="$(
+      jq -er '
+        .data.repository.object
+        | if .__typename == "Commit" then .oid
+          elif .__typename == "Tag" then .target.oid
+          else empty
+          end
+      ' <<<"$result"
+    )" || {
+      error "Could not resolve ref to a commit: $ref"
+      return 1
+    }
+    total_commits="$(
+      jq -er '
+        .data.repository.object
+        | if .__typename == "Commit" then .history.totalCount
+          elif .__typename == "Tag" then .target.history.totalCount
+          else empty
+          end
+      ' <<<"$result"
+    )"
+  fi
+
+  if [[ -z "$anchor_sha" || -z "$total_commits" || "$total_commits" == "null" ]]; then
+    error "No commits found for $repo at ref $ref"
+    return 1
+  fi
+
+  local encoded_ref
+  local base_url
+  local final_page_index
+  local oldest_page_offset=""
+  local after_cursor=""
+  local oldest_web_page
+
+  encoded_ref="$(urlencode "$ref")"
+  base_url="https://github.com/$repo/commits/$encoded_ref"
+  final_page_index=$(( (total_commits - 1) / web_page_size ))
+
+  if (( final_page_index == 0 )); then
+    oldest_web_page="$base_url"
+  else
+    oldest_page_offset=$(( final_page_index * web_page_size - 1 ))
+    after_cursor="$anchor_sha+$oldest_page_offset"
+    oldest_web_page="$base_url/?after=$after_cursor"
+  fi
+
+  if [[ "$output_json" == true ]]; then
+    jq -n \
+      --arg repo "$repo" \
+      --arg ref "$ref" \
+      --arg url "$oldest_web_page" \
+      --argjson totalCommits "$total_commits" \
+      --arg anchorSha "$anchor_sha" \
+      --argjson webPageSize "$web_page_size" \
+      --arg oldestPageOffset "$oldest_page_offset" \
+      --arg afterCursor "$after_cursor" \
+      '{
+        repo: $repo,
+        ref: $ref,
+        url: $url,
+        totalCommits: $totalCommits,
+        anchorSha: $anchorSha,
+        webPageSize: $webPageSize,
+        oldestPageOffset: (if $oldestPageOffset == "" then null else ($oldestPageOffset | tonumber) end),
+        afterCursor: (if $afterCursor == "" then null else $afterCursor end),
+        caveat: "The GitHub web commit-list page size is inferred and may change if GitHub changes the website UI."
+      }'
+  else
+    printf '%s\n' "$oldest_web_page"
+  fi
+
+  if [[ "$open_url" == true ]]; then
+    open "$oldest_web_page"
+  fi
+}
+
+main "$@"
