@@ -1,5 +1,8 @@
 #!/usr/bin/env zsh
 
+set -e
+set -o pipefail
+
 # Import our common helper scripts
 source "${ZSH}/lib/_helpers"
 
@@ -11,38 +14,47 @@ source "${ZSH}/python/python-versions.zsh"
 require_installed_brew "pyenv"
 require_installed_brew "pyenv-virtualenv"
 
-# Install python 2x
-if [[ ! -z "$PYTHON_2X_VER" ]]; then
-  if [ -z "$(pyenv versions | grep $PYTHON_2X_VER)" ]; then
-    echo "  [pyenv] Installing python $PYTHON_2X_VER for you.."
-    pyenv install $PYTHON_2X_VER
-    pyenv rehash
+install_python_version() {
+  local version_series="$1"
+  local version="$2"
+
+  if [[ -z "$version" ]]; then
+    echo "  [pyenv] Python ${version_series} version is disabled; skipping."
+    return
+  fi
+
+  if pyenv versions --bare | grep -Fxq -- "$version"; then
+    echo "  [pyenv] Python $version already installed."
   else
-    echo "  [pyenv] Python $PYTHON_2X_VER already installed."
-  fi
-
-  if [[ "$PYTHON_GLOBAL_VER" = '2x' ]]; then
-    echo "  [pyenv] Setting python $PYTHON_2X_VER as global.."
-    pyenv global $PYTHON_2X_VER
-  fi
-else
-  echo "  [pyenv] Warning: No PYTHON_2X_VER set, not installing."
-fi
-
-# Install python 3x
-if [[ ! -z "$PYTHON_3X_VER" ]]; then
-  if [ -z "$(pyenv versions | grep $PYTHON_3X_VER)" ]; then
-    echo "  [pyenv] Installing python $PYTHON_3X_VER for you.."
-    pyenv install $PYTHON_3X_VER
+    echo "  [pyenv] Installing python $version for you.."
+    pyenv install "$version"
     pyenv rehash
-  else
-    echo "  [pyenv] Python $PYTHON_3X_VER already installed."
   fi
 
-  if [[ "$PYTHON_GLOBAL_VER" = '3x' ]]; then
-    echo "  [pyenv] Setting python $PYTHON_3X_VER as global.."
-    pyenv global $PYTHON_3X_VER
+  if [[ "$PYTHON_GLOBAL_VER" == "$version_series" ]]; then
+    echo "  [pyenv] Setting python $version as global.."
+    pyenv global "$version"
   fi
-else
-  echo "  [pyenv] Warning: No PYTHON_3X_VER set, not installing."
-fi
+}
+
+case "$PYTHON_GLOBAL_VER" in
+  2x)
+    if [[ -z "$PYTHON_2X_VER" ]]; then
+      echo "  [pyenv] Error: PYTHON_GLOBAL_VER is 2x, but PYTHON_2X_VER is disabled." >&2
+      exit 1
+    fi
+    ;;
+  3x)
+    if [[ -z "$PYTHON_3X_VER" ]]; then
+      echo "  [pyenv] Error: PYTHON_GLOBAL_VER is 3x, but PYTHON_3X_VER is disabled." >&2
+      exit 1
+    fi
+    ;;
+  *)
+    echo "  [pyenv] Error: PYTHON_GLOBAL_VER must be either 2x or 3x." >&2
+    exit 1
+    ;;
+esac
+
+install_python_version "2x" "$PYTHON_2X_VER"
+install_python_version "3x" "$PYTHON_3X_VER"
