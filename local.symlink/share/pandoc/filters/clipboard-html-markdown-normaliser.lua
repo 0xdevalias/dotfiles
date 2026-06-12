@@ -218,6 +218,33 @@ local function github_code_example(div)
   return code_block
 end
 
+-- Move a full-heading link into a short, removable suffix.
+local function linked_heading_suffix(header)
+  if #header.content ~= 1 then
+    return nil
+  end
+
+  local link = header.content:at(1)
+  if link.t ~= 'Link' then
+    return nil
+  end
+
+  local title = link.content:filter(function(inline)
+    return inline.t ~= 'Span' or not inline.classes:includes('heading-link-symbol')
+  end)
+  while title:at(1) and (title:at(1).t == 'Space' or title:at(1).t == 'SoftBreak') do
+    title:remove(1)
+  end
+  while title:at(#title) and (title:at(#title).t == 'Space' or title:at(#title).t == 'SoftBreak') do
+    title:remove(#title)
+  end
+  title:insert(pandoc.Space())
+  title:insert(pandoc.Link({pandoc.Str('🔗')}, link.target))
+
+  header.content = title
+  return header
+end
+
 -- @see https://pandoc.org/lua-filters.html#type-div
 -- @see https://pandoc.org/lua-filters.html#pandoc.Div
 function Div(div)
@@ -296,6 +323,18 @@ function Link(link)
   end
 end
 
+-- Process linked headings after inline filters have removed decorative content.
+--
+-- @see https://pandoc.org/lua-filters.html#type-pandoc
+-- @see https://pandoc.org/lua-filters.html#pandoc.Pandoc
+function Pandoc(doc)
+  return doc:walk({
+    Header = function(header)
+      return linked_heading_suffix(header) or header
+    end,
+  })
+end
+
 -- Processes emphasis elements (italic text) to customize the emphasis_marker character
 --
 -- @see https://pandoc.org/lua-filters.html#type-emph
@@ -318,4 +357,5 @@ return {
     {Span = Span},
     {Link = Link},
     {Emph = Emph},
+    {Pandoc = Pandoc},
 }
