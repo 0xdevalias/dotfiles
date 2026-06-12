@@ -24,6 +24,16 @@
 local debug_mode = false
 local emphasis_marker = '_'
 
+-- GitHub Docs renders Markdown alerts as color-specific ghd-alert divs.
+-- Map those presentation classes back to their semantic GFM alert types.
+local github_alert_types = {
+  danger = 'CAUTION',
+  attention = 'WARNING',
+  done = 'IMPORTANT',
+  accent = 'NOTE',
+  success = 'TIP',
+}
+
 -- Helper function for debug logging
 local function debug(msg, ...)
     if debug_mode then
@@ -71,15 +81,86 @@ function Meta(meta)
     return meta
 end
 
+-- Return the GFM alert type represented by a GitHub Docs alert div.
+local function github_alert_type(div)
+  if not div.classes:includes('ghd-alert') then
+    return nil
+  end
+
+  for color, alert_type in pairs(github_alert_types) do
+    if div.classes:includes('ghd-alert-' .. color) then
+      return alert_type
+    end
+  end
+
+  return nil
+end
+
+-- GitHub Docs includes a decorative Octicon before each localized alert title.
+local function is_octicon_image(inline)
+  return inline and inline.t == 'Image' and inline.classes:includes('octicon')
+end
+
+-- Remove the rendered icon and title while preserving the alert body.
+--
+-- Structured page HTML gives Pandoc a standalone title paragraph. Clipboard
+-- HTML may instead combine the title and body in one Plain block separated by
+-- a soft break, so both shapes need to be handled.
+local function strip_github_alert_title(blocks)
+  local first_block = blocks:at(1)
+  if not first_block or (first_block.t ~= 'Para' and first_block.t ~= 'Plain') then
+    return blocks
+  end
+
+  local inlines = first_block.content
+  if not is_octicon_image(inlines:at(1)) then
+    return blocks
+  end
+
+  local title_break
+  for index, inline in ipairs(inlines) do
+    if inline.t == 'SoftBreak' or inline.t == 'LineBreak' then
+      title_break = index
+      break
+    end
+  end
+
+  if not title_break then
+    blocks:remove(1)
+    return blocks
+  end
+
+  for _ = 1, title_break do
+    inlines:remove(1)
+  end
+  while inlines:at(1) and inlines:at(1).t == 'Space' do
+    inlines:remove(1)
+  end
+
+  if #inlines == 0 then
+    blocks:remove(1)
+  end
+
+  return blocks
+end
+
 -- @see https://pandoc.org/lua-filters.html#type-div
 -- @see https://pandoc.org/lua-filters.html#pandoc.Div
 function Div(div)
   debug("Div: content: %s, classes: %s, identifier: %s", div.content, div.classes, div.identifier)
-  debug("pandoc.utils.type(div.content) %s, [1] %s %s", pandoc.utils.type(div.content), div.content:at(1).t, div.content:at(1))
+  local firstContent = div.content:at(1)
+  debug("pandoc.utils.type(div.content) %s, [1] %s %s", pandoc.utils.type(div.content), firstContent and firstContent.t or "nil", firstContent or "nil")
+
+  local alert_type = github_alert_type(div)
+  if alert_type then
+    local content = strip_github_alert_title(div.content)
+    -- Raw Markdown keeps Pandoc's GFM writer from escaping the alert marker.
+    content:insert(1, pandoc.Para({pandoc.RawInline('markdown', '[!' .. alert_type .. ']')}))
+    return pandoc.BlockQuote(content)
+  end
 
   -- If the div has a class markdown-heading, then we want to extract only the heading from it, and drop the wrapper div/inner link/etc
   if (div.classes:includes("markdown-heading")) then
-    local firstContent = div.content:at(1)
     if (firstContent and firstContent.t == "Header") then
       return div.content:filter(function (elem)
         debug("[div.content:filter] elem: %s (%s), elem.content: %s, elem.content: %s", pandoc.utils.type(elem), elem.t, pandoc.utils.type(elem.content), elem.content)
