@@ -1,0 +1,48 @@
+#!/bin/zsh
+
+set -euo pipefail
+
+script_dir=${0:A:h}
+filter=${1:-}
+
+if [[ -z $filter ]]; then
+  print -u2 "Usage: ${0:t} FILTER [FIXTURE_DIR]"
+  exit 64
+fi
+
+filter=${filter:A}
+if [[ ! -f $filter ]]; then
+  print -u2 "Filter not found: $filter"
+  exit 66
+fi
+
+fixture_dir=${2:-"$script_dir/fixtures/${filter:t:r}"}
+fixture_dir=${fixture_dir:A}
+inputs=("$fixture_dir"/*.html(N))
+
+if (( ${#inputs} == 0 )); then
+  print -u2 "No HTML fixtures found in: $fixture_dir"
+  exit 66
+fi
+
+for input in "${inputs[@]}"; do
+  expected=${input%.html}.md
+  if [[ ! -f $expected ]]; then
+    print -u2 "Expected output not found: $expected"
+    exit 66
+  fi
+
+  actual=$(mktemp)
+  trap 'rm -f "$actual"' EXIT
+
+  pandoc \
+    --from=html \
+    --to=gfm \
+    --wrap=none \
+    --lua-filter="$filter" \
+    "$input" > "$actual"
+
+  diff -u "$expected" "$actual"
+  rm -f "$actual"
+  trap - EXIT
+done
