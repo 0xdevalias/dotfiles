@@ -144,6 +144,80 @@ local function strip_github_alert_title(blocks)
   return blocks
 end
 
+-- Read the displayed language from GitHub Docs' generated code header.
+-- Pandoc drops the nested code element's language-* class when the clipboard
+-- adds attributes to the enclosing pre element.
+-- Ref: https://github.com/jgm/pandoc/issues/11701
+local function github_code_language_label(header)
+  if not header or header.t ~= 'Div' then
+    return nil
+  end
+
+  for _, block in ipairs(header.content) do
+    if block.t == 'Para' or block.t == 'Plain' then
+      for _, inline in ipairs(block.content) do
+        if inline.t == 'Span' and inline.classes:includes('flex-1') then
+          return pandoc.utils.stringify(inline)
+        end
+      end
+    end
+  end
+
+  return nil
+end
+
+-- Convert GitHub Docs' rendered code-example wrapper back into a fenced block.
+-- The header may contain a hidden copy buffer, so use the last direct code
+-- block and prefer its original language-* class when Pandoc preserves it.
+local function github_code_example(div)
+  if not div.classes:includes('code-example') then
+    return nil
+  end
+
+  local code_block
+  for index = #div.content, 1, -1 do
+    local block = div.content:at(index)
+    if block.t == 'CodeBlock' then
+      code_block = block
+      break
+    end
+  end
+  if not code_block then
+    return nil
+  end
+
+  local language
+  for _, class in ipairs(code_block.classes) do
+    language = class:match('^language%-(.+)$')
+    if language then
+      break
+    end
+  end
+
+  if not language then
+    local label = github_code_language_label(div.content:at(1))
+    if label then
+      language = label:lower():match('^%s*(.-)%s*$'):gsub('%s+', '-')
+    end
+  end
+
+  if language then
+    -- Pandoc's GFM writer emits a space before the language, so render the
+    -- conventional compact fence directly while avoiding fence collisions.
+    -- Ref: https://github.com/jgm/pandoc/issues/11702
+    local fence_length = 3
+    for backticks in code_block.text:gmatch('`+') do
+      fence_length = math.max(fence_length, #backticks + 1)
+    end
+
+    local fence = string.rep('`', fence_length)
+    local markdown = string.format('%s%s\n%s\n%s', fence, language, code_block.text, fence)
+    return pandoc.RawBlock('markdown', markdown)
+  end
+
+  return code_block
+end
+
 -- @see https://pandoc.org/lua-filters.html#type-div
 -- @see https://pandoc.org/lua-filters.html#pandoc.Div
 function Div(div)
@@ -157,6 +231,11 @@ function Div(div)
     -- Raw Markdown keeps Pandoc's GFM writer from escaping the alert marker.
     content:insert(1, pandoc.Para({pandoc.RawInline('markdown', '[!' .. alert_type .. ']')}))
     return pandoc.BlockQuote(content)
+  end
+
+  local code_example = github_code_example(div)
+  if code_example then
+    return code_example
   end
 
   -- If the div has a class markdown-heading, then we want to extract only the heading from it, and drop the wrapper div/inner link/etc
