@@ -1,0 +1,613 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+SCRIPT_NAME="${0:t}"
+
+usage() {
+  cat <<EOF
+Usage:
+  $SCRIPT_NAME -o BASE_DIR [-l LABEL]
+  $SCRIPT_NAME --check-dependencies
+  $SCRIPT_NAME -h | --help
+
+Dump every item and representation on the macOS clipboard to a timestamped
+subdirectory named clipboard-dump-YYYYMMDD-HHMMSS.
+
+When a label is supplied, it is converted to a filesystem-safe slug and added
+to the directory name: clipboard-dump-YYYYMMDD-HHMMSS-label.
+
+For each representation, the dump includes:
+  - the original raw bytes
+  - a hex dump
+  - a byte-escaped view with CR, LF, TAB, and NUL made explicit
+  - a byte-level newline summary
+  - decoded UTF-8 text and character-level diagnostics when applicable
+
+The base output directory is required and must already exist. The generated
+clipboard dump subdirectory must not exist; this script never overwrites or
+merges with an existing path.
+
+Options:
+  -o, --output BASE_DIR
+                       Create the timestamped dump directory inside BASE_DIR
+  -l, --label LABEL    Add a descriptive label to the dump directory name
+      --check-dependencies, --check-deps
+                       Show required dependency status and exit
+  -h, --help           Show this help message and exit
+
+Example:
+  $SCRIPT_NAME --output ~/Desktop
+  $SCRIPT_NAME --output ~/Desktop --label "source A"
+EOF
+}
+
+usage_hint() {
+  echo "Run '$SCRIPT_NAME --help' for usage information." >&2
+}
+
+error() {
+  echo "Error: $1" >&2
+  usage_hint
+  return 1
+}
+
+check_dependencies() {
+  local mode="${1:-run}"
+  local -a missing=()
+
+  if [[ "$OSTYPE" != darwin* ]]; then
+    echo "Error: $SCRIPT_NAME requires macOS." >&2
+    return 127
+  fi
+
+  if [[ ! -x /usr/bin/osascript ]]; then
+    missing+=(/usr/bin/osascript)
+  fi
+
+  if (( ${#missing[@]} > 0 )); then
+    echo "Error: Missing required dependencies:" >&2
+    printf '  - %s\n' "${missing[@]}" >&2
+    return 127
+  fi
+
+  if [[ "$mode" == "status" ]]; then
+    echo "All required dependencies are installed:"
+    echo "  - osascript: /usr/bin/osascript"
+    echo "  - AppKit: macOS system framework"
+  fi
+}
+
+sanitize_label() {
+  local label="$1"
+  local sanitized
+
+  sanitized="$(
+    printf '%s' "$label" |
+      LC_ALL=C sed -E \
+        -e 's/[^A-Za-z0-9]+/-/g' \
+        -e 's/^-+//' \
+        -e 's/-+$//' |
+      tr '[:upper:]' '[:lower:]' |
+      cut -c1-80 |
+      sed -E 's/-+$//'
+  )"
+
+  if [[ -z "$sanitized" ]]; then
+    error "label must contain at least one ASCII letter or number"
+    return 1
+  fi
+
+  printf '%s\n' "$sanitized"
+}
+
+dump_clipboard() {
+  local out_dir="$1"
+
+  /usr/bin/osascript -l JavaScript - "$out_dir" <<'JXA'
+ObjC.import("AppKit");
+ObjC.import("Foundation");
+
+function fail(message) {
+  throw new Error(message);
+}
+
+function unwrap(value) {
+  return ObjC.unwrap(value);
+}
+
+function pad(value, width) {
+  return String(value).padStart(width, "0");
+}
+
+function safeFilename(value) {
+  const sanitized = value
+    .replace(/[^A-Za-z0-9._-]/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 120);
+
+  return sanitized || "unnamed-type";
+}
+
+function writeText(path, content) {
+  const ok = $(content).writeToFileAtomicallyEncodingError(
+    path,
+    true,
+    $.NSUTF8StringEncoding,
+    null
+  );
+
+  if (!ok) {
+    fail("could not write " + path);
+  }
+}
+
+function decodeBase64(value) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const bytes = [];
+  let buffer = 0;
+  let bitCount = 0;
+
+  for (const character of value.replace(/=+$/, "")) {
+    const digit = alphabet.indexOf(character);
+    if (digit < 0) {
+      continue;
+    }
+
+    buffer = (buffer << 6) | digit;
+    bitCount += 6;
+
+    if (bitCount >= 8) {
+      bitCount -= 8;
+      bytes.push((buffer >> bitCount) & 0xff);
+      buffer &= (1 << bitCount) - 1;
+    }
+  }
+
+  return bytes;
+}
+
+function bytesForData(data) {
+  const encoded = unwrap(data.base64EncodedStringWithOptions(0));
+  return decodeBase64(encoded);
+}
+
+function hexDump(bytes) {
+  const lines = [];
+
+  for (let offset = 0; offset < bytes.length; offset += 16) {
+    const chunk = bytes.slice(offset, offset + 16);
+    const hex = chunk
+      .map(byte => byte.toString(16).padStart(2, "0"))
+      .join(" ")
+      .padEnd(47, " ");
+    const ascii = chunk.map(byte => {
+      if (byte === 0x0a) return "␊";
+      if (byte === 0x0d) return "␍";
+      if (byte === 0x09) return "⇥";
+      if (byte === 0x00) return "␀";
+      if (byte >= 0x20 && byte <= 0x7e) return String.fromCharCode(byte);
+      return ".";
+    }).join("");
+
+    lines.push(offset.toString(16).padStart(8, "0") + "  " + hex + "  " + ascii);
+  }
+
+  return lines.length > 0 ? lines.join("\n") + "\n" : "";
+}
+
+function escapedBytes(bytes) {
+  let output = "";
+
+  for (let index = 0; index < bytes.length; index += 1) {
+    const byte = bytes[index];
+
+    if (byte === 0x0d && bytes[index + 1] === 0x0a) {
+      output += "[CRLF]\n";
+      index += 1;
+    } else if (byte === 0x0d) {
+      output += "[CR]\n";
+    } else if (byte === 0x0a) {
+      output += "[LF]\n";
+    } else if (byte === 0x09) {
+      output += "[TAB]";
+    } else if (byte === 0x00) {
+      output += "[NUL]";
+    } else if (byte === 0x5c) {
+      output += "\\\\";
+    } else if (byte >= 0x20 && byte <= 0x7e) {
+      output += String.fromCharCode(byte);
+    } else {
+      output += "[0x" + byte.toString(16).padStart(2, "0") + "]";
+    }
+  }
+
+  return output;
+}
+
+function newlineEvents(bytes) {
+  const events = [];
+
+  for (let index = 0; index < bytes.length; index += 1) {
+    if (bytes[index] === 0x0d && bytes[index + 1] === 0x0a) {
+      events.push({ offset: index, kind: "CRLF", width: 2 });
+      index += 1;
+    } else if (bytes[index] === 0x0d) {
+      events.push({ offset: index, kind: "CR", width: 1 });
+    } else if (bytes[index] === 0x0a) {
+      events.push({ offset: index, kind: "LF", width: 1 });
+    }
+  }
+
+  return events;
+}
+
+function newlineSummary(bytes) {
+  const events = newlineEvents(bytes);
+  const totals = { CRLF: 0, CR: 0, LF: 0 };
+  const lines = [];
+
+  for (const event of events) {
+    totals[event.kind] += 1;
+  }
+
+  for (let index = 0; index < events.length;) {
+    const run = [events[index]];
+    let next = index + 1;
+
+    while (
+      next < events.length &&
+      events[next].offset === run[run.length - 1].offset + run[run.length - 1].width
+    ) {
+      run.push(events[next]);
+      next += 1;
+    }
+
+    const kinds = run.map(event => event.kind).join(", ");
+    let line = "offset " + run[0].offset + ": " + run.length +
+      " newline sequence(s): " + kinds;
+    if (run.length >= 2) {
+      line += "  <-- blank-line run";
+    }
+    lines.push(line);
+    index = next;
+  }
+
+  if (lines.length === 0) {
+    lines.push("No CR/LF newline bytes found.");
+  }
+
+  lines.push("");
+  lines.push("Totals:");
+  lines.push("  CRLF pairs: " + totals.CRLF);
+  lines.push("  bare CR bytes: " + totals.CR);
+  lines.push("  bare LF bytes: " + totals.LF);
+
+  return lines.join("\n") + "\n";
+}
+
+function isTextLikeType(typeName) {
+  const name = typeName.toLowerCase();
+  return (
+    name === "nsstringpboardtype" ||
+    name.includes("text") ||
+    name.includes("html") ||
+    name.includes("xml") ||
+    name.includes("json") ||
+    name.includes("rtf") ||
+    name.includes("csv") ||
+    name.includes("url")
+  );
+}
+
+function decodeText(data, typeName) {
+  if (!isTextLikeType(typeName)) {
+    return null;
+  }
+
+  const encodings = [
+    $.NSUTF8StringEncoding,
+    $.NSUTF16StringEncoding,
+    $.NSUTF16LittleEndianStringEncoding,
+    $.NSUTF16BigEndianStringEncoding
+  ];
+
+  for (const encoding of encodings) {
+    const decoded = $.NSString.alloc.initWithDataEncoding(data, encoding);
+    const value = unwrap(decoded);
+    if (typeof value === "string") {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function escapedText(text) {
+  let output = "";
+  const characters = [...text];
+
+  for (let index = 0; index < characters.length; index += 1) {
+    const character = characters[index];
+    const codePoint = character.codePointAt(0);
+
+    if (character === "\r" && characters[index + 1] === "\n") {
+      output += "[CRLF]\n";
+      index += 1;
+    } else if (character === "\r") {
+      output += "[CR]\n";
+    } else if (character === "\n") {
+      output += "[LF]\n";
+    } else if (character === "\t") {
+      output += "[TAB]";
+    } else if (character === "\0") {
+      output += "[NUL]";
+    } else if (character === "\\") {
+      output += "\\\\";
+    } else if (codePoint === 0x2028) {
+      output += "[LINE SEPARATOR]\n";
+    } else if (codePoint === 0x2029) {
+      output += "[PARAGRAPH SEPARATOR]\n";
+    } else if (codePoint < 0x20 || codePoint === 0x7f) {
+      output += "[U+" + codePoint.toString(16).toUpperCase().padStart(4, "0") + "]";
+    } else {
+      output += character;
+    }
+  }
+
+  return output;
+}
+
+function textNewlineSummary(text) {
+  let crlf = 0;
+  let cr = 0;
+  let lf = 0;
+  let lineSeparator = 0;
+  let paragraphSeparator = 0;
+
+  for (let index = 0; index < text.length; index += 1) {
+    if (text[index] === "\r" && text[index + 1] === "\n") {
+      crlf += 1;
+      index += 1;
+    } else if (text[index] === "\r") {
+      cr += 1;
+    } else if (text[index] === "\n") {
+      lf += 1;
+    } else if (text.charCodeAt(index) === 0x2028) {
+      lineSeparator += 1;
+    } else if (text.charCodeAt(index) === 0x2029) {
+      paragraphSeparator += 1;
+    }
+  }
+
+  return [
+    "Character-level newline totals:",
+    "  CRLF pairs: " + crlf,
+    "  bare CR characters: " + cr,
+    "  bare LF characters: " + lf,
+    "  Unicode line separators (U+2028): " + lineSeparator,
+    "  Unicode paragraph separators (U+2029): " + paragraphSeparator,
+    ""
+  ].join("\n");
+}
+
+function dumpRepresentation(outDir, base, typeName, data, manifest, indent) {
+  manifest.push(indent + "- " + typeName);
+
+  if (!data) {
+    manifest.push(indent + "  data: unavailable");
+    return;
+  }
+
+  const rawPath = outDir + "/" + base + ".raw";
+  const bytes = bytesForData(data);
+
+  if (!data.writeToFileAtomically(rawPath, true)) {
+    fail("could not write " + rawPath);
+  }
+
+  writeText(outDir + "/" + base + ".hex.txt", hexDump(bytes));
+  writeText(outDir + "/" + base + ".bytes-escaped.txt", escapedBytes(bytes));
+  writeText(outDir + "/" + base + ".byte-newlines.txt", newlineSummary(bytes));
+
+  manifest.push(indent + "  bytes: " + bytes.length);
+  manifest.push(indent + "  raw: " + base + ".raw");
+  manifest.push(indent + "  hex: " + base + ".hex.txt");
+  manifest.push(indent + "  escaped bytes: " + base + ".bytes-escaped.txt");
+  manifest.push(indent + "  byte newlines: " + base + ".byte-newlines.txt");
+
+  const text = decodeText(data, typeName);
+  if (text !== null) {
+    writeText(outDir + "/" + base + ".utf8.txt", text);
+    writeText(outDir + "/" + base + ".text-escaped.txt", escapedText(text));
+    writeText(outDir + "/" + base + ".text-newlines.txt", textNewlineSummary(text));
+    manifest.push(indent + "  decoded text: " + base + ".utf8.txt");
+    manifest.push(indent + "  escaped text: " + base + ".text-escaped.txt");
+    manifest.push(indent + "  text newlines: " + base + ".text-newlines.txt");
+  }
+}
+
+function run(argv) {
+  if (argv.length !== 1) {
+    fail("expected one output directory argument");
+  }
+
+  const outDir = unwrap($(argv[0]).stringByStandardizingPath);
+  const pasteboard = $.NSPasteboard.generalPasteboard;
+  const initialChangeCount = Number(pasteboard.changeCount);
+  const items = pasteboard.pasteboardItems;
+  const itemCount = items ? Number(items.count) : 0;
+  const firstItemTypeNames = new Set();
+  const manifest = [
+    "Clipboard dump",
+    "Generated: " + new Date().toISOString(),
+    "Pasteboard change count: " + initialChangeCount,
+    "Items: " + itemCount,
+    ""
+  ];
+
+  for (let itemIndex = 0; itemIndex < itemCount; itemIndex += 1) {
+    const item = items.objectAtIndex(itemIndex);
+    const types = item.types;
+    const typeCount = types ? Number(types.count) : 0;
+
+    manifest.push("Item " + (itemIndex + 1) + ":");
+    manifest.push("  Representations: " + typeCount);
+
+    for (let typeIndex = 0; typeIndex < typeCount; typeIndex += 1) {
+      const type = types.objectAtIndex(typeIndex);
+      const typeName = unwrap(type);
+      const base = "item-" + pad(itemIndex + 1, 3) +
+        "_type-" + pad(typeIndex + 1, 3) +
+        "_" + safeFilename(typeName);
+      const data = item.dataForType(type);
+
+      if (itemIndex === 0) {
+        firstItemTypeNames.add(typeName);
+      }
+
+      dumpRepresentation(outDir, base, typeName, data, manifest, "  ");
+    }
+
+    manifest.push("");
+  }
+
+  const pasteboardTypes = pasteboard.types;
+  const pasteboardTypeCount = pasteboardTypes ? Number(pasteboardTypes.count) : 0;
+  const compatibilityTypes = [];
+
+  for (let typeIndex = 0; typeIndex < pasteboardTypeCount; typeIndex += 1) {
+    const type = pasteboardTypes.objectAtIndex(typeIndex);
+    const typeName = unwrap(type);
+    if (!firstItemTypeNames.has(typeName)) {
+      compatibilityTypes.push({ type: type, name: typeName });
+    }
+  }
+
+  if (compatibilityTypes.length > 0) {
+    manifest.push("Pasteboard compatibility representations for the first item:");
+    manifest.push("  Representations: " + compatibilityTypes.length);
+
+    for (let typeIndex = 0; typeIndex < compatibilityTypes.length; typeIndex += 1) {
+      const entry = compatibilityTypes[typeIndex];
+      const base = "pasteboard_type-" + pad(typeIndex + 1, 3) +
+        "_" + safeFilename(entry.name);
+      const data = pasteboard.dataForType(entry.type);
+
+      dumpRepresentation(outDir, base, entry.name, data, manifest, "  ");
+    }
+
+    manifest.push("");
+  }
+
+  const finalChangeCount = Number(pasteboard.changeCount);
+  if (finalChangeCount !== initialChangeCount) {
+    manifest.push("WARNING: The clipboard changed during the dump.");
+    manifest.push("Final pasteboard change count: " + finalChangeCount);
+    manifest.push("");
+  }
+
+  writeText(outDir + "/manifest.txt", manifest.join("\n"));
+}
+JXA
+}
+
+main() {
+  local base_dir=""
+  local label=""
+  local label_slug=""
+  local out_dir=""
+  local check_dependencies_only=0
+
+  while (( $# > 0 )); do
+    case "$1" in
+      -o|--output)
+        if (( $# < 2 )); then
+          error "missing value for $1"
+          return 1
+        fi
+        base_dir="$2"
+        shift 2
+        ;;
+      -l|--label)
+        if (( $# < 2 )); then
+          error "missing value for $1"
+          return 1
+        fi
+        label="$2"
+        shift 2
+        ;;
+      --check-dependencies|--check-deps)
+        check_dependencies_only=1
+        shift
+        ;;
+      -h|--help)
+        usage
+        return 0
+        ;;
+      --)
+        shift
+        if (( $# > 0 )); then
+          error "unexpected positional argument: $1"
+          return 1
+        fi
+        ;;
+      -*)
+        error "unknown option: $1"
+        return 1
+        ;;
+      *)
+        error "unexpected positional argument: $1"
+        return 1
+        ;;
+    esac
+  done
+
+  if (( check_dependencies_only )); then
+    if [[ -n "$base_dir" || -n "$label" ]]; then
+      error "--check-dependencies cannot be combined with --output or --label"
+      return 1
+    fi
+    check_dependencies status
+    return $?
+  fi
+
+  if [[ -z "$base_dir" ]]; then
+    error "a base output directory is required"
+    return 1
+  fi
+
+  check_dependencies || return $?
+
+  if [[ ! -d "$base_dir" ]]; then
+    error "base output directory does not exist or is not a directory: $base_dir"
+    return 1
+  fi
+
+  base_dir="${base_dir:A}"
+  out_dir="$base_dir/clipboard-dump-$(date +%Y%m%d-%H%M%S)"
+
+  if [[ -n "$label" ]]; then
+    label_slug="$(sanitize_label "$label")" || return 1
+    out_dir+="-$label_slug"
+  fi
+
+  if [[ -e "$out_dir" || -L "$out_dir" ]]; then
+    error "generated output path already exists: $out_dir"
+    return 1
+  fi
+
+  if ! mkdir -- "$out_dir"; then
+    error "could not create output directory: $out_dir"
+    return 1
+  fi
+
+  if ! dump_clipboard "$out_dir"; then
+    echo "Error: clipboard dump failed; partial output may remain in: $out_dir" >&2
+    return 1
+  fi
+
+  echo "Wrote clipboard dump to: $out_dir"
+  echo "Manifest: $out_dir/manifest.txt"
+}
+
+main "$@"
