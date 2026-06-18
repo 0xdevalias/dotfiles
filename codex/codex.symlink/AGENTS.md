@@ -15,3 +15,10 @@ For thread management actions, preserve clarity around parent vs side thread nam
 When providing copy-pasteable git commit subjects/titles or commit descriptions/bodies, do not hard-wrap the commit text, including inside Markdown fenced blocks.
 
 When providing both a commit title and description/body, put them in separate code blocks.
+
+## Thread Title Conventions
+
+When creating a new Codex thread, handling a thread rename request, or explicitly suggesting a thread title, check whether the thread matches an existing title pattern. If the thread appears related to a reusable pattern but its title does not match, suggest a better title and ask the user whether they want it renamed before changing it. Prefer concise, reusable prefixes that make related work easy to scan in the thread list. Keep titles in the shape `<Area>: <Action> <Specific Subject>`.
+
+Reusable title patterns:
+- `Codex AGENTS.md: Add <Guidance Name> Guidance` for persistent global guidance additions.
