@@ -4,9 +4,9 @@ When providing copy-pasteable Markdown that may contain embedded fenced code blo
 
 Use this in chat output and skill templates so copied Markdown preserves the embedded code fences.
 
-## Side Chat Thread Renames
+## Delegated Thread Renames
 
-When a side conversation was created from, delegated by, or is clearly about a parent/source Codex thread, interpret ambiguous requests to rename "this thread", "this chat", "this conversation", or similar as referring to the parent/source thread by default. Rename the current side thread only when the user explicitly says side thread, current side chat, or otherwise identifies the side conversation.
+When an inline side conversation or temporary delegation is clearly operating on behalf of a parent/source Codex thread, interpret ambiguous requests to rename "this thread", "this chat", "this conversation", or similar as referring to the parent/source thread by default. Do not treat every normal Codex thread with delegation or source-thread history as a side thread; if the user says "current thread" or clarifies they mean the thread they are chatting in, rename the current thread.
 
 For thread management actions, preserve clarity around parent vs side thread names and use explicit thread ids when available.
 
