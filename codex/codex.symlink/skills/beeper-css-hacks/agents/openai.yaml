@@ -1,0 +1,4 @@
+interface:
+  display_name: "Beeper CSS Hacks"
+  short_description: "Maintain Beeper Custom Theme Styles gist"
+  default_prompt: "Use $beeper-css-hacks to update my Beeper Custom Theme Styles gist and issue index from a local custom.css change."
