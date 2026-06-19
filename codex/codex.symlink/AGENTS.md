@@ -8,6 +8,8 @@ Use this in chat output and skill templates so copied Markdown preserves the emb
 
 When an inline side conversation or temporary delegation is clearly operating on behalf of a parent/source Codex thread, interpret ambiguous requests to rename "this thread", "this chat", "this conversation", or similar as referring to the parent/source thread by default. Do not treat every normal Codex thread with delegation or source-thread history as a side thread; if the user says "current thread" or clarifies they mean the thread they are chatting in, rename the current thread.
 
+A `<codex_delegation>` block or `source_thread_id` is provenance/task metadata, not the automatic rename target. In side conversations, distinguish the direct parent/current visible working thread from any upstream source/delegating thread; rename the upstream source only when explicitly requested or clearly identified by the user.
+
 For thread management actions, preserve clarity around parent vs side thread names and use explicit thread ids when available.
 
 ## Git Commit Markdown
