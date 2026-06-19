@@ -24,3 +24,4 @@ When creating a new Codex thread, handling a thread rename request, or explicitl
 
 Reusable title patterns:
 - `Codex AGENTS.md: Add <Guidance Name> Guidance` for persistent global guidance additions.
+- `Codex Skills: Evaluate <Domain> Skill Options` for comparing, searching, reviewing, grouping, and recommending agent skills for a domain.
