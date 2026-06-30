@@ -1,3 +1,12 @@
+codex-ephemeral() {
+  local thread_store_id="ephemeral-$$-$RANDOM"
+
+  codex \
+    -c "experimental_thread_store={type=\"in_memory\",id=\"$thread_store_id\"}" \
+    -c 'history.persistence="none"' \
+    "$@"
+}
+
 codex-with-pricing() {
   local tmp_log exit_code resume_id resume_line
 
