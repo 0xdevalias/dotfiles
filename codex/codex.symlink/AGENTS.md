@@ -49,5 +49,15 @@ Title shapes:
 
 Reusable title patterns:
 - `Codex AGENTS.md: Add <Guidance Name> Guidance` for persistent global guidance additions.
-- `Codex Skills: Evaluate <Domain> Skill Options` for comparing, searching, reviewing, grouping, and recommending agent skills for a domain.
 - `<Product>: Bug - Investigate <Issue Area> Issues` for bug-investigation threads where the category improves scanning while preserving the action verb.
+
+Codex skills title patterns:
+- `Codex Skills: Create <Skill Name> Skill` for new skills, including extraction from existing notes, prompts, or workflows.
+- `Codex Skills: Refine <Skill Name> to <Outcome>` for behavioral, routing, workflow, or instruction improvements where the outcome adds scan value.
+- `Codex Skills: Refactor <Skill Name> [Qualifier]` for larger structural reshaping, not ordinary edits.
+- `Codex Skills: Split <New Skill Name> from <Original Skill Name>` for extracting one new skill while the original remains.
+- `Codex Skills: Split <Original Skill Name> into <Skill A> / <Skill B>` for decomposing one skill into multiple resulting skills.
+- `Codex Skills: Evaluate <Domain> Skill Options` for comparing, searching, reviewing, grouping, and recommending skill options in a domain.
+- `Codex Skills: Assess <Source> Skills` for reviewing a repo, bundle, collection, or other source of existing skills.
+
+For other Codex-skill work, use `Codex Skills: <Verb> <Specific Subject>`. For less common cases, avoid adding new standard verbs too early: treat `Validate`, `Extract`, `Package`, `Port`, and generic `Improve` as descriptions inside the patterns above unless a recurring pattern clearly emerges. Use `Workflow` only when the main topic is sequencing, modes, routing, states, or what the agent should do next.
