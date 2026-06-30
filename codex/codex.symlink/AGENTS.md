@@ -4,6 +4,25 @@ When providing copy-pasteable Markdown that may contain embedded fenced code blo
 
 Use this in chat output and skill templates so copied Markdown preserves the embedded code fences.
 
+## Zsh Script Style
+
+When editing `.zsh` files or zsh functions, follow these style and safety preferences.
+
+For zsh local assignment, keep `local`/`typeset` declarations on the same line as their assignment when assigning a value:
+
+```zsh
+local var="$(some_command)"
+```
+
+Do not split local assignment into a separate declaration and later assignment unless there is a real reason:
+
+```zsh
+local var
+var="$(some_command)"
+```
+
+This zsh local preference is intentional: `local`/`typeset` behavior, including cases involving `TYPESET_SILENT`, can interact badly with existing values/output unless handled carefully. Prefer the same-line assignment form so agents do not split zsh locals from assignments by default.
+
 ## Delegated Thread Renames
 
 When an inline side conversation or temporary delegation is clearly operating on behalf of a parent/source Codex thread, interpret ambiguous requests to rename "this thread", "this chat", "this conversation", or similar as referring to the parent/source thread by default. Do not treat every normal Codex thread with delegation or source-thread history as a side thread; if the user says "current thread" or clarifies they mean the thread they are chatting in, rename the current thread.
