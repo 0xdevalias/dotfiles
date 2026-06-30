@@ -25,9 +25,11 @@ This zsh local preference is intentional: `local`/`typeset` behavior, including 
 
 ## Delegated Thread Renames
 
-When an inline side conversation or temporary delegation is clearly operating on behalf of a parent/source Codex thread, interpret ambiguous requests to rename "this thread", "this chat", "this conversation", or similar as referring to the parent/source thread by default. Do not treat every normal Codex thread with delegation or source-thread history as a side thread; if the user says "current thread" or clarifies they mean the thread they are chatting in, rename the current thread.
+A `<codex_delegation>` block or `source_thread_id` in delegated task metadata is provenance, not the automatic target for ambiguous rename requests. If there is no explicit side-conversation boundary and the user is chatting in a visible delegated working thread, interpret "this thread", "this chat", "this conversation", or similar as the current visible working thread unless they explicitly ask to rename the upstream/source/delegating thread.
 
-A `<codex_delegation>` block or `source_thread_id` is provenance/task metadata, not the automatic rename target. In side conversations, distinguish the direct parent/current visible working thread from any upstream source/delegating thread; rename the upstream source only when explicitly requested or clearly identified by the user.
+A harness-injected side-conversation boundary is an explicit indicator that the assistant is in a side conversation. In that case, ambiguous requests to rename "this thread", "this chat", "this conversation", or similar should default to the parent/main visible thread, unless the user says "current side thread" or otherwise clarifies they mean the side conversation.
+
+If the intended target thread id is unavailable, inaccessible, or cannot be found confidently, do not rename a different thread as a fallback. Report the blocker and ask whether the user wants to retarget the rename.
 
 For thread management actions, preserve clarity around parent vs side thread names and use explicit thread ids when available.
 
