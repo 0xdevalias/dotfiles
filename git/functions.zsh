@@ -77,3 +77,43 @@ function list-git-dirs() {
     printf '  %s\n' "${non_git_dirs[@]}"
   fi
 }
+
+function git-worktree-cd() {
+  for arg in "$@"; do
+    case "$arg" in
+      -h|--help)
+        echo "Usage: git-worktree-cd"
+        echo
+        echo "Interactively select an existing Git worktree and cd into it."
+        echo
+        echo "Options:"
+        echo "  -h, --help  Show this help message."
+        return 0
+        ;;
+      *)
+        echo "Error: unknown option for git-worktree-cd: $arg" >&2
+        echo "Run 'git-worktree-cd --help' for usage." >&2
+        return 1
+        ;;
+    esac
+  done
+
+  if ! (( $+commands[fzf] )); then
+    echo "Error: fzf is required for git-worktree-cd" >&2
+    return 1
+  fi
+
+  local worktree_dir="$(git worktree list --porcelain | awk '/^worktree / { print substr($0, 10) }' | fzf)" || return
+
+  if [[ -n "$worktree_dir" ]]; then
+    if [[ ! -d "$worktree_dir" ]]; then
+      echo "Error: selected git worktree path does not exist: $worktree_dir" >&2
+      return 1
+    fi
+
+    if ! cd "$worktree_dir"; then
+      echo "Error: failed to cd into selected git worktree path: $worktree_dir" >&2
+      return 1
+    fi
+  fi
+}
