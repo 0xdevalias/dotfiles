@@ -41,8 +41,13 @@ When providing both a commit title and description/body, put them in separate co
 
 ## Thread Title Conventions
 
-When creating a new Codex thread, handling a thread rename request, or explicitly suggesting a thread title, check whether the thread matches an existing title pattern. If the thread appears related to a reusable pattern but its title does not match, suggest a better title and ask the user whether they want it renamed before changing it. Prefer concise, reusable prefixes that make related work easy to scan in the thread list. Keep titles in the shape `<Area>: <Action> <Specific Subject>`.
+When creating a new Codex thread, handling a thread rename request, or explicitly suggesting a thread title, check whether the thread matches an existing title pattern. If the thread appears related to a reusable pattern but its title does not match, suggest a better title and ask the user whether they want it renamed before changing it. Prefer concise, reusable prefixes that make related work easy to scan in the thread list.
+
+Title shapes:
+- `<Area>: <Action> <Specific Subject>` for the default pattern.
+- `<Area>: <Category> - <Action> <Specific Subject>` when a category prefix is useful. The category should not replace the action verb.
 
 Reusable title patterns:
 - `Codex AGENTS.md: Add <Guidance Name> Guidance` for persistent global guidance additions.
 - `Codex Skills: Evaluate <Domain> Skill Options` for comparing, searching, reviewing, grouping, and recommending agent skills for a domain.
+- `<Product>: Bug - Investigate <Issue Area> Issues` for bug-investigation threads where the category improves scanning while preserving the action verb.
