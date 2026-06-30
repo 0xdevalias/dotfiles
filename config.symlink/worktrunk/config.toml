@@ -1,0 +1,9 @@
+# Worktrunk: CLI for Git worktree management, designed for parallel AI agent workflows (https://worktrunk.dev)
+#
+# Docs:
+# - https://worktrunk.dev/config/
+
+# https://worktrunk.dev/extending/#aliases
+# https://worktrunk.dev/config/#aliases
+[aliases]
+switch-with-early-path-column = "wt --config-set 'list.columns=[\"branch\",\"path\",\"status\",\"working-diff\",\"ahead-behind\",\"branch-diff\",\"upstream\",\"commit\",\"age\",\"message\"]' switch {{ args }}"

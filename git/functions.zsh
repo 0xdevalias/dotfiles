@@ -79,16 +79,25 @@ function list-git-dirs() {
 }
 
 function git-worktree-cd() {
+  local use_worktrunk=1
+
   for arg in "$@"; do
     case "$arg" in
       -h|--help)
-        echo "Usage: git-worktree-cd"
+        echo "Usage: git-worktree-cd [--no-worktrunk]"
         echo
         echo "Interactively select an existing Git worktree and cd into it."
         echo
+        echo "By default, uses Worktrunk (wt) when its shell integration is available,"
+        echo "otherwise falls back to git worktree + fzf."
+        echo
         echo "Options:"
-        echo "  -h, --help  Show this help message."
+        echo "  --no-worktrunk  Use git worktree + fzf even when Worktrunk is available."
+        echo "  -h, --help      Show this help message."
         return 0
+        ;;
+      --no-worktrunk)
+        use_worktrunk=0
         ;;
       *)
         echo "Error: unknown option for git-worktree-cd: $arg" >&2
@@ -98,8 +107,16 @@ function git-worktree-cd() {
     esac
   done
 
+  # worktrunk: CLI for Git worktree management, designed for parallel AI agent workflows (https://worktrunk.dev)
+  #   Worktrunk only changes the current shell directory through its generated shell function; the standalone
+  #   binary cannot cd the parent shell.
+  if (( use_worktrunk && $+functions[wt] && $+commands[wt] )); then
+    wt switch-with-early-path-column
+    return
+  fi
+
   if ! (( $+commands[fzf] )); then
-    echo "Error: fzf is required for git-worktree-cd" >&2
+    echo "Error: fzf is required for git-worktree-cd when Worktrunk (wt) shell integration is unavailable" >&2
     return 1
   fi
 

@@ -11,6 +11,7 @@ require_installed_brew gh                          # GitHub’s official command
 require_installed_brew git-delta                   # Syntax-highlighting pager for git and diff output: https://github.com/dandavison/delta
 require_installed_brew git-recent                  # See your latest local git branches, formatted real fancy: https://github.com/paulirish/git-recent
 require_installed_brew git-delete-merged-branches  # Command-line tool to delete merged Git branches: https://github.com/hartwork/git-delete-merged-branches
+require_installed_brew worktrunk                   # CLI for Git worktree management, designed for parallel AI agent workflows: https://worktrunk.dev
 
 # Authenticate the GitHub CLI + set up SSH key
 if (( $+commands[gh] )); then
