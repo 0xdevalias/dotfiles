@@ -1,4 +1,5 @@
-# ffmpeg-* INPUT [OUTPUT] [CRF]
+# ffmpeg-x264[-silent] INPUT [OUTPUT] [CRF]
+# ffmpeg-x265[-silent] INPUT [OUTPUT] [CRF]
 #
 # When OUTPUT is omitted, use the input basename with an .mp4 extension.
 # If that would overwrite the input or another file, add the helper variant:
@@ -37,6 +38,7 @@ _ffmpeg_prepare_output() {
   local input=$1
   local explicit_output=$2
   local variant=$3
+  local extension=${4:-mp4}
 
   if [[ ! -f "$input" ]]; then
     print -u2 -- "Error: input '$input' is not a file."
@@ -55,13 +57,13 @@ _ffmpeg_prepare_output() {
     return 0
   fi
 
-  local output="${input:r}.mp4"
+  local output="${input:r}.${extension}"
   if [[ ! -e "$output" && ! -L "$output" ]]; then
     print -r -- "$output"
     return 0
   fi
 
-  local fallback="${input:r}.${variant}.mp4"
+  local fallback="${input:r}.${variant}.${extension}"
   if [[ -e "$fallback" || -L "$fallback" ]]; then
     print -u2 -- "Error: outputs '$output' and '$fallback' already exist; refusing to overwrite them."
     return 1
@@ -139,5 +141,53 @@ ffmpeg-x265-silent() {
     -an \
     -tag:v hvc1 \
     -movflags +faststart \
+    "$output"
+}
+
+# MP3 audio using LAME variable-bitrate encoding.
+# Quality 0 is best/largest; 9 is lowest/smallest. Approximate averages:
+#   0=245k, 1=225k, 2=190k, 3=175k, 4=165k, 5=130k, 6=115k
+#   7=100k, 8=85k, 9=65k (consider ABR instead for qualities 7-9)
+ffmpeg-mp3() {
+  local quality=2
+
+  case "${1-}" in
+    -h|--help)
+      print -rl -- \
+        "Usage: ffmpeg-mp3 [-q QUALITY] INPUT [OUTPUT]" \
+        "Convert INPUT to MP3; OUTPUT defaults to the input basename with .mp3." \
+        "  -q, --quality  VBR quality 0-9 (default: 2, about 190 kbps)" \
+        "  -h, --help     Show this help."
+      return
+      ;;
+    -q|--quality)
+      if [[ -z "${2-}" ]]; then
+        print -u2 -- "Error: $1 requires a quality from 0 to 9."
+        return 1
+      fi
+      quality=$2
+      shift 2
+      ;;
+  esac
+
+  if (( $# < 1 || $# > 2 )); then
+    print -u2 -- "Usage: ffmpeg-mp3 [-q QUALITY] INPUT [OUTPUT]"
+    return 1
+  fi
+
+  if [[ "$quality" != <0-9> ]]; then
+    print -u2 -- "Error: quality must be an integer from 0 to 9."
+    return 1
+  fi
+
+  local output="$(_ffmpeg_prepare_output "$1" "${2-}" converted mp3)"
+  [[ -n "$output" ]] || return 1
+
+  ffmpeg \
+    -n \
+    -i "$1" \
+    -map 0:a:0 \
+    -c:a libmp3lame \
+    -q:a "$quality" \
     "$output"
 }
