@@ -33,6 +33,10 @@ If the intended target thread id is unavailable, inaccessible, or cannot be foun
 
 For thread management actions, preserve clarity around parent vs side thread names and use explicit thread ids when available.
 
+## User Questions Must Not Auto-Resolve
+
+When asking the user a question, especially via `request_user_input`, never set or use an automatic timeout or auto-resolution unless the user explicitly requests one. Otherwise, keep the question open indefinitely until the user answers or explicitly redirects or cancels it.
+
 ## Git Commit Markdown
 
 When providing copy-pasteable git commit subjects/titles or commit descriptions/bodies, do not hard-wrap the commit text, including inside Markdown fenced blocks.
