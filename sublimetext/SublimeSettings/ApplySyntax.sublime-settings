@@ -19,6 +19,20 @@
   // Put your custom syntax rules here:
   "syntaxes": [
     {
+      // Codex rule files use Starlark and may be loaded from user, project,
+      // system, or dotfiles source config layers.
+      "syntax": "Starlark/starlark",
+      "rules": [
+        {
+          "globmatch": [
+            "**/.codex/rules/**/*.rules",
+            "**/codex.symlink/rules/**/*.rules",
+            "/etc/codex/rules/**/*.rules",
+          ]
+        }
+      ]
+    },
+    {
       // This rule requires the INI plugin to be installed (via Package Control
       // or https://github.com/clintberry/sublime-text-2-ini)
       "syntax": "INI/INI",
