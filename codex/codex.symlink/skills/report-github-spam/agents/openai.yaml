@@ -1,0 +1,4 @@
+interface:
+  display_name: "Report GitHub Spam"
+  short_description: "Report GitHub comments and users as spam"
+  default_prompt: "Use $report-github-spam to report this GitHub or Gist comment as spam."
