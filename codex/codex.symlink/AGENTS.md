@@ -43,6 +43,18 @@ When providing copy-pasteable git commit subjects/titles or commit descriptions/
 
 When providing both a commit title and description/body, put them in separate code blocks.
 
+## Task and Chat References
+
+Whenever presenting a reference to another Codex task or ChatGPT conversation, include its exact title, its raw technical ID in a plainly visible and copyable form, and a clickable link that opens the intended task or conversation. The layout may vary to suit the context: the ID may appear after an em dash, in parentheses, or alongside separate links, and does not need to be literally labelled `UUID`. If a platform label such as `ChatGPT:` is useful, keep it outside the title unless it is part of the verified title.
+
+For a local Codex task, use `codex://threads/<thread-id>`.
+
+For a private ChatGPT conversation, normally provide both a clickable `chatgpt-conversation://<conversation-id>` reference for opening it inside Codex and the full `https://chatgpt.com/c/<conversation-id>` URL as visible, clickable link text for opening or copying it outside Codex.
+
+If a verified ChatGPT shared link is also available and relevant, include its full `https://chatgpt.com/share/<share-id>` URL as visible, clickable link text, optionally distinguished with a short parenthetical such as `(shared)`. A shared link is a separate access surface and may use an ID different from the private conversation ID. Never construct, infer, or create a shared link merely from the private conversation ID.
+
+Only omit one of the ordinary private ChatGPT destinations when the user explicitly requests a single destination or there is another clear context-specific reason. Do not substitute one task type's link scheme for another. Verify the title, raw ID, and link destination before presenting the reference; if any element cannot be verified, state that rather than guessing.
+
 ## Thread Title Conventions
 
 When creating a new Codex thread, handling a thread rename request, or explicitly suggesting a thread title, check whether the thread matches an existing title pattern. If the thread appears related to a reusable pattern but its title does not match, suggest a better title and ask the user whether they want it renamed before changing it. Prefer concise, reusable prefixes that make related work easy to scan in the thread list.
