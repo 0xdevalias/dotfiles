@@ -33,6 +33,12 @@ If the intended target thread id is unavailable, inaccessible, or cannot be foun
 
 For thread management actions, preserve clarity around parent vs side thread names and use explicit thread ids when available.
 
+## Safe Thread Deletion
+
+When the user explicitly requests permanent deletion of a Codex task, first verify its exact title and task ID. Prefer a first-class task-deletion tool when available. If the app tool surface only supports archiving, check `codex delete --help` before concluding that permanent deletion is unavailable.
+
+Run `codex delete <task-id>` interactively so its irreversible confirmation remains visible. Do not use `--force`, auto-confirm, bypass the prompt, or delete an ambiguously identified task. Warn that deletion cannot be undone and may also delete subagent tasks. Afterward, verify that the task is absent from the user-visible task surface.
+
 ## User Questions Must Not Auto-Resolve
 
 When asking the user a question, especially via `request_user_input`, never set or use an automatic timeout or auto-resolution unless the user explicitly requests one. Otherwise, keep the question open indefinitely until the user answers or explicitly redirects or cancels it.
