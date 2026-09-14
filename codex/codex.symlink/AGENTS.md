@@ -23,6 +23,10 @@ var="$(some_command)"
 
 This zsh local preference is intentional: `local`/`typeset` behavior, including cases involving `TYPESET_SILENT`, can interact badly with existing values/output unless handled carefully. Prefer the same-line assignment form so agents do not split zsh locals from assignments by default.
 
+## Dotfiles Task Creation
+
+When creating a Codex task for the saved `~/.dotfiles` project, use its saved checkout directly: `environment: { type: "local" }`. Use `environment: { type: "worktree" }` only when the user explicitly requests a worktree. This path-specific rule overrides the generic Git-repository default because this is a live system-configuration checkout, and its dirty state may be intentional.
+
 ## Delegated Thread Renames
 
 A `<codex_delegation>` block or `source_thread_id` in delegated task metadata is provenance, not the automatic target for ambiguous rename requests. If there is no explicit side-conversation boundary and the user is chatting in a visible delegated working thread, interpret "this thread", "this chat", "this conversation", or similar as the current visible working thread unless they explicitly ask to rename the upstream/source/delegating thread.
