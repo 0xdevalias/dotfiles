@@ -78,6 +78,7 @@ Use only straight ASCII quotation marks in thread titles; never use typographic 
 Reusable title patterns:
 - `Codex AGENTS.md: Add <Guidance Name> Guidance` for persistent global guidance additions.
 - `<Product>: Bug - Investigate <Issue Area> Issues` for bug-investigation threads where the category improves scanning while preserving the action verb.
+- `Beeper: CSS Hacks - <Action> <Specific Subject>` for tasks centered on creating, publishing, or maintaining Beeper CSS hacks.
 
 Codex skills title patterns:
 - `Codex Skills: Create <Skill Name> Skill` for new skills, including extraction from existing notes, prompts, or workflows.
