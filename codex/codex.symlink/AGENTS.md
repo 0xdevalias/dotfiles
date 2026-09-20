@@ -73,6 +73,8 @@ Title shapes:
 - `<Area>: <Action> <Specific Subject>` for the default pattern.
 - `<Area>: <Category> - <Action> <Specific Subject>` when a category prefix is useful. The category should not replace the action verb.
 
+Use only straight ASCII quotation marks in thread titles; never use typographic or curly quotes. Prefer straight single quotes (`'...'`) for quoted text. Use straight double quotes only when nesting or ambiguity makes them necessary.
+
 Reusable title patterns:
 - `Codex AGENTS.md: Add <Guidance Name> Guidance` for persistent global guidance additions.
 - `<Product>: Bug - Investigate <Issue Area> Issues` for bug-investigation threads where the category improves scanning while preserving the action verb.
