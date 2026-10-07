@@ -4,34 +4,86 @@ codex.symlink/sessions/
 codex.symlink/archived_sessions/
 codex.symlink/browser/sessions/
 
+# Attachments
+codex.symlink/attachments/pasted-text-attachments.json
+codex.symlink/attachments/
+
 # Session derived data, etc
+codex.symlink/transcription-history.jsonl
 codex.symlink/log/
 codex.symlink/ambient-suggestions/
-codex.symlink/memories/
+codex.symlink/dictation-history/
 codex.symlink/generated_images/
+codex.symlink/worktrees/
+codex.symlink/worktrees/.metadata_never_index
+codex.symlink/visualizations/
 
+# Automations
+# codex.symlink/automations/
+codex.symlink/automations/.run-jitter-salt
+codex.symlink/automations/*/automation.toml
+codex.symlink/automations/*/memory.md
+codex.symlink/automations/*/memory.md.orig
+
+# Memories
+codex.symlink/memories/
+codex.symlink/memories_*.sqlite*
+
+# Pets
 # Could be considered config'ish, but also maybe could be considered local state..
 codex.symlink/pets/*
+!codex.symlink/pets/alt-sweetheart/
+
+# Plugins / Skills
+
+# Could be considered config'ish, but also maybe could be considered local state..
 # codex.symlink/skills/
 codex.symlink/skills/.system/
 codex.symlink/skills/hatch-pet/
 
+# Codex Security
+codex.symlink/state/plugins/codex-security/completion-locks/*.lock
+codex.symlink/state/plugins/codex-security/workbench.sqlite3
+
+# App Server
+codex.symlink/.app-server-state-reconciled-v1
+codex.symlink/app-server-control/
+codex.symlink/app-server-daemon/
+codex.symlink/packages/app-server-daemon/
+codex.symlink/plugins/.plugin-appserver/
+
 # DBs, etc
+codex.symlink/.sqlite-maintenance.lock
 codex.symlink/logs_*.sqlite*
 codex.symlink/state_*.sqlite*
+codex.symlink/goals_*.sqlite*
+codex.symlink/queue_*.sqlite*
+codex.symlink/thread_history_*.sqlite*
+# Potentially old/outdated/legacy (can these be removed/cleaned up?)
+codex.symlink/sqlite/
+
+# Locks/etc
+codex.symlink/thread-writer-locks/
+codex.symlink/mcp-oauth-locks/*.lock
 
 # General codex support files, etc
+codex.symlink/.sandbox_migration
+codex.symlink/chrome-native-hosts-v2.json
 codex.symlink/cache/
 codex.symlink/computer-use/
+codex.symlink/ipc/
 codex.symlink/node_repl/
+codex.symlink/process_manager/chat_processes.json
 codex.symlink/shell_snapshots/
-codex.symlink/sqlite/
 codex.symlink/.tmp/
 codex.symlink/tmp/
+codex.symlink/tui-thread-reference-capabilities/
 # codex.symlink/vendor_imports/
+codex.symlink/vendor_imports/skills-curated-cache.json
 
 # Etc?
 codex.symlink/.codex-global-state.json*
+codex.symlink/..codex-global-state.json*
 codex.symlink/.personality_migration
 codex.symlink/auth.json
 codex.symlink/history.jsonl
