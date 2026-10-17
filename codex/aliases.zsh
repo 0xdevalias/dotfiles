@@ -1,3 +1,7 @@
+codex-dotfiles() {
+  codex --cd "$HOME/.dotfiles" "$@"
+}
+
 codex-ephemeral() {
   local thread_store_id="ephemeral-$$-$RANDOM"
 
