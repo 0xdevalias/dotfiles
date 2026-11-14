@@ -29,6 +29,11 @@ karabiner/automatic_backups/
 
 MusicBrainz/
 
+openresearch/locks/
+openresearch/telemetry-outbox/
+openresearch/*.lock
+openresearch/update-check-app-bundle.json
+
 OpenRGB/OpenRGB.json
 OpenRGB/logs/*.log
 
