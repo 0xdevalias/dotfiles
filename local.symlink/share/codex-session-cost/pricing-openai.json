@@ -1,8 +1,13 @@
 {
-  "checked_at": "2026-03-21T09:01:36Z",
-  "etag": "4d21318440591d1dd772b0632cc072b3",
-  "fetched_at": "2026-03-21T08:25:36Z",
+  "checked_at": "2026-11-14T02:13:38Z",
+  "etag": "3a46fc7d051d991ef1343361284e072e",
+  "fetched_at": "2026-11-14T02:13:14Z",
   "prices": {
+    "chat-latest": {
+      "cached_input": 0.5,
+      "input": 5.0,
+      "output": 30.0
+    },
     "chatgpt-4o-latest": {
       "cached_input": null,
       "input": 5,
@@ -58,6 +63,11 @@
       "input": 15,
       "output": 120
     },
+    "gpt-5-search-api": {
+      "cached_input": 0.125,
+      "input": 1.25,
+      "output": 10.0
+    },
     "gpt-5.1": {
       "cached_input": 0.125,
       "input": 1.25,
@@ -82,6 +92,11 @@
       "cached_input": null,
       "input": 21.0,
       "output": 168.0
+    },
+    "gpt-5.3-codex": {
+      "cached_input": 0.175,
+      "input": 1.75,
+      "output": 14.0
     },
     "gpt-5.4": {
       "cached_input": 0.25,
@@ -113,6 +128,116 @@
       "input": 60.0,
       "output": 270.0
     },
+    "gpt-5.5": {
+      "cached_input": 0.5,
+      "input": 5.0,
+      "output": 30.0
+    },
+    "gpt-5.5-272k": {
+      "cached_input": 1,
+      "input": 10.0,
+      "output": 45.0
+    },
+    "gpt-5.5-cyber": {
+      "cached_input": 1.25,
+      "input": 12.5,
+      "output": 75.0
+    },
+    "gpt-5.5-pro": {
+      "cached_input": null,
+      "input": 30.0,
+      "output": 180.0
+    },
+    "gpt-5.5-pro-272k": {
+      "cached_input": null,
+      "input": 60.0,
+      "output": 270.0
+    },
+    "gpt-5.6-cyber": {
+      "cached_input": 1.25,
+      "input": 12.5,
+      "output": 75.0
+    },
+    "gpt-5.6-luna": {
+      "cached_input": 0.02,
+      "input": 0.2,
+      "output": 1.2
+    },
+    "gpt-5.6-luna-272k": {
+      "cached_input": 0.04,
+      "input": 0.4,
+      "output": 1.8
+    },
+    "gpt-5.6-sol": {
+      "cached_input": 0.4,
+      "input": 4.0,
+      "output": 20.0
+    },
+    "gpt-5.6-sol-272k": {
+      "cached_input": 0.8,
+      "input": 8.0,
+      "output": 30.0
+    },
+    "gpt-5.6-terra": {
+      "cached_input": 0.2,
+      "input": 2,
+      "output": 12.0
+    },
+    "gpt-5.6-terra-272k": {
+      "cached_input": 0.4,
+      "input": 4.0,
+      "output": 18.0
+    },
+    "gpt-6-astra": {
+      "cached_input": 1.0,
+      "input": 10.0,
+      "output": 50.0
+    },
+    "gpt-6-astra-272k": {
+      "cached_input": 2.0,
+      "input": 20.0,
+      "output": 75.0
+    },
+    "gpt-6-luna": {
+      "cached_input": 0.01,
+      "input": 0.1,
+      "output": 0.5
+    },
+    "gpt-6-luna-272k": {
+      "cached_input": 0.02,
+      "input": 0.2,
+      "output": 0.75
+    },
+    "gpt-6-sol": {
+      "cached_input": 0.2,
+      "input": 2.0,
+      "output": 10.0
+    },
+    "gpt-6-sol-272k": {
+      "cached_input": 0.4,
+      "input": 4.0,
+      "output": 15.0
+    },
+    "gpt-6.1-sol": {
+      "cached_input": 0.1,
+      "input": 2.0,
+      "output": 10.0
+    },
+    "gpt-6.1-sol-272k": {
+      "cached_input": 0.2,
+      "input": 4.0,
+      "output": 15.0
+    },
+    "gpt-6.1-terra": {
+      "cached_input": 0.05,
+      "input": 1.0,
+      "output": 5.0
+    },
+    "gpt-6.1-terra-272k": {
+      "cached_input": 0.1,
+      "input": 2.0,
+      "output": 7.5
+    },
     "gpt-image-1": {
       "cached_input": 1.25,
       "input": 10,
@@ -122,6 +247,26 @@
       "cached_input": 0.2,
       "input": 2,
       "output": 8
+    },
+    "gpt-image-1.5-image": {
+      "cached_input": 2,
+      "input": 8,
+      "output": 32
+    },
+    "gpt-image-1.5-text": {
+      "cached_input": 1.25,
+      "input": 5,
+      "output": 10
+    },
+    "gpt-image-2-image": {
+      "cached_input": 2,
+      "input": 8,
+      "output": 30
+    },
+    "gpt-image-2-text": {
+      "cached_input": 1.25,
+      "input": 5,
+      "output": 10
     },
     "o1-mini": {
       "cached_input": 0.55,
@@ -140,8 +285,8 @@
     },
     "o3": {
       "cached_input": 0.5,
-      "input": 10,
-      "output": 40
+      "input": 2,
+      "output": 8
     },
     "o3-deep-research": {
       "cached_input": 2.5,
@@ -174,7 +319,7 @@
       "output": 20
     }
   },
-  "reference_updated_at": "2026-03-17",
+  "reference_updated_at": "2026-11-12",
   "source": "llm-prices",
   "source_url": "https://www.llm-prices.com/current-v1.json",
   "vendor": "openai"
