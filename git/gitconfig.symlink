@@ -428,10 +428,10 @@
   gpgSign = true
 [credential "https://github.com"]
 	helper =
-	helper = !/usr/local/bin/gh auth git-credential
+	helper = !$(brew --prefix)/bin/gh auth git-credential
 [credential "https://gist.github.com"]
 	helper =
-	helper = !/usr/local/bin/gh auth git-credential
+	helper = !$(brew --prefix)/bin/gh auth git-credential
 [init]
 	defaultBranch = main
 
