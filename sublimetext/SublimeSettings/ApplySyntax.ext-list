@@ -12,6 +12,30 @@
 	[
 		"zsh"
 	],
+	"HAML":
+	[
+		"haml"
+	],
+	"HTML (Rails)":
+	[
+		"html.erb"
+	],
+	"Python":
+	[
+		"py3",
+		"pyw"
+	],
+	"YAML":
+	[
+		".gemrc",
+		"YAML-tmLanguage",
+		"yml",
+		"yml.dist"
+	],
+	"XML":
+	[
+		"xml.dist"
+	],
 	"JSON":
 	[
 		".babelrc",
@@ -22,6 +46,14 @@
 		".jshintrc",
 		".stylelintrc",
 		"geojson"
+	],
+	"PHP":
+	[
+		"inc",
+		"php3",
+		"php4",
+		"php5",
+		"phtml"
 	],
 	"INI":
 	[
@@ -37,10 +69,6 @@
 		"sh",
 		"zsh"
 	],
-	"XML":
-	[
-		"xml.dist"
-	],
 	"Ruby":
 	[
 		"jbuilder",
@@ -50,33 +78,5 @@
 		"rb",
 		"simplecov",
 		"thor"
-	],
-	"YAML":
-	[
-		".gemrc",
-		"YAML-tmLanguage",
-		"yml",
-		"yml.dist"
-	],
-	"HAML":
-	[
-		"haml"
-	],
-	"Python":
-	[
-		"py3",
-		"pyw"
-	],
-	"PHP":
-	[
-		"inc",
-		"php3",
-		"php4",
-		"php5",
-		"phtml"
-	],
-	"HTML (Rails)":
-	[
-		"html.erb"
 	],
 }
