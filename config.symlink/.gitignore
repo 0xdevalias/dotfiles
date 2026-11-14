@@ -21,6 +21,10 @@ github-repos/
 
 gtk-2.0/
 
+gws/client_secret.json
+gws/credentials.enc
+gws/token_cache.json
+
 httpie/version_info.json
 
 iterm2/
