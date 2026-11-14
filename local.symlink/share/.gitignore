@@ -12,6 +12,7 @@ gh/extensions/
 
 karabiner/log/
 karabiner/pid/
+karabiner/tmp/
 
 openresearch/
 .orx-remote-*
