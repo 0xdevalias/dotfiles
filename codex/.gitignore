@@ -1,5 +1,6 @@
 # Sessions, etc
 codex.symlink/session_index.jsonl
+codex.symlink/session_index.jsonl.lock
 codex.symlink/sessions/
 codex.symlink/archived_sessions/
 codex.symlink/browser/sessions/
