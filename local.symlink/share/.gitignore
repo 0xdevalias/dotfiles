@@ -13,4 +13,7 @@ gh/extensions/
 karabiner/log/
 karabiner/pid/
 
+openresearch/
+.orx-remote-*
+
 recently-used.xbel
