@@ -14,8 +14,9 @@ event-tap-health/
 
 gem/last_update_check
 
+gh/device-id
 gh/state.yml
-gh/extensions/gh-copilot/state.yml
+gh/extensions/*/state.yml
 
 gh-copilot/state.yml
 
