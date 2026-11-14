@@ -2,6 +2,16 @@
 #   $XDG_STATE_HOME defines the base directory relative to which user-specific state files should be stored.
 #   If $XDG_STATE_HOME is either not set or empty, a default equal to $HOME/.local/state should be used.
 
+brew-update-log/capture-*/
+brew-update-log/.lock
+
+codex-window-thread-map/backups/
+
+electron-toolkit/browser-repair/
+electron-toolkit/codex-asar-cache/
+
+event-tap-health/
+
 gem/last_update_check
 
 gh/state.yml
