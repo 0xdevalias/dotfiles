@@ -27,6 +27,9 @@ codex.symlink/automations/*/memory.md.orig
 
 # Memories
 codex.symlink/memories/
+codex.symlink/memories.lock
+codex.symlink/memories_v2
+codex.symlink/memories_v2.lock
 codex.symlink/memories_*.sqlite*
 
 # Pets
