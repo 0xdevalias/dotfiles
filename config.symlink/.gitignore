@@ -4,6 +4,8 @@
 
 configstore/
 
+dbxcli/auth.json
+
 gcloud/
 
 gh/hosts.yml
