@@ -59,6 +59,7 @@ codex.symlink/state_*.sqlite*
 codex.symlink/goals_*.sqlite*
 codex.symlink/queue_*.sqlite*
 codex.symlink/thread_history_*.sqlite*
+codex.symlink/code-review-plugin/reviews.sqlite*
 # Potentially old/outdated/legacy (can these be removed/cleaned up?)
 codex.symlink/sqlite/
 
