@@ -39,5 +39,3 @@ fi
 
 echo "[iTerm2] Enabling automatic updates"
 defaults write com.googlecode.iterm2 SUEnableAutomaticChecks -bool true
-
-# TODO: move com.googlecode.iterm2.plist into iterm2.symlink folder (when we commit it, commit any diffs to it separate to the move)
